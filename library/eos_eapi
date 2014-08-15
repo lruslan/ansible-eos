@@ -1,0 +1,126 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2014, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+import re
+
+from ansible.module_utils.basic import *
+
+STATUS_RE = re.compile(r'(?P<protocol>[HTTP|HTTPS])\s[\D]+(?P<port>\d+)$')
+
+module = None
+
+def run_command(commands):
+    cmd = ['FastCli', '-p', '15', '-A', '-c']
+    cmd.append(commands)
+    return module.run_command(cmd)
+
+def running():
+    (rc, out, err) = run_command('show management api http-commands | '
+                                 'grep running')
+    match = STATUS_RE.match(out)
+    if match:
+        return match.groups('protocol'), match.groups('port')
+
+def config(commands):
+    return run_command('\n'.join(['configure'] + commands))
+
+def enable(protocol=None, port=None):
+
+    options = ['management api http-commands']
+    if protocol == 'http':
+        options += ['no protocol https', 'protocol http']
+    elif protocol == 'https':
+        options += ['no protocol http', 'protocol https']
+    options.append('no shutdown')
+
+    config(options)
+
+    timeout = 3
+    while timeout != 0:
+        if running():
+            return 'running'
+        time.sleep(1)
+        timeout = timeout - 1
+    return 'timeout'
+
+def disable():
+    config(['management api http-commands', 'shutdown'])
+    timeout = 3
+    while not timeout:
+        if running():
+            return 'stopped'
+        time.sleep(1)
+        timeout = timeout - 1
+    return 'timeout'
+
+def main():
+    global module
+    module = AnsibleModule(
+        argument_spec = dict(
+            name=dict(type='str'),
+            hostname=dict(type='str', default='localhost'),
+            username=dict(type='str', default='admin'),
+            password=dict(type='str'),
+            protocol=dict(type='str', choices=['http', 'https'], default='https')
+            port=dict(type='int')
+        ),
+        supports_check_mode=True
+    )
+
+    result = dict(changed=False)
+
+    state = module.params['state']
+    protocol = module.params['protocol']
+    port = module.params['port']
+    status = running()
+
+    result['status'] = status
+
+    if state == 'running' and not status:
+        if not module.check_mode:
+            result['status'] = enable(protocol, port)
+        result['changed'] = True
+
+    elif state == 'running':
+        if status[0] != protocol or status[1] != port:
+            if not module.check_mode:
+                result['status'] = enable(protocol, port)
+            result['changed'] = True
+
+    elif state == 'stopped' and status:
+        if not module.check_mode:
+            result['status'] = disable()
+        result['changed'] = True
+
+    module.exit_json(**result)
+
+main()
