@@ -1,0 +1,287 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2014, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+DOCUMENTATION = """
+module: eos_vlan
+short_description: Manage VLAN resources in EOS
+description:
+  - Provides active state management of VLAN configuration on Arista EOS
+    nodes. All configuration of resources is idempotent unless
+    otherwise specified.
+author: Arista EOS+
+notes:
+requirements:
+  - Arista EOS 4.12.0 or later
+  - EOS command API enabled
+options:
+  name:
+    description:
+      - An ASCII string identifer for this VLAN
+    required: True
+    default: null
+    aliases: []
+  vlanid:
+    description:
+      - The unique VLAN identifier associated with this resource.  The value
+        for this identiifer must be in the range of 1 to 4094.
+    required: false
+    aliases: []
+  vni:
+    description:
+      - Configures the VXLAN VNI for this VLAN.  The value for the VNI
+        identifier must be in the range of 1 to 16777215
+    required: false
+    aliases: []
+  state:
+    description:
+      - The state of the VLAN related to the current running configuration
+    required: false
+    default: 'configured'
+    choices: ['configured', 'unconfigured', 'default']
+    aliases: []
+  null_as_default:
+    description:
+      - Instructs the module how to handle null values.  If this flag is set
+        then null values trigger default configuration otherwise do nothing
+    required: false
+    default: false
+    choices: [true, false]
+    aliases: []
+  eapi_hostname:
+    description:
+      - The IP address or DNS hostname of the EOS device to be managed.  If
+        local_connection is used, then this value must be configured.  When
+        not using local_connection, this value does not need to be supplied
+        and defaults to 'localhost'
+    required: false
+    default: 'localhost'
+    aliases: []
+  eapi_username:
+    description:
+      - The username to use for calls to eAPI.  If the username is not
+        specified, then the default is used
+    required: false
+    default: 'admin'
+    alias: []
+  eapi_password:
+    descripition:
+      - The password to use for calls to eAPI.  If the password is not
+        specified then the default is used ('')
+    required: false
+    default: ''
+    alias: []
+  eapi_protocol:
+    description:
+      - Configures the transport for connection to eAPI for either local
+        or remote connections.  This value should be the same as shown
+        from the output of 'show management api http-commands'
+    require: false
+    default: 'https'
+    choices: ['http', 'https']
+    alias: []
+  eapi_port:
+    description:
+      - Configures the port used ifor connecting to eAPI for either local
+        or remote connections.  This value should be the same as shown
+        from the output of 'show management api http-commands'
+      - If no value is specified, the the port is automatically determined
+        based on the setting of eapi_protocol (http=80, https=443).
+      - The value for this attribute must be in the range of 1 to 65535
+    require: false
+    default: null
+    alias: []
+"""
+import syslog
+import time
+
+from ansible.module_utils.basic import *
+
+import eapilib
+
+CONFIG_DELAY = 3
+
+EAPI_KWARG_MAP = {
+    'eapi_hostname': 'hostname',
+    'eapi_username': 'username',
+    'eapi_password': 'password',
+    'eapi_protocol': 'protocol',
+    'eapi_port': 'port'
+}
+
+def log(entry):
+    syslog.openlog('ansible-%s' % os.path.basename(__file__))
+    syslog.syslog(syslog.LOG_NOTICE, entry)
+
+def get_vxlan(eapi, identifier):
+    try:
+        resource = dict()
+        resp = eapi.enable('show interfaces Vxlan1')
+        vni = resp[0]['interfaces']['Vxlan1']['vlanToVniMap'].get(identifier)
+        if vni:
+            resource['vni'] = vni['vni']
+        else:
+            resource['vni'] = None
+    except eapilib.connections.CommandError as exc:
+        if exc.message[0][0] == 1002:
+            resource['vni'] = None
+        else:
+            raise
+    finally:
+        return resource
+
+def get_resource(eapi, identifier):
+    try:
+        resource = None
+        resp = eapi.enable('show vlan %s' % identifier)
+        resource = dict(vlanid=identifier, state='present')
+        resource['name'] = resp[0]['vlans'][identifier]['name']
+
+        vxlan = get_vxlan(eapi, identifier)
+        resource.update(get_vxlan(eapi, identifier))
+        return resource
+    except eapilib.connections.CommandError as exc:
+        if exc.message[0][0] == 1000:
+            return resource
+        raise
+
+def create_resource(eapi, identifier):
+    eapi.config('vlan %s' % identifier)
+    time.sleep(CONFIG_DELAY)
+    return get_resource(eapi, identifier)
+
+ATTRIBUTE_TO_CONFIG_MAP = {
+    'name': 'name {name}'
+}
+
+ATTRIBUTE_TO_DEFAULT_MAP = {
+    'name': 'default name',
+}
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec = dict(
+            name=dict(required=True, type='str'),
+            vlanid=dict(required=False, type='str'),
+            vni=dict(type='int'),
+            state=dict(default='configured', type='str',
+                       choices=['configured', 'unconfigured', 'default']),
+            null_as_default=dict(type='bool', default=False, choices=BOOLEANS),
+            eapi_hostname=dict(default='localhost'),
+            eapi_username=dict(default='admin'),
+            eapi_password=dict(default=''),
+            eapi_protocol=dict(default='https'),
+            eapi_port=dict(default=None)
+        ),
+        supports_check_mode=True
+    )
+
+    result = dict(changed=False, created=False)
+
+    kwargs = dict()
+    for key, value in module.params.items():
+        if value and key in EAPI_KWARG_MAP:
+            kwargs[EAPI_KWARG_MAP[key]] = value
+
+    eapi = eapilib.connections.create_connection(**kwargs)
+
+    state = module.params['state']
+    vlanid = module.params['vlanid'] or module.params['name']
+    null_as_default = module.params['null_as_default']
+
+    new_resource = {
+        'vlanid': vlanid,
+        'name': str(module.params['name']).replace(' ', '_'),
+        'vni': module.params['vni']
+    }
+
+    commands = list()
+    vni_commands = list()
+    current_resource = get_resource(eapi, vlanid)
+
+    if state == 'configured':
+        if current_resource is None:
+            current_resource = create_resource(eapi, vlanid)
+            result['created'] = True
+
+        changeset = set(new_resource.items()).difference(\
+                    current_resource.items())
+
+        new_vni = new_resource['vni']
+        cur_vni = current_resource['vni']
+
+        if cur_vni is None and new_vni is not None:
+            vni_commands.append('vxlan vlan %s vni %s' % (vlanid, new_vni))
+        elif cur_vni != new_vni:
+            if new_vni is not None:
+                vni_commands.append('vxlan vlan %s vni %s' % (vlanid, new_vni))
+            elif new_vni is None and null_as_default:
+                vni_commands.append('default vxlan vlan %s vni' % vlanid)
+
+        for key, value in changeset:
+            if value is None and null_as_default:
+                command = ATTRIBUTE_TO_DEFAULT_MAP.get(key)
+            elif value is not None:
+                command = ATTRIBUTE_TO_CONFIG_MAP.get(key)
+                if command:
+                    command = str(command).format(**new_resource)
+            else:
+                command = None
+
+            if command:
+                commands.append(command)
+
+    elif state == 'unconfigured' and current_resource is not None:
+        commands.append('no vlan %s' % vlanid)
+        vni_commands.append('no vxlan %s vni' % vlanid)
+
+    elif state == 'default' and current_resource is not None:
+        commands.append('default vlan %s' % vlanid)
+        vni_commands.append('default vxlan %s vni' % vlanid)
+
+    if commands:
+        if vni_commands:
+            vni_commands.insert(0, 'interface vxlan1')
+            commands.extend(vni_commands)
+        commands.insert(0, 'vlan %s' % vlanid)
+        result['commands'] = commands
+        if not module.check_mode:
+            eapi.config(commands)
+        result['changed'] = True
+
+    result['resource'] = get_resource(eapi, vlanid)
+    result['current_resource'] = current_resource
+    result['new_resource'] = new_resource
+
+    module.exit_json(**result)
+
+main()
