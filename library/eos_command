@@ -113,7 +113,6 @@ def main():
         argument_spec = dict(
             commands=dict(required=True, type='list'),
             mode=dict(default='enable', choices=['enable', 'config']),
-            eapi=dict(type='dict'),
             eapi_hostname=dict(default='localhost'),
             eapi_username=dict(default='admin'),
             eapi_password=dict(default=''),
@@ -129,9 +128,6 @@ def main():
     for key, value in module.params.items():
         if value and key in EAPI_KWARG_MAP:
             kwargs[EAPI_KWARG_MAP[key]] = value
-
-    for key, value in module.params['eapi'].items():
-        kwargs[key] = value
 
     eapi = create_connection(**kwargs)
 
