@@ -262,11 +262,13 @@ def main():
 
     elif state == 'unconfigured' and current_resource is not None:
         commands.append('no vlan %s' % vlanid)
-        vni_commands.append('no vxlan %s vni' % vlanid)
+        if new_resource['vni'] is not None:
+            vni_commands.append('no vxlan %s vni' % vlanid)
 
     elif state == 'default' and current_resource is not None:
         commands.append('default vlan %s' % vlanid)
-        vni_commands.append('default vxlan %s vni' % vlanid)
+        if new_resource['vni'] is not None:
+            vni_commands.append('default vxlan %s vni' % vlanid)
 
     if commands:
         if vni_commands:

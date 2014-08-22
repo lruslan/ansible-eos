@@ -249,7 +249,10 @@ The next example demonstrates how to use playbooks with a local connection to co
 
   tasks:
     - name: create a vlan
-      eos_vlan: vlanid=100 eapi_username=eapi eapi_password=itsasecret
+      eos_vlan: name=myvlan vlanid=100
+                eapi_username=eapi
+                eapi_password=itsasecret
+                eapi_hostname={{ inventory_hostname }}
 ```
 
 License
