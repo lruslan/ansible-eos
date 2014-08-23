@@ -1,0 +1,32 @@
+Arista EOS role for Ansible
+===========================
+
+## v0.1.2 (under development)
+
+- fixes a minor issue with eos_vlan trying to set a nonexistent vni
+- documentation updates
+- fixes an issue where the wrong state was being set for configured resources
+
+## v0.1.1
+
+- fixes a major bug with eos_command using an old variable name
+- added additional details and new examples to README
+
+
+## v0.1.0
+
+- first release of role to Ansible Galaxy
+- all modules initially released
+
+New Modules:
+
+* eos_command
+* eos_interface
+* eos_ipv4interface
+* eos_portchannel
+* eos_switchport
+* eos_vlan
+* eos_vxlan
+* eos_purge (beta)
+* eos_eapi (alpha)
+* eos_facts (on-box connections only)
