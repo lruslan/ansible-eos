@@ -191,7 +191,7 @@ def get_switchport(eapi, name):
         if not enabled:
             return None
 
-        switchport = dict(name=name, state='present')
+        switchport = dict(name=name, state='configured')
 
         match = mode_re.search(output)
 
@@ -222,6 +222,7 @@ def create_switchport(eapi, name):
     ]
     eapi.config(commands)
     return get_switchport(eapi, name)
+
 
 ATTRIBUTE_TO_CONFIG_MAP = {
     'mode': 'switchport mode {mode}',
@@ -280,12 +281,15 @@ def main():
     if str(intfid).upper()[0:2] not in ['ET', 'PO']:
         return module.fail_json(msg='invalid interface (%s) specified' % intfid)
 
+
+    allowed_vlans = str(module.params['trunk_allowed_vlans']).replace(' ', '')
+
     new_resource = {
         'name': intfid,
         'mode': module.params['mode'],
         'access_vlan': module.params['access_vlan'],
         'trunk_native_vlan': module.params['trunk_native_vlan'],
-        'trunk_allowed_vlans': module.params['trunk_allowed_vlans']
+        'trunk_allowed_vlans': allowed_vlans
     }
 
     commands = list()
