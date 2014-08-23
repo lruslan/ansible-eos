@@ -62,8 +62,16 @@ options:
       - Describes the expected state of the IP interface as either present
         in the configuration or absent from the configuration
     required: false
-    default: 'present'
-    choices: ['present', 'absent']
+    default: 'configured'
+    choices: ['configured', 'unconfigured', 'default']
+    aliases: []
+  null_as_default:
+    description:
+      - Instructs the module how to handle null values.  If this flag is set
+        then null values trigger default configuration otherwise do nothing
+    required: false
+    default: false
+    choices: [true, false]
     aliases: []
   eapi_hostname:
     description:
