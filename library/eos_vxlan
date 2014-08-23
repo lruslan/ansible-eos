@@ -213,7 +213,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            name=dict(required=True, type='str'),
+            name=dict(required=False, type='str'),
             admin=dict(choices=['enable', 'disable']),
             description=dict(type='str'),
             multicast_group=dict(type='str'),
