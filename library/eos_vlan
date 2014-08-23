@@ -162,7 +162,7 @@ def get_resource(eapi, identifier):
     try:
         resource = None
         resp = eapi.enable('show vlan %s' % identifier)
-        resource = dict(vlanid=identifier, state='present')
+        resource = dict(vlanid=identifier, state='configured')
         resource['name'] = resp[0]['vlans'][identifier]['name']
         resource.update(get_vxlan(eapi, identifier))
         return resource

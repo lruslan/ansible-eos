@@ -150,7 +150,7 @@ def get_interface(eapi, name):
         if data['forwardingModel'] != 'routed':
             return None
 
-        interface = dict(name=name)
+        interface = dict(name=name, state='configured')
 
         if data['interfaceAddress']:
             ipaddr = data['interfaceAddress'][0]['primaryIp']['address']
