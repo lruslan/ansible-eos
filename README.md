@@ -176,11 +176,6 @@ eos_save_on_change: true
 # startup-config to the Ansible control host and store it
 eos_backup_on_change: true
 eos_backup_dir: {{ ansible_hostname }}
-
-# configures the working directory to use with Ansible for temporary
-# storage.  it defaults to /tmp and is overridden in vars/eos.yml
-eos_working_dir: /tmp
-eos_source_dir: /tmp
 ```
 
 _vars/eos.yml_
