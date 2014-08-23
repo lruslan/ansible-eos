@@ -164,8 +164,6 @@ def get_resource(eapi, identifier):
         resp = eapi.enable('show vlan %s' % identifier)
         resource = dict(vlanid=identifier, state='present')
         resource['name'] = resp[0]['vlans'][identifier]['name']
-
-        vxlan = get_vxlan(eapi, identifier)
         resource.update(get_vxlan(eapi, identifier))
         return resource
     except eapilib.connections.CommandError as exc:
