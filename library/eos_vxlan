@@ -31,10 +31,10 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 DOCUMENTATION = """
-module: eos_interface
-short_description: Manage interfaces in EOS
+module: eos_vxlan
+short_description: Manage VXLAN virtual tunnint interface
 description:
-  - Provides active state management of physical ethernet interfaces
+  - Provides active state management of vxlan interface
     configuration on Arista EOS nodes. All configuration of
     resources is idempotent unless otherwise specified.
 author: Arista EOS+

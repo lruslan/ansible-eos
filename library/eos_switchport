@@ -31,7 +31,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 DOCUMENTATION = """
-module: switchport
+module: eos_switchport
 short_description: Manage switchport (layer 2) interface resources in EOS
 description:
   - Provides active state management of switchport (layer 2) interface

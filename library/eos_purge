@@ -31,7 +31,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 DOCUMENTATION = """
-module: purge
+module: eos_purge
 short_description: Purges unmanaged resources from the running configuration
 description:
   - The purge module provides a mechanism to purge all resources of a given
@@ -41,6 +41,8 @@ author: Arista EOS+
 notes:
   - Please be sure to fully understand the implications of this module
     before using it in a production environment.
+  - This module is still in testing, please do not use it in production
+    environments
 requirements:
   - Arista EOS 4.12.0 or later
   - EOS command API enabled

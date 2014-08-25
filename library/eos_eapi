@@ -31,11 +31,11 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 DOCUMENTATION = """
-module: eos_vlan
-short_description: Manage VLAN resources in EOS
+module: eos_eapi
+short_description: Configures EOS command API
 description:
-  - Provides active state management of VLAN configuration on Arista EOS
-    nodes. All configuration of resources is idempotent unless
+  - Provides active state management of EOS command API configuration on
+    Arista EOS nodes. All configuration of resources is idempotent unless
     otherwise specified.
 author: Arista EOS+
 notes:

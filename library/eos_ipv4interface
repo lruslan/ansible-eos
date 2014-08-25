@@ -31,7 +31,7 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 DOCUMENTATION = """
-module: eos_ipinterface
+module: eos_ipv4interface
 short_description: Manage layer 3 interface resources in EOS
 description:
   - Provides active state management of layer 3 IP interface
