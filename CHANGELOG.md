@@ -4,8 +4,13 @@ Arista EOS role for Ansible
 ## v0.1.2 (under development)
 
 - fixes a minor issue with eos_vlan trying to set a nonexistent vni
-- documentation updates
 - fixes an issue where the wrong state was being set for configured resources
+- documentation updates
+
+Updated Modules:
+
+* eos_eapi
+
 
 ## v0.1.1
 

@@ -30,96 +30,163 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+DOCUMENTATION = """
+module: eos_vlan
+short_description: Manage VLAN resources in EOS
+description:
+  - Provides active state management of VLAN configuration on Arista EOS
+    nodes. All configuration of resources is idempotent unless
+    otherwise specified.
+author: Arista EOS+
+notes:
+requirements:
+  - Arista EOS 4.12.0 or later
+  - EOS command API enabled
+options:
+  protocol:
+    description:
+      - The protocol that command api should use for transport.
+    required: False
+    default: null
+    choices: ['http', 'https']
+    aliases: []
+  port:
+    description:
+      - The TCP port to be used along with the protocol to listen for
+        connections on.  Valid range is 1-65535
+    required: false
+    aliases: []
+  admin:
+    description:
+      - Configures the administrative state of command api.  Valid
+        values include enable and disable.
+    required: false
+    default: null
+    choices: ['enable', 'disable']
+    aliases: []
+  state:
+    description:
+      - The state of eAPI related to the current running configuration
+    required: false
+    default: 'configured'
+    choices: ['configured', 'unconfigured', 'default']
+    aliases: []
+"""
 import re
 
 from ansible.module_utils.basic import *
 
-STATUS_RE = re.compile(r'(?P<protocol>[HTTP|HTTPS])\s[\D]+(?P<port>\d+)$')
-
-module = None
-
-def run_command(commands):
+def run_command(module, commands):
     cmd = ['FastCli', '-p', '15', '-A', '-c']
     cmd.append(commands)
     return module.run_command(cmd)
 
-def running():
-    (rc, out, err) = run_command('show management api http-commands | '
-                                 'grep running')
-    match = STATUS_RE.match(out)
-    if match:
-        return match.groups('protocol'), match.groups('port')
+def config(module, commands):
+    return run_command(module, '\n'.join(['configure'] + commands))
 
-def config(commands):
-    return run_command('\n'.join(['configure'] + commands))
+def get_resource(module):
+    (rc, out, err) = run_command(module, 'show running-config section '
+                                         'management api http-commands')
 
-def enable(protocol=None, port=None):
+    resource = dict()
+    if out != None:
+        admin = 'enable' if 'no shutdown' in out else 'disable'
+        resource['admin'] = admin
 
-    options = ['management api http-commands']
+        proto = 'http' if 'no protocol https' in out else 'https'
+        resource['protocol'] = proto
+
+        match = re.search(r'port\s(?P<port>\d+)', out)
+        if match:
+            resource['port'] = match.group('port')
+        else:
+            resource['port'] = 80 if proto == 'http' else 443
+
+    return resource
+
+def configure_eapi(module, commands, state='running'):
+    config(module, commands)
+
+    timeout = 3
+    while time > 0:
+        resource = get_resource(module)
+        if resource:
+            return True
+        time.sleep(1)
+        timeout = timeout - 1
+    return False
+
+def enable_eapi(admin='enable', protocol='https', port=443):
+    config = list()
+
     if protocol == 'http':
-        options += ['no protocol https', 'protocol http']
+        config += ['no protocol https', 'protocol http port %s' % port]
     elif protocol == 'https':
-        options += ['no protocol http', 'protocol https']
-    options.append('no shutdown')
+        config += ['no protocol http', 'protocol https port %s' % port]
 
-    config(options)
+    if admin == 'enable':
+        config.append('no shutdown')
+    else:
+        config.append('shutdown')
 
-    timeout = 3
-    while timeout != 0:
-        if running():
-            return 'running'
-        time.sleep(1)
-        timeout = timeout - 1
-    return 'timeout'
+    return config
 
-def disable():
-    config(['management api http-commands', 'shutdown'])
-    timeout = 3
-    while not timeout:
-        if running():
-            return 'stopped'
-        time.sleep(1)
-        timeout = timeout - 1
-    return 'timeout'
+def set_port(protocol, port):
+    if port is not None:
+        return str(port)
+    return '80' if protocol == 'http' and not port else '443'
+
 
 def main():
-    global module
     module = AnsibleModule(
         argument_spec = dict(
-            name=dict(type='str'),
-            hostname=dict(type='str', default='localhost'),
-            username=dict(type='str', default='admin'),
-            password=dict(type='str'),
-            protocol=dict(type='str', choices=['http', 'https'], default='https')
-            port=dict(type='int')
+            admin=dict(type='str', default='enable',
+                       choices=['enable', 'disable']),
+            protocol=dict(type='str', default='https',
+                          choices=['http', 'https']),
+            port=dict(type='int'),
+            state=dict(type='str', default='configured',
+                       choices=['configured', 'unconfigured', 'default'])
         ),
         supports_check_mode=True
     )
 
     result = dict(changed=False)
-
     state = module.params['state']
-    protocol = module.params['protocol']
-    port = module.params['port']
-    status = running()
 
-    result['status'] = status
+    new_resource = {
+        'admin': module.params['admin'],
+        'protocol': module.params['protocol'],
+        'port': set_port(module.params['protocol'], module.params['port'])
+    }
 
-    if state == 'running' and not status:
+    commands = list()
+    current_resource = get_resource(module)
+
+    if state == 'configured':
+        if current_resource is None:
+            commands.extend(enable_eapi(**new_resource))
+
+        elif set(new_resource.items()).difference(current_resource.items()):
+            commands.extend(enable_eapi(**new_resource))
+
+        if commands:
+            commands.insert(0, 'management api http-commands')
+
+    elif state in ['unconfigured', 'default']:
+        if current_resource is not None:
+            commands.append('default management api http-commands')
+
+    if commands:
         if not module.check_mode:
-            result['status'] = enable(protocol, port)
+            if not configure_eapi(module, commands, state='running'):
+                module.fail_json(msg='timeout trying to enable command api')
+        result['commands'] = commands
         result['changed'] = True
 
-    elif state == 'running':
-        if status[0] != protocol or status[1] != port:
-            if not module.check_mode:
-                result['status'] = enable(protocol, port)
-            result['changed'] = True
-
-    elif state == 'stopped' and status:
-        if not module.check_mode:
-            result['status'] = disable()
-        result['changed'] = True
+    result['resource'] = get_resource(module)
+    result['current_resource'] = current_resource
+    result['new_resource'] = new_resource
 
     module.exit_json(**result)
 
