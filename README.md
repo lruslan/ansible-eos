@@ -25,7 +25,7 @@ Enabling EOS Command API
 ------------------------
 The modules provided in the Arista EOS role require command API (aka eAPI) to be enabled on the switch.   The modules use eAPI to communicate with EOS.  Since eAPI is not enabled by default, it must be initially enabled before the EOS modules can be used.
 
-_Note:_ The EOS role provides a module for enabling and configuring command API using a task; however, the local user still needs to be created
+_Note: The EOS role provides a module for enabling and configuring command API using a task; however, the local user still needs to be created_
 
 The steps below provide the basic steps to enable eAPI.  For more advanced configurations, please consult the EOS User Guide.
 
