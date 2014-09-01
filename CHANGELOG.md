@@ -1,7 +1,11 @@
 Arista EOS role for Ansible
 ===========================
 
-## v0.1.2 
+## v0.1.3 (under development)
+- added admin attribute to eos_vlan
+
+
+## v0.1.2
 
 - fixes a minor issue with eos_vlan trying to set a nonexistent vni
 - fixes an issue where the wrong state was being set for configured resources

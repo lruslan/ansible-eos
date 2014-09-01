@@ -61,6 +61,14 @@ options:
         identifier must be in the range of 1 to 16777215
     required: false
     aliases: []
+  admin:
+    description:
+      - Configures the administrative state for the vlan.  Valid
+        values include enable and disable.
+    required: false
+    default: null
+    choices: ['enable', 'disable']
+    aliases: []
   state:
     description:
       - The state of the VLAN related to the current running configuration
@@ -164,6 +172,9 @@ def get_resource(eapi, identifier):
         resp = eapi.enable('show vlan %s' % identifier)
         resource = dict(vlanid=identifier, state='configured')
         resource['name'] = resp[0]['vlans'][identifier]['name']
+        admin = 'disable' if resp[0]['vlans'][identifier]['state'] == 'suspend'\
+                          else 'enable'
+        resource['admin'] = admin
         resource.update(get_vxlan(eapi, identifier))
         return resource
     except eapilib.connections.CommandError as exc:
@@ -176,12 +187,17 @@ def create_resource(eapi, identifier):
     time.sleep(CONFIG_DELAY)
     return get_resource(eapi, identifier)
 
+set_admin = lambda kwargs: 'suspend' if kwargs['admin'] == 'disable' \
+                            else 'active'
+
 ATTRIBUTE_TO_CONFIG_MAP = {
-    'name': 'name {name}'
+    'name': 'name {name}',
+    'admin': set_admin
 }
 
 ATTRIBUTE_TO_DEFAULT_MAP = {
     'name': 'default name',
+    'admin': 'default state'
 }
 
 def main():
@@ -191,6 +207,8 @@ def main():
             name=dict(required=True, type='str'),
             vlanid=dict(required=False, type='str'),
             vni=dict(type='int'),
+            admin=dict(type='str', default='enable',
+                       choices=['enable', 'disable']),
             state=dict(default='configured', type='str',
                        choices=['configured', 'unconfigured', 'default']),
             null_as_default=dict(type='bool', default=False, choices=BOOLEANS),

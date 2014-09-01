@@ -12,6 +12,7 @@ This role provides the following modules available for using in playbooks and ta
 * eos_portchannel
 * eos_vxlan
 * eos_ipv4interfaces
+* eos_eapi
 
 All modules are fully documented, please see the module documententation for all available parameters.  See the CHANGELOG.md file for the most update to date changes.
 
