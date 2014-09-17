@@ -36,6 +36,8 @@ eapi_password:
 eapi_protocol: https
 eapi_port:
 
+eapi: {}
+
 eos_debug: []
 eos_purge: []
 

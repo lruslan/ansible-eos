@@ -2,7 +2,12 @@ Arista EOS role for Ansible
 ===========================
 
 ## v0.1.3 (under development)
-- added admin attribute to eos_vlan
+
+- added eapi attribute to all modules
+
+Updated Modules:
+
+* eos_vlan
 
 
 ## v0.1.2

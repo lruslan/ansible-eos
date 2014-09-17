@@ -173,7 +173,9 @@ def main():
         argument_spec = dict(
             name=dict(required=True, type='str'),
             interface=dict(type='str'),
-            ipv4address=dict(type='str', aliases=['ipaddress']),
+            ipv4address=dict(type='str', aliases=['ipaddress', 'address']),
+            create_if_missing=dict(type='bool', default=False,
+                                   choices=BOOLEANS),
             state=dict(default='configured',
                        choices=['configured', 'unconfigured', 'default']),
             null_as_default=dict(type='bool', default=False),
@@ -203,6 +205,7 @@ def main():
     state = module.params['state']
     null_as_default = module.params['null_as_default']
     intfid = module.params['interface'] or module.params['name']
+    create_if_missing = module.params['create_if_missing']
 
     new_resource = {
         'name': intfid,

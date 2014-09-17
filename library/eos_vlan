@@ -82,7 +82,7 @@ options:
         then null values trigger default configuration otherwise do nothing
     required: false
     default: false
-    choices: [true, false]
+    choices: BOOLEANS
     aliases: []
   eapi_hostname:
     description:
@@ -145,6 +145,7 @@ EAPI_KWARG_MAP = {
     'eapi_port': 'port'
 }
 
+
 def log(entry):
     syslog.openlog('ansible-%s' % os.path.basename(__file__))
     syslog.syslog(syslog.LOG_NOTICE, entry)
@@ -172,8 +173,13 @@ def get_resource(eapi, identifier):
         resp = eapi.enable('show vlan %s' % identifier)
         resource = dict(vlanid=identifier, state='configured')
         resource['name'] = resp[0]['vlans'][identifier]['name']
-        admin = 'disable' if resp[0]['vlans'][identifier]['state'] == 'suspend'\
-                          else 'enable'
+
+        if resp[0]['vlans'][identifier]['status'] == 'suspend':
+            admin = 'disable'
+        else:
+            admin = 'enable'
+        resource['admin'] = admin
+
         resource['admin'] = admin
         resource.update(get_vxlan(eapi, identifier))
         return resource
@@ -205,8 +211,8 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name=dict(required=True, type='str'),
-            vlanid=dict(required=False, type='str'),
-            vni=dict(type='int'),
+            vlanid=dict(required=True, type='str'),
+            vni=dict(type='str'),
             admin=dict(type='str', default='enable',
                        choices=['enable', 'disable']),
             state=dict(default='configured', type='str',
@@ -231,13 +237,16 @@ def main():
     eapi = eapilib.connections.create_connection(**kwargs)
 
     state = module.params['state']
-    vlanid = module.params['vlanid'] or module.params['name']
     null_as_default = module.params['null_as_default']
+
+    vlanid = module.params['vlanid'] or module.params['name']
+    vni = None if module.params['vni'] == '' else module.params['vni']
 
     new_resource = {
         'vlanid': vlanid,
         'name': str(module.params['name']).replace(' ', '_'),
-        'vni': module.params['vni']
+        'admin': module.params['admin'],
+        'vni': vni
     }
 
     commands = list()

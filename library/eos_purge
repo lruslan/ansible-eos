@@ -182,6 +182,7 @@ def eos_vlan(eapi, results):
     if commands:
         eapi.config(commands)
         return dict(commands=commands, purged=purged)
+
     return dict(purged=[])
 
 def eos_switchport(eapi, results):
@@ -232,6 +233,8 @@ def eos_portchannel(eapi, results):
         return dict(commands=commands, purged=purged)
     return dict(purged=[])
 
+def eos_bgp_neighbor(eapi, results):
+    pass
 
 def main():
 
@@ -259,7 +262,7 @@ def main():
 
     func = globals().get(module.params['resource'])
     if not func:
-        module.exit_json(msg='resource %s does not currently support the '
+        module.fail_json(msg='resource %s does not currently support the '
                              'purge function' % module.params['resource'])
 
     resp = func(eapi, module.params['results']) or False

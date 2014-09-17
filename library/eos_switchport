@@ -335,7 +335,6 @@ def main():
     result['current_resource'] = current_resource
     result['new_resource'] = new_resource
 
-
     module.exit_json(**result)
 
 main()
