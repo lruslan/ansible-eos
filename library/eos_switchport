@@ -155,9 +155,6 @@ options:
     alias: []
 """
 
-import json
-import urlparse
-import collections
 import re
 
 from ansible.module_utils.basic import *
