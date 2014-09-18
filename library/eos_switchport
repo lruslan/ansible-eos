@@ -279,7 +279,10 @@ def main():
         return module.fail_json(msg='invalid interface (%s) specified' % intfid)
 
 
-    allowed_vlans = str(module.params['trunk_allowed_vlans']).replace(' ', '')
+    if module.params['trunk_allowed_vlans'] is not None:
+        allowed_vlans = str(module.params['trunk_allowed_vlans']).replace(' ', '')
+    else:
+        allowed_vlans = module.params['trunk_allowed_vlans']
 
     new_resource = {
         'name': intfid,
