@@ -4,6 +4,7 @@ Arista EOS role for Ansible
 ## v0.1.3 (under development)
 
 - added eapi attribute to all modules
+- fixes an issue with switchport trunks being set to none (issue #7)
 
 Updated Modules:
 
