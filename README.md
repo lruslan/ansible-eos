@@ -215,6 +215,7 @@ The example playbook demostrates how to send a list of commands to the EOS node.
   vars:
     eapi_username: eapi
     eapi_password: password
+
     commands:
       - show version
       - show lldp neighbors
@@ -224,34 +225,16 @@ The example playbook demostrates how to send a list of commands to the EOS node.
 
   tasks:
     - name: run an arbitrary EOS command
-      eos_command: eapi_username={{ eapi_username }}
-                   eapi_password={{ eapi_password }}
-      args: { commands: "{{ commands }}" }
+      action: eos_command
+      args: { commands: "{{ commands }}",
+              eapi_username: "{{ eapi_username }}",
+              eapi_password: "{{ eapi_password }}"}
       register: eos_command_output
 
     - debug: var=eos_command_output
 
 ```
 
-The next example demonstrates how to use playbooks with a local connection to configure VLANs in EOS.
-
-```
-- name: eos nodes
-  hosts: eos_switches
-  gather_facts: yes
-  sudo: true
-  connection: local
-
-  roles:
-    - role: arista.eos
-
-  tasks:
-    - name: create a vlan
-      eos_vlan: name=myvlan vlanid=100
-                eapi_username=eapi
-                eapi_password=itsasecret
-                eapi_hostname={{ inventory_hostname }}
-```
 
 License
 -------
