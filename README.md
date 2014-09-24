@@ -2,7 +2,7 @@ README
 ======
 The Arista eos role provides the foundation for working with Arista EOS nodes and Ansible.  The eos role includes the necessary libraries to bootstrap an Arista EOS node and prepare it for use.  In addition, the eos role provides low level functionality for use by all other eos_* roles.
 
-The Arista EOS roles for Ansible provide the ability to manage configuration resources in EOS.  The architecture of the roles makes inherent use of the Arista EOS command API.  This provides a secure two phase authentication that allows for clean separate between automation frameworks and node configuration.  The EOS roles allow an Ansible control host to connect to an Arista EOS node and perform tasks that traverse eAPI with a set of API credentials.
+The Arista EOS roles for Ansible provide the ability to manage configuration resources in EOS.  The architecture of the roles makes inherent use of the Arista EOS command API.  This provides a secure two phase authentication that allows for clean separation between automation frameworks and node configuration.  The EOS roles allow an Ansible control host to connect to an Arista EOS node and perform tasks that traverse eAPI with a set of API credentials.
 
 This role provides the following modules available for using in playbooks and tasks:
 
@@ -14,7 +14,7 @@ This role provides the following modules available for using in playbooks and ta
 * eos_ipv4interfaces
 * eos_eapi
 
-All modules are fully documented, please see the module documententation for all available parameters.  See the CHANGELOG.md file for the most update to date changes.
+All modules are fully documented, please see the module documentation for all available parameters.  See the CHANGELOG.md file for the most update to date changes.
 
 Requirements
 ------------
@@ -125,11 +125,11 @@ __Step 5.__ Reboot the EOS node and start automating with Ansible
 
 Understanding the Security Model
 --------------------------------
-The Arista EOS role for Ansible provides a two stage authentication model to maximize the security and flexibility available for providing programatic access to EOS nodes.   The steps above walk through how to enable both eAPI and create a shell account for use with Ansible.   This section provides some additional details about how the two stage authentication model works.
+The Arista EOS role for Ansible provides a two stage authentication model to maximize the security and flexibility available for providing programmatic access to EOS nodes.   The steps above walk through how to enable both eAPI and create a shell account for use with Ansible.   This section provides some additional details about how the two stage authentication model works.
 
 _Note:_ The two stage authentication model only applies to tasks that are not using connection: local.  If your playbooks are using local connections, the all of the authentication is based on eAPI.
 
-Implementing a two stage security model allows operators to secure the Ansible shell accout and prevent it from configuring EOS.  Conversely, having a separate eAPI authentication mechanism allows operators to separately control the users that can run EOS modules without giving them root access to EOS.
+Implementing a two stage security model allows operators to secure the Ansible shell account and prevent it from configuring EOS.  Conversely, having a separate eAPI authentication mechanism allows operators to separately control the users that can run EOS modules without giving them root access to EOS.
 
 When Ansible connects to an EOS node, it must first authenticate to Linux as it would for any other Linux platform.  In order to create the shell account, the steps in Preparing EOS for Ansible should be followed.  The steps above will create a user called 'ansible'.  You are free to choose any username you like with the following exception. You cannot create a username the same as a local account in EOS (more on that in a moment).
 
