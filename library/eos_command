@@ -64,7 +64,7 @@ options:
     default: 'admin'
     alias: []
   eapi_password:
-    descripition:
+    description:
       - The password to use for calls to eAPI.  If the password is not
         specified then the default is used ('')
     required: false
