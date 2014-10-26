@@ -177,8 +177,8 @@ def eos_vlan(eapi, results):
 
     expected = list()
     for vlan in results:
-        if vlan['resource'] is not None:
-            expected.append(str(vlan['resource']['vlanid']))
+        if vlan['eos_vlan'] is not None:
+            expected.append(str(vlan['eos_vlan']['vlanid']))
 
     commands = list()
     purged = list()

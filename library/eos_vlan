@@ -134,15 +134,20 @@ options:
     require: false
     default: null
     alias: []
+  eapi:
+    description:
+      - Configures the eAPI attributes for connecting to EOS.  This options
+        must be a dictionary with the following keys: hostname, username
+        password, protocol, port
+    require: false
+    default: null
+    alias: []
 """
 import syslog
-import time
 
 from ansible.module_utils.basic import *
 
 import eapilib
-
-CONFIG_DELAY = 3
 
 EAPI_KWARG_MAP = {
     'eapi_hostname': 'hostname',
@@ -177,7 +182,6 @@ def get_vxlan(eapi, identifier):
 
 def get_resource(eapi, identifier):
     try:
-        resource = None
         resp = eapi.enable('show vlan %s' % identifier)
         resource = dict(vlanid=identifier, state='configured')
         resource['name'] = resp[0]['vlans'][identifier]['name']
@@ -193,26 +197,22 @@ def get_resource(eapi, identifier):
         return resource
     except eapilib.connections.CommandError as exc:
         if exc.message[0][0] == 1000:
-            return resource
+            return dict(state='unconfigured', vlanid=identifier)
         raise
 
-def create_resource(eapi, identifier):
-    eapi.config('vlan %s' % identifier)
-    time.sleep(CONFIG_DELAY)
-    return get_resource(eapi, identifier)
+def set_name(resource, default=False):
+    if default:
+        return 'default name'
+    else:
+        return 'name {name}'.format(**resource)
 
-set_admin = lambda kwargs: 'suspend' if kwargs['admin'] == 'disable' \
-                            else 'active'
-
-ATTRIBUTE_TO_CONFIG_MAP = {
-    'name': 'name {name}',
-    'admin': set_admin
-}
-
-ATTRIBUTE_TO_DEFAULT_MAP = {
-    'name': 'default name',
-    'admin': 'default state'
-}
+def set_admin(resource, default=False):
+    if default:
+        return 'default state'
+    elif resource['admin'] == 'enable':
+        return 'state active'
+    elif resource['admin'] == 'disable':
+        return 'state suspend'
 
 def main():
 
@@ -231,7 +231,8 @@ def main():
             eapi_password=dict(default=''),
             eapi_enable_password=dict(default=''),
             eapi_protocol=dict(default='https'),
-            eapi_port=dict(default=None)
+            eapi_port=dict(default=None),
+            eapi=dict(type='dict')
         ),
         supports_check_mode=True
     )
@@ -242,6 +243,9 @@ def main():
     for key, value in module.params.items():
         if value and key in EAPI_KWARG_MAP:
             kwargs[EAPI_KWARG_MAP[key]] = value
+
+    if module.params['eapi']:
+        kwargs.update(module.params['eapi'])
 
     eapi = eapilib.connections.create_connection(**kwargs)
 
@@ -260,18 +264,18 @@ def main():
 
     commands = list()
     vni_commands = list()
+
     current_resource = get_resource(eapi, vlanid)
 
     if state == 'configured':
-        if current_resource is None:
-            current_resource = create_resource(eapi, vlanid)
+        if current_resource['state'] == 'unconfigured':
             result['created'] = True
 
-        changeset = set(new_resource.items()).difference(\
-                    current_resource.items())
+        result['updates'] = dict()
+        changeset = new_resource.viewitems() - current_resource.viewitems()
 
         new_vni = new_resource['vni']
-        cur_vni = current_resource['vni']
+        cur_vni = current_resource.get('vni')
 
         if cur_vni is None and new_vni is not None:
             vni_commands.append('vxlan vlan %s vni %s' % (vlanid, new_vni))
@@ -282,42 +286,40 @@ def main():
                 vni_commands.append('default vxlan vlan %s vni' % vlanid)
 
         for key, value in changeset:
-            if value is None and null_as_default:
-                command = ATTRIBUTE_TO_DEFAULT_MAP.get(key)
-            elif value is not None:
-                command = ATTRIBUTE_TO_CONFIG_MAP.get(key)
-                if command:
-                    command = str(command).format(**new_resource)
-            else:
-                command = None
+            func = 'set_%s' % key
+            if func in globals():
+                command = globals().get(func)
+                default = value is None and null_as_default
+                if value or default:
+                    result['updates'][key] = value
+                    commands.append(command(new_resource, default=default))
 
-            if command:
-                commands.append(command)
+    elif current_resource['state'] == 'configured':
+        if state == 'unconfigured':
+            commands.append('no vlan %s' % vlanid)
+            if new_resource['vni'] is not None:
+                vni_commands.append('no vxlan %s vni' % vlanid)
 
-    elif state == 'unconfigured' and current_resource is not None:
-        commands.append('no vlan %s' % vlanid)
-        if new_resource['vni'] is not None:
-            vni_commands.append('no vxlan %s vni' % vlanid)
+        elif state == 'default':
+            commands.append('default vlan %s' % vlanid)
+            if new_resource['vni'] is not None:
+                vni_commands.append('default vxlan %s vni' % vlanid)
 
-    elif state == 'default' and current_resource is not None:
-        commands.append('default vlan %s' % vlanid)
-        if new_resource['vni'] is not None:
-            vni_commands.append('default vxlan %s vni' % vlanid)
 
     if commands:
-        if vni_commands:
-            vni_commands.insert(0, 'interface vxlan1')
-            commands.extend(vni_commands)
-        commands.insert(0, 'vlan %s' % vlanid)
-        result['commands'] = commands
+        if state == 'configured':
+            if vni_commands:
+                vni_commands.insert(0, 'interface vxlan1')
+                commands.extend(vni_commands)
+            commands.insert(0, 'vlan %s' % vlanid)
+
         if not module.check_mode:
             eapi.config(commands)
+
+        result['commands'] = commands
         result['changed'] = True
 
-    result['resource'] = get_resource(eapi, vlanid)
-    result['current_resource'] = current_resource
-    result['new_resource'] = new_resource
-
+    result['eos_vlan'] = get_resource(eapi, vlanid)
     module.exit_json(**result)
 
 main()

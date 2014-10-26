@@ -5,6 +5,7 @@ Arista EOS role for Ansible
 
 - added eapi attribute to all modules
 - fixes an issue with switchport trunks being set to none (issue #7)
+- support added for using enable_password over eAPI (thanks rsolomo)
 
 Updated Modules:
 
