@@ -48,43 +48,34 @@ options:
     description:
       - The unique VLAN identifier associated with this resource.  The value
         for this identiifer must be in the range of 1 to 4094.
-    required: false
-    aliases: []
+    required: true
   name:
     description:
       - An ASCII string identifer for this VLAN
-    required: True
-    default: null
-    aliases: []
   enable:
     description:
       - Configures the administrative state for the vlan, true if the vlan
         should be enabled otherwise false
-    required: false
-    default: null
-    choices: [true, false]
-    aliases: []
+    default: true
+    choices: BOOLEANS
   config:
     description:
       - Configures the path to the pyeapi config file
-    required: false
-    default: null
-    aliases: []
+  connection:
+    description:
+      - Configures the name of the connection to use from the eapi.conf file
+    default: 'localhost'
   state:
     description:
       - The state of the VLAN related to the current running configuration
-    required: false
     default: 'configured'
-    choices: ['configured', 'unconfigured', 'default']
-    aliases: []
+    choices: ['configured', 'unconfigured']
   null_as_default:
     description:
       - Instructs the module how to handle null values.  If this flag is set
         then null values trigger default configuration otherwise do nothing
-    required: false
     default: false
     choices: BOOLEANS
-    aliases: []
 """
 import syslog
 
@@ -122,8 +113,8 @@ def set_name(node, vlanid, name=None, default=False, **kwargs):
         return api.set_name(vlanid, name)
 
 def set_enable(node, vlanid, enable=None, default=False, **kwargs):
-    log("Invoded set_enable for vlanid %s with value %s and default "
-        "%s" % (vlanid, enable, default))
+    log('Invoked set_enable for vlanid %s with value %s and '
+        'default %s' % (vlanid, enable, default))
     api = node.api('vlans')
     if default:
         return api.set_state(vlanid, default=True)
