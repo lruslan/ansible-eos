@@ -34,13 +34,18 @@
 - name: check if running on eos node
   stat: path=/etc/Eos-release
   register: eos_node
+  tags: eos_bootstrap
 
 - name: setup eos environment
   include: bootstrap.yml
   when: eos_node.stat.exists
+  tags: eos_bootstrap
+  when: not eos_skip_bootstrap
 
 - name: install required libraries
   include: install_libs.yml
   when: not eos_node.stat.exists
+  tags: eos_bootstrap
+  when: not eos_skip_bootstrap
 
 

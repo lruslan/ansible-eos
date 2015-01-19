@@ -32,9 +32,6 @@
 
 ---
 
-- name: install jsonrpclib
-  pip: name=jsonrpclib
-
 - name: install required libraries and dependencies
   pip: name={{ item }}
   with_items: eos_required_libs

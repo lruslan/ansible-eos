@@ -32,5 +32,5 @@
 ---
 eos_username: ansible
 eos_working_dir: "/persist/local/{{ eos_username }}"
-eos_source_dir: "{{ eos_working_dir }}/src"
+eos_source_dir: "{{ eos_working_dir }}/cache"
 eos_python_pip: python-pip-1.4.1.swix

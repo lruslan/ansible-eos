@@ -33,11 +33,6 @@
 
 - name: save current config
   eos_command: commands='copy running-config startup-config'
-               eapi_hostname={{ eapi_hostname }}
-               eapi_username={{ eapi_username }}
-               eapi_password={{ eapi_password }}
-               eapi_protocol={{ eapi_protocol }}
-               eapi_port={{ eapi_port }}
   when: eos_save_on_change
 
 - name: backup startup config
