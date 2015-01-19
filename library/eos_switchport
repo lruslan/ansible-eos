@@ -161,189 +161,130 @@ options:
     default: null
     alias: []
 """
-
-import re
+import syslog
 
 from ansible.module_utils.basic import *
 
-import eapilib
-
-EAPI_KWARG_MAP = {
-    'eapi_hostname': 'hostname',
-    'eapi_username': 'username',
-    'eapi_password': 'password',
-    'eapi_enable_password': 'enable_password',
-    'eapi_protocol': 'protocol',
-    'eapi_port': 'port'
-}
-
-def get_switchport(eapi, name):
-    enabled_re = re.compile(r'(?<=Switchport:\s)(?P<enabled>\w+)')
-    mode_re = re.compile(r'(?<=Operational Mode:\s)(?P<mode>.*)')
-    access_vlan_re = re.compile(r'(?<=Access Mode VLAN:\s)(?P<access_vlan>\d+)')
-    trunk_vlan_re = re.compile(r'(?<=Trunking Native Mode VLAN:\s)'
-                               r'(?P<trunk_vlan>\d+)')
-    trunking_vlans_re = re.compile(r'(?<=Trunking VLANs Enabled:\s)'
-                                   r'(?P<trunking_vlans>.*)')
-
-    try:
-        resp = eapi.enable('show interfaces %s switchport' % name, 'text')
-        output = resp[0]['output']
-
-        match = enabled_re.search(output)
-        enabled = False if match.group('enabled') == 'Disabled' else True
-
-        if not enabled:
-            return None
-
-        switchport = dict(name=name, state='configured')
-
-        match = mode_re.search(output)
-
-        switchport['mode'] = \
-            'access' if match.group('mode') == 'static access' else 'trunk'
-
-        switchport['access_vlan'] = \
-            access_vlan_re.search(output).group('access_vlan')
-
-        switchport['trunk_native_vlan'] = \
-            trunk_vlan_re.search(output).group('trunk_vlan')
-
-        switchport['trunk_allowed_vlans'] = \
-            trunking_vlans_re.search(output).group('trunking_vlans')
-
-        return switchport
-
-    except eapilib.connections.CommandError as exc:
-        if exc.message[0][0] == 1002:
-            return None
-        raise
-
-def create_switchport(eapi, name):
-    commands = [
-        'interface %s' % name,
-        'no ip address',
-        'switchport'
-    ]
-    eapi.config(commands)
-    return get_switchport(eapi, name)
+import pyeapi
 
 
-ATTRIBUTE_TO_CONFIG_MAP = {
-    'mode': 'switchport mode {mode}',
-    'access_vlan': 'switchport access vlan {access_vlan}',
-    'trunk_native_vlan': 'switchport trunk native vlan {trunk_native_vlan}',
-    'trunk_allowed_vlans': 'switchport trunk allowed vlan {trunk_allowed_vlans}'
-}
+def log(entry):
+    syslog.openlog('ansible-eos')
+    syslog.syslog(syslog.LOG_NOTICE, str(entry))
 
-ATTRIBUTE_TO_DEFAULT_MAP = {
-    'mode': 'default switchport mode',
-    'access_vlan': 'default switchport access vlan',
-    'trunk_native_vlan': 'default switchport trunk native vlan',
-    'trunk_allowed_vlans': 'default switchport trunk allowed vlan'
-}
+def get_instance(node, name):
+    result = node.api('switchports').get(name)
+    instance = dict(name=name, state='unconfigured')
+    if result:
+        instance['mode'] = result['mode']
+        instance['access_vlan'] = result['access_vlan']
+        instance['trunk_native_vlan'] = result['trunk_native_vlan']
+        instance['trunk_allowed_vlans'] = result['trunk_allowed_vlans']
+    return instance
+
+def create_instance(node, name):
+    node.api('switchports').create(name)
+    return get_instance(node, name)
+
+def set_mode(node, name, mode=None, default=False, **kwargs):
+    log('Invoked set_mode for switchport %s with value %s and '
+        'default %s' % (name, mode, default))
+    api = node.api('switchports')
+    if default:
+        return api.set_mode(name, default=True)
+    else:
+        return api.set_mode(name, mode)
+
+def set_access_vlan(node, name, access_vlan=None, default=False, **kwargs):
+    log('Invoked set_access_vlan for switchport %s with value %s and '
+        'default %s' % (name, access_vlan, default))
+    api = node.api('switchports')
+    if default:
+        return api.set_access_vlan(name, default=True)
+    else:
+        return api.set_access_vlan(name, access_vlan)
+
+def set_trunk_native_vlan(node, name, trunk_native_vlan=None,
+                          default=False, **kwargs):
+    log('Invoked set_trunk_native_vlan for switchport %s with value %s and '
+        'default %s' % (name, trunk_native_vlan, default))
+    api = node.api('switchports')
+    if default:
+        return api.set_trunk_native_vlan(name, default=True)
+    else:
+        return api.set_trunk_native_vlan(name, trunk_native_vlan)
+
+def set_trunk_allowed_vlans(node, name, trunk_allowed_vlans=None,
+                          default=False, **kwargs):
+    log('Invoked set_trunk_native_vlan for switchport %s with value %s and '
+        'default %s' % (name, trunk_allowed_vlans, default))
+    api = node.api('switchports')
+    if default:
+        return api.set_trunk_allowed_vlans(name, default=True)
+    else:
+        return api.set_trunk_allowed_vlans(name, trunk_allowed_vlans)
+
 
 def main():
 
-    module = AnsibleModule(
-        argument_spec = dict(
-            name=dict(required=True, type='str'),
-            interface=dict(type='str'),
-            mode=dict(choices=['trunk', 'access']),
-            access_vlan=dict(type='str'),
-            trunk_native_vlan=dict(type='str'),
-            trunk_allowed_vlans=dict(type='str'),
-            state=dict(default='configured',
-                       choices=['configured', 'unconfigured', 'default']),
-            null_as_default=dict(type='bool', default=False),
-            eapi_hostname=dict(default='localhost'),
-            eapi_username=dict(default='admin'),
-            eapi_password=dict(default=''),
-            eapi_enable_password=dict(default=''),
-            eapi_protocol=dict(default='https'),
-            eapi_port=dict(default=None)
-        ),
-        supports_check_mode=True
+    argument_spec = dict(
+        name=dict(required=True),
+        mode=dict(choices=['access', 'trunk']),
+        access_vlan=dict(),
+        trunk_native_vlan=dict(),
+        trunk_allowed_vlans=dict(),
+        config=dict(default='/mnt/flash/eapi.conf'),
+        connection=dict(default='localhost'),
+        null_as_default=dict(type='bool', default=False),
+        state=dict(default='configured', choices=['configured', 'unconfigured'])
     )
 
-    result = dict(changed=False, created=False)
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
 
-    kwargs = dict()
-    for key, value in module.params.items():
-        if value and key in EAPI_KWARG_MAP:
-            kwargs[EAPI_KWARG_MAP[key]] = value
+    pyeapi.client.load_config(module.params['config'])
+    node = pyeapi.client.connect_to(module.params['connection'])
 
-    eapi = eapilib.connections.create_connection(**kwargs)
-
-    proposed = dict()
-    for key, value in module.params.items():
-        if not str(key).startswith('eapi_'):
-            proposed[key] = value
-
+    result = dict(changed=False, created=False, removed=False, changes=dict())
     state = module.params['state']
     null_as_default = module.params['null_as_default']
-    intfid = module.params['interface'] or module.params['name']
 
-    if str(intfid).upper()[0:2] not in ['ET', 'PO']:
-        return module.fail_json(msg='invalid interface (%s) specified' % intfid)
+    name = module.params['name']
 
-
-    if module.params['trunk_allowed_vlans'] is not None:
-        allowed_vlans = str(module.params['trunk_allowed_vlans']).replace(' ', '')
-    else:
-        allowed_vlans = module.params['trunk_allowed_vlans']
-
-    new_resource = {
-        'name': intfid,
-        'mode': module.params['mode'],
-        'access_vlan': module.params['access_vlan'],
-        'trunk_native_vlan': module.params['trunk_native_vlan'],
-        'trunk_allowed_vlans': allowed_vlans
+    attributes = {
+        'name': name,
+        'enable': module.params['enable'],
+        'description': module.params['description'],
+        'source_interface': module.params['source_interface'],
+        'multicast_group': module.params['multicast_group']
     }
 
-    commands = list()
-    current_resource = get_switchport(eapi, intfid)
+    instance = get_instance(node, name)
 
     if state == 'configured':
-        if current_resource is None:
-            current_resource = create_switchport(eapi, intfid)
+        if instance['state'] == 'unconfigured':
+            if not module.check_mode:
+                instance = create_instance(node, name)
             result['created'] = True
 
-        changeset = set(new_resource.items()).difference(\
-                    current_resource.items())
-
+        changeset = attributes.viewitems() - instance.viewitems()
         for key, value in changeset:
-            if value is None and null_as_default:
-                command = ATTRIBUTE_TO_DEFAULT_MAP.get(key)
+            func = 'set_%s' % key
+            if func in globals():
+                command = globals().get(func)
+                default = value is None and null_as_default
+                if value is not None or default:
+                    result['changes'][key] = value
+                    result['changed'] = True
+                    if not module.check_mode:
+                        command(node, **attributes)
 
-            elif value is not None:
-                command = ATTRIBUTE_TO_CONFIG_MAP.get(key)
-                if command:
-                    command = str(command).format(**new_resource)
-
-            else:
-                command = None
-
-            if command:
-                commands.append(command)
-
-    elif state == 'unconfigured' and current_resource is not None:
-        commands.append('no switchport')
-
-    elif state == 'default':
-        commands.append('default switchport')
-
-    if commands:
+    elif instance['state'] == 'configured' and state == 'unconfigured':
+        result['removed'] = True
         if not module.check_mode:
-            commands.insert(0, 'interface %s' % intfid)
-            result['commands'] = commands
-            eapi.config(commands)
-        result['changed'] = True
+            node.api('interfaces').delete(name)
 
-    result['resource'] = get_switchport(eapi, intfid)
-    result['current_resource'] = current_resource
-    result['new_resource'] = new_resource
-
+    result['instance'] = get_instance(node, name)
     module.exit_json(**result)
 
 main()
