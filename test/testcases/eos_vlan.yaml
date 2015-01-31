@@ -1,0 +1,74 @@
+---
+module: eos_vlan
+path: ./library
+hostsfile: test/fixtures/hosts
+
+variables:
+  config: test/fixtures/dut.conf
+  vlanid: random_vlan()
+
+testcases:
+
+  - name: create vlan $vlanid
+    args: 
+      vlanid: $vlanid
+      state: present
+      config: $config
+      connection: $dut_name
+    test: create
+    setup:
+      - no vlan $vlanid
+
+  - name: delete vlan $vlanid
+    args:
+      vlanid: $vlanid
+      state: absent
+      config: $config
+      connection: $dut_name
+    test: remove
+    setup:
+      - vlan $vlanid
+
+  - name: set vlan name
+    args:
+      vlanid: $vlanid
+      name: MY_TEST_VLAN
+      state: present
+      config: $config
+      connection: $dut_name
+    setup:
+      - no vlan $vlanid
+      - vlan $vlanid
+
+  - name: set vlan enable=true
+    args:
+      vlanid: $vlanid
+      enable: true
+      config: $config
+      connection: $dut_name
+    setup:
+      - no vlan $vlanid
+      - vlan $vlanid
+      - state suspend
+
+  - name: set vlan enable=false
+    args:
+      vlanid: $vlanid
+      enable: false
+      config: $config
+      connection: $dut_name
+    setup:
+      - no vlan $vlanid
+      - vlan $vlanid
+
+  - name: set vlan trunk groups
+    args:
+      vlanid: $vlanid
+      trunk_groups: tg1,tg2,tg3
+      config: $config
+      connection: $dut_name
+    setup:
+      - no vlan $vlanid
+      - vlan $vlanid
+
+
