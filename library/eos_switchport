@@ -42,7 +42,7 @@ notes:
 requirements:
   - Arista EOS 4.12.0 or later
   - EOS command API enabled
-  - pyeapi 0.1.0 or later
+  - pyeapi 0.1.1 or later
 options:
   name:
     description:
