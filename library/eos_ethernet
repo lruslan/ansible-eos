@@ -1,0 +1,283 @@
+#!/usr/bin/python
+#
+# Copyright (c) 2014, Arista Networks, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name of Arista Networks nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+DOCUMENTATION = """
+module: eos_interface
+short_description: Generic module to manage interfaces in EOS
+description:
+  - Provides state management for any interface in EOS.  The interface
+    attributes supported in this module are available on any interface
+    available on the EOS node
+author: Arista EOS+
+notes:
+requirements:
+  - Arista EOS 4.12.0 or later
+  - EOS command API enabled
+  - pyeapy 0.1.0 or later
+options:
+  name:
+    description:
+      - The unique interface identifier name.  The interface name must use
+        the full interface name (no abbreviated names).  For example,
+        interfaces should be specified as Ethernet1 not Et1
+    required: true
+  enable:
+    description:
+      - Configures the administrative state for the interface.
+    required: true
+    choices: BOOLEANS
+  description:
+    description:
+      - Sets a one line ASCII description for the interface.
+    required: false
+  null_as_default:
+    description:
+      - Instructs the module how to handle null values.  If this flag is set
+        then null values trigger default configuration otherwise do nothing
+    required: false
+    default: false
+    choices: BOOLEANS
+  state:
+    description:
+      - Identifies the state of the interface.  Interfaces can be either
+        configured, unconfigured or default.   Please beware that an interface with
+        state of default will also wipe out any additional services
+        on top of the physical interface.
+    required: false
+    default: configured
+    choices: ['present', 'absent']
+"""
+import syslog
+
+from ansible.module_utils.basic import *
+
+import pyeapi
+
+def log(entry):
+    """ Writes an entry to the local syslog
+
+    Args:
+        entry (str): The text string to write to syslog
+
+    """
+    syslog.openlog('ansible-eos')
+    syslog.syslog(syslog.LOG_NOTICE, str(entry))
+
+def get_instance(node, name):
+    """ Returns the interface properties for the specified name
+
+    Response
+
+    .. code-block:: json
+
+        {
+            "name": <string>,
+            "state": "present",
+            "enable": [true, false],
+            "description": <string>
+            "sflow": [true, false],
+            "flowcontrol_send": ["on", "off"],
+            "flowcontrol_recieve": ["on", "off"]
+        }
+
+    Args:
+        node (Node): An instance of pyeapi.client.Node
+        name (str): The interface identifier to return
+
+    Returns:
+        A Python dictionary object that represents the interface resource
+
+    """
+    result = node.api('interfaces').get(name)
+    instance = dict(name=name, state='present')
+    instance['enable'] = not result['shutdown']
+    instance['description'] = result['description']
+    instance['sflow'] = result['sflow']
+    instance['flowcontrol_send'] = result['flowcontrol_send']
+    instance['flowcontrol_receive'] = result['flowcontrol_receive']
+    return instance
+
+def set_attribute(node, method_name, name, value, default):
+    log('Invoked %s for interface %s with value %s and default %s'\
+        % (method_name, name, value, default))
+    method = getattr(node.api('interfaces'), method_name)
+    return method(name, value, default)
+
+
+def set_description(node, name, **kwargs):
+    """ Configures the description attribute for the interface
+
+    Args:
+        node (Node): An instance of pyeapi.client.Node used for sending and
+            receiveing eAPI messages
+        name (str): The interface to configure the value for
+        kwargs: Optional keyword arguments
+
+    Returns:
+        True if the command was completed successfully otherwise False is
+            returned
+
+    """
+    default = kwargs.get('default', False)
+    value = kwargs['description']
+    return set_attribute(node, 'set_description', name, value, default)
+
+def set_enable(node, name, **kwargs):
+    """ Configures the enable attribute for the interface
+
+    Args:
+        node (Node): An instance of pyeapi.client.Node used for sending and
+            receiveing eAPI messages
+        name (str): The interface to configure the value for
+        kwargs: Optional keyword arguments
+
+    Returns:
+        True if the command was completed successfully otherwise False is
+            returned
+
+    """
+    default = kwargs.get('default', False)
+    value = not kwargs['enable']
+    return set_attribute(node, 'set_shutdown', name, value, default)
+
+def set_sflow(node, name, **kwargs):
+    """ Configures the sflow attribute for the interface
+
+    Args:
+        node (Node): An instance of pyeapi.client.Node used for sending and
+            receiveing eAPI messages
+        name (str): The interface to configure the value for
+        kwargs: Optional keyword arguments
+
+    Returns:
+        True if the command was completed successfully otherwise False is
+            returned
+
+    """
+    default = kwargs.get('default', False)
+    value = kwargs['sflow']
+    return set_attribute(node, 'set_sflow', name, value, default)
+
+def set_flowcontrol_send(node, name, **kwargs):
+    """ Configures the flowcontrol send  attribute for the interface
+
+    Args:
+        node (Node): An instance of pyeapi.client.Node used for sending and
+            receiveing eAPI messages
+        name (str): The interface to configure the value for
+        kwargs: Optional keyword arguments
+
+    Returns:
+        True if the command was completed successfully otherwise False is
+            returned
+
+    """
+    default = kwargs.get('default', False)
+    value = kwargs['flowcontrol_send']
+    return set_attribute(node, 'set_flowcontrol_send', name, value, default)
+
+def set_flowcontrol_receive(node, name, **kwargs):
+    """ Configures the flowcontrol receive attribute for the interface
+
+    Args:
+        node (Node): An instance of pyeapi.client.Node used for sending and
+            receiveing eAPI messages
+        name (str): The interface to configure the value for
+        kwargs: Optional keyword arguments
+
+    Returns:
+        True if the command was completed successfully otherwise False is
+            returned
+
+    """
+    default = kwargs.get('default', False)
+    value = kwargs['flowcontrol_receive']
+    return set_attribute(node, 'set_flowcontrol_receive', name, value, default)
+
+
+def main():
+    """ The main module routine called when the module is run by Ansible
+    """
+
+    argument_spec = dict(
+        name=dict(required=True),
+        enable=dict(type='bool', default=True),
+        description=dict(),
+        sflow=dict(type='bool', default=True),
+        flowcontrol_send=dict(choices=['on', 'off']),
+        flowcontrol_receive=dict(choices=['on', 'off']),
+        config=dict(),
+        connection=dict(default='localhost'),
+        null_as_default=dict(type='bool', default=False),
+    )
+
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
+
+    if module.params['config']:
+        pyeapi.load_config(module.params['config'])
+    node = pyeapi.connect_to(module.params['connection'])
+
+    result = dict(changed=False, created=False, removed=False, changes=dict())
+    null_as_default = module.params['null_as_default']
+
+    name = module.params['name']
+    if not name.startswith('Ethernet'):
+        return module.fail_json(msg='interface must be Ethernet')
+
+    attributes = {
+        'name': name,
+        'enable': module.params['enable'],
+        'description': module.params['description'],
+        'sflow': module.params['sflow'],
+        'flowcontrol_send': module.params['flowcontrol_send'],
+        'flowcontrol_receive': module.params['flowcontrol_receive']
+    }
+
+    instance = get_instance(node, name)
+
+    changeset = attributes.viewitems() - instance.viewitems()
+    for key, value in changeset:
+        func = 'set_%s' % key
+        if func in globals():
+            command = globals().get(func)
+            default = value is None and null_as_default
+            if value is not None or default:
+                result['changes'][key] = value
+                result['changed'] = True
+                if not module.check_mode:
+                    command(node, **attributes)
+
+    result['instance'] = get_instance(node, name)
+    module.exit_json(**result)
+
+main()
