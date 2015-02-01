@@ -1,0 +1,54 @@
+---
+module: eos_ipv4interface
+path: ./library
+hostsfile: test/fixtures/hosts
+
+variables:
+  config: test/fixtures/dut.conf
+
+testcases:
+
+  - name: create ipv4interface on Ethernet1
+    args:
+      name: Ethernet1
+      state: present
+      config: $config
+      connection: $dut_name
+    test: create
+    setup:
+      - default interface Ethernet1
+
+  - name: remove ipv4interface from Ethernet1
+    args:
+      name: Ethernet1
+      state: absent
+      config: $config
+      connection: $dut_name
+    test: remove
+    setup:
+      - default interface Vxlan1
+      - interface Ethernet1
+      - no switchport
+
+  - name: set interface address=99.99.99.99/24
+    args:
+      name: Ethernet1
+      address: 99.99.99.99/24
+      config: $config
+      connection: $dut_name
+    setup:
+      - interface Ethernet1
+      - no switchport
+
+  - name: set interface mtu=2000
+    args:
+      name: Ethernet1
+      mtu: 2000
+      config: $config
+      connection: $dut_name
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - no switchport
+      - ip address 99.99.99.99/24
+
