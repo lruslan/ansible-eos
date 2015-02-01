@@ -137,18 +137,19 @@ def create_instance(node, name):
     node.api('interfaces').create(name)
     return get_instance(node, name)
 
-def set_description(node, name, description=None, default=False, **kwargs):
+def set_attribute(node, method_name, name, value, default):
+    log('Invoked %s for interface %s with value %s and default %s'\
+        % (method_name, name, value, default))
+    method = getattr(node.api('interfaces'), method_name)
+    return method(name, value, default)
+
+def set_description(node, name, **kwargs):
     """ Configures the description attribute for the interface
 
     Args:
         node (Node): An instance of pyeapi.client.Node used for sending and
             receiveing eAPI messages
         name (str): The interface to configure the value for
-        description (str): The value to set the description of the interface to.
-            This argument is optional.  If not set and default is False
-            then the description configuration is negated
-        default (bool): Configures the default value if this argument is
-            True.  This argument takes precedence over the value argument
         kwargs: Optional keyword arguments
 
     Returns:
@@ -156,26 +157,17 @@ def set_description(node, name, description=None, default=False, **kwargs):
             returned
 
     """
-    log("Invoked set_description for interface %s with value %s and "
-        "default %s" % (name, description, default))
-    api = node.api('interfaces')
-    if default:
-        return api.set_description(name, default=True)
-    else:
-        return api.set_description(name, description)
+    default = kwargs.get('default', False)
+    value = kwargs['description']
+    return set_attribute(node, 'set_description', name, value, default)
 
-def set_enable(node, name, enable=None, default=False, **kwargs):
+def set_enable(node, name, **kwargs):
     """ Configures the enable attribute for the interface
 
     Args:
         node (Node): An instance of pyeapi.client.Node used for sending and
             receiveing eAPI messages
         name (str): The interface to configure the value for
-        enable (bool): Configures the interface to be administratively
-            enabled if the value is true otherwise adminstratively disables
-            the interface.
-        default (bool): Configures the default value if this argument is
-            True.  This argument takes precedence over the value argument
         kwargs: Optional keyword arguments
 
     Returns:
@@ -183,14 +175,9 @@ def set_enable(node, name, enable=None, default=False, **kwargs):
             returned
 
     """
-    log("Invoked set_enable for interface %s with value %s and "
-        "default %s" % (name, enable, default))
-    api = node.api('interfaces')
-    if default:
-        return api.set_shutdown(name, default=True)
-    else:
-        value = not enable
-        return api.set_shutdown(name, value)
+    default = kwargs.get('default', False)
+    value = not kwargs['enable']
+    return set_attribute(node, 'set_shutdown', name, value, default)
 
 def main():
     """ The main module routine called when the module is run by Ansible

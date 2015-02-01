@@ -173,18 +173,19 @@ def create_instance(node, name):
     node.api('switchports').create(name)
     return get_instance(node, name)
 
-def set_mode(node, name, mode=None, default=False, **kwargs):
+def set_attribute(node, method_name, name, value, default):
+    log('Invoked %s for switchport %s with value %s and default %s'\
+        % (method_name, name, value, default))
+    method = getattr(node.api('switchports'), method_name)
+    return method(name, value, default)
+
+def set_mode(node, name, **kwargs):
     """Configures the mode attribute for the switchport
 
     Args:
         node (Node): An instance of pyeapi.client.Node used for sending and
             receiveing eAPI messages
         name (str): The interface to configure the value for
-        mode (str): The value to set the mode of the switchport to.
-            This argument is optional.  If not set and default is False
-            then the mode configuration is negated
-        default (bool): Configures the default value if this argument is
-            True.  This argument takes precedence over the value argument
         kwargs: Optional keyword arguments
 
     Returns:
@@ -192,26 +193,17 @@ def set_mode(node, name, mode=None, default=False, **kwargs):
             returned
 
     """
-    log('Invoked set_mode for switchport %s with value %s and '
-        'default %s' % (name, mode, default))
-    api = node.api('switchports')
-    if default:
-        return api.set_mode(name, default=True)
-    else:
-        return api.set_mode(name, mode)
+    default = kwargs.get('default', False)
+    value = kwargs['mode']
+    return set_attribute(node, 'set_mode', name, value, default)
 
-def set_access_vlan(node, name, access_vlan=None, default=False, **kwargs):
+def set_access_vlan(node, name, **kwargs):
     """Configures the access vlan attribute for the switchport
 
     Args:
         node (Node): An instance of pyeapi.client.Node used for sending and
             receiveing eAPI messages
         name (str): The interface to configure the value for
-        access_vlan (str): The value to set the access vlan  of the
-            switchport to.  This argument is optional.  If not set
-            and default is False then the access vlan configuration is negated
-        default (bool): Configures the default value if this argument is
-            True.  This argument takes precedence over the value argument
         kwargs: Optional keyword arguments
 
     Returns:
@@ -219,28 +211,17 @@ def set_access_vlan(node, name, access_vlan=None, default=False, **kwargs):
             returned
 
     """
-    log('Invoked set_access_vlan for switchport %s with value %s and '
-        'default %s' % (name, access_vlan, default))
-    api = node.api('switchports')
-    if default:
-        return api.set_access_vlan(name, default=True)
-    else:
-        return api.set_access_vlan(name, access_vlan)
+    default = kwargs.get('default', False)
+    value = kwargs['access_vlan']
+    return set_attribute(node, 'set_access_vlan', name, value, default)
 
-def set_trunk_native_vlan(node, name, trunk_native_vlan=None,
-                          default=False, **kwargs):
+def set_trunk_native_vlan(node, name, **kwargs):
     """Configures the trunk native vlan attribute for the switchport
 
     Args:
         node (Node): An instance of pyeapi.client.Node used for sending and
             receiveing eAPI messages
         name (str): The interface to configure the value for
-        access_vlan (str): The value to set the trunk native vlan  of the
-            switchport to.  This argument is optional.  If not set
-            and default is False then the trunk native vlan configuration
-            is negated
-        default (bool): Configures the default value if this argument is
-            True.  This argument takes precedence over the value argument
         kwargs: Optional keyword arguments
 
     Returns:
@@ -248,28 +229,17 @@ def set_trunk_native_vlan(node, name, trunk_native_vlan=None,
             returned
 
     """
-    log('Invoked set_trunk_native_vlan for switchport %s with value %s and '
-        'default %s' % (name, trunk_native_vlan, default))
-    api = node.api('switchports')
-    if default:
-        return api.set_trunk_native_vlan(name, default=True)
-    else:
-        return api.set_trunk_native_vlan(name, trunk_native_vlan)
+    default = kwargs.get('default', False)
+    value = kwargs['trunk_native_vlan']
+    return set_attribute(node, 'set_trunk_native_vlan', name, value, default)
 
-def set_trunk_allowed_vlans(node, name, trunk_allowed_vlans=None,
-                            default=False, **kwargs):
+def set_trunk_allowed_vlans(node, name, **kwargs):
     """Configures the trunk allowed vlans attribute for the switchport
 
     Args:
         node (Node): An instance of pyeapi.client.Node used for sending and
             receiveing eAPI messages
         name (str): The interface to configure the value for
-        access_vlan (str): The value to set the trunk allowed vlans  of the
-            switchport to.  This argument is optional.  If not set
-            and default is False then the trunk allowed vlans configuration
-            is negated
-        default (bool): Configures the default value if this argument is
-            True.  This argument takes precedence over the value argument
         kwargs: Optional keyword arguments
 
     Returns:
@@ -277,14 +247,9 @@ def set_trunk_allowed_vlans(node, name, trunk_allowed_vlans=None,
             returned
 
     """
-    log('Invoked set_trunk_native_vlan for switchport %s with value %s and '
-        'default %s' % (name, trunk_allowed_vlans, default))
-    api = node.api('switchports')
-    if default:
-        return api.set_trunk_allowed_vlans(name, default=True)
-    else:
-        return api.set_trunk_allowed_vlans(name, trunk_allowed_vlans)
-
+    default = kwargs.get('default', False)
+    value = kwargs['trunk_allowed_vlans']
+    return set_attribute(node, 'set_trunk_allowed_vlans', name, value, default)
 
 def main():
     """ The main module routine called when the module is run by Ansible

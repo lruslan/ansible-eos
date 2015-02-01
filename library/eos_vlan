@@ -146,44 +146,37 @@ def create_instance(node, vlanid):
     node.api('vlans').create(vlanid)
     return get_instance(node, vlanid)
 
-def set_name(node, vlanid, name=None, default=False, **kwargs):
+def set_attribute(node, method_name, vlanid, value, default):
+    log('Invoked %s for vlan id %s with value %s and default %s'\
+        % (method_name, vlanid, value, default))
+    method = getattr(node.api('vlans'), method_name)
+    return method(vlanid, value, default)
+
+def set_name(node, vlanid, **kwargs):
     """ Configures the name attribute for the vlan id
 
     Args:
         node (Node): An instance of pyeapi.client.Node used for sending and
             receiveing eAPI messages
         vlanid (str): The Vlan ID to configure the name value for
-        name (str): The value to set the name of the Vlan to.  This argument
-            is optional.  If not set and default is False then the name
-            configuration is negated
-        default (bool): Configures the default value if this argument is
-            True.  This argument takes precedence over the value argument
-        kwargs: Optional keyword arguments
+       kwargs: Optional keyword arguments
 
     Returns:
         True if the command was completed successfully otherwise False is
             returned
 
     """
-    log("Invoked set_name for vlanid %s with value %s and "
-        "default %s" % (vlanid, name, default))
-    api = node.api('vlans')
-    if default:
-        return api.set_name(vlanid, default=True)
-    else:
-        return api.set_name(vlanid, name)
+    default = kwargs.get('default', False)
+    value = kwargs['name']
+    return set_attribute(node, 'set_name', vlanid, value, default)
 
-def set_enable(node, vlanid, enable=None, default=False, **kwargs):
+def set_enable(node, vlanid, **kwargs):
     """ Configures the vlan as adminstratively enabled or disabled
 
     Args:
         node (Node): An instance of pyeapi.client.Node used for sending and
             receiveing eAPI messages
         vlanid (str): The Vlan ID to configure the name value for
-        enable (bool): If this value is true, then the vlan is enabled and
-            if this value is false, then the vlan is disabled
-        default (bool): Configures the default value if this argument is
-            True.  This argument takes precedence over the value argument
         kwargs: Optional keyword arguments
 
     Returns:
@@ -191,26 +184,17 @@ def set_enable(node, vlanid, enable=None, default=False, **kwargs):
             returned
 
     """
-    log('Invoked set_enable for vlanid %s with value %s and '
-        'default %s' % (vlanid, enable, default))
-    api = node.api('vlans')
-    if default:
-        return api.set_state(vlanid, default=True)
-    else:
-        value = 'active' if enable else 'suspend'
-        return api.set_state(vlanid, value)
+    default = kwargs.get('default', False)
+    value = 'active' if kwargs['enable'] else 'suspend'
+    return set_attribute(node, 'set_state', vlanid, value, default)
 
-def set_trunk_groups(node, vlanid, trunk_groups=None, default=False, **kwargs):
+def set_trunk_groups(node, vlanid, **kwargs):
     """ Configures the list of trunk groups assigned to this Vlan
 
     Args:
         node (Node): An instance of pyeapi.client.Node used for sending and
             receiveing eAPI messages
         vlanid (str): The Vlan ID to configure the name value for
-        enable (bool): If this value is true, then the vlan is enabled and
-            if this value is false, then the vlan is disabled
-        default (bool): Configures the default value if this argument is
-            True.  This argument takes precedence over the value argument
         kwargs: Optional keyword arguments
 
     Returns:
@@ -218,15 +202,9 @@ def set_trunk_groups(node, vlanid, trunk_groups=None, default=False, **kwargs):
             returned
 
     """
-    log('Invoked set_trunk_groups for vlanid %s with value %s and '
-        'default %s' % (vlanid, trunk_groups, default))
-    api = node.api('vlans')
-    if default:
-        return api.set_trunk_groups(vlanid, default=True)
-    else:
-        if trunk_groups:
-            trunk_groups = trunk_groups.split(',')
-        return api.set_trunk_groups(vlanid, trunk_groups)
+    default = kwargs.get('default', False)
+    value = kwargs['trunk_groups']
+    return set_attribute(node, 'set_trunk_groups', vlanid, value, default)
 
 def main():
     """ The main module routine called when the module is run by Ansible
