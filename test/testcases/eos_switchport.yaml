@@ -1,0 +1,86 @@
+---
+module: eos_switchport
+path: ./library
+hostsfile: test/fixtures/hosts
+
+variables:
+  config: test/fixtures/dut.conf
+  vlanid: random_vlan()
+
+testcases:
+
+  - name: create switchport
+    args:
+      name: Ethernet1
+      state: present
+      config: $config
+      connection: $dut_name
+    test: create
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - no switchport
+
+  - name: delete switchport
+    args:
+      name: Ethernet1
+      state: absent
+      config: $config
+      connection: $dut_name
+    test: remove
+    setup:
+      - default interface Ethernet1
+
+  - name: set switchport mode=trunk
+    args:
+      name: Ethernet1
+      mode: trunk
+      config: $config
+      connection: $dut_name
+    setup:
+      - default interface Ethernet1
+
+  - name: set switchport mode=access
+    args:
+      name: Ethernet1
+      mode: access
+      config: $config
+      connection: $dut_name
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - switchport mode trunk
+
+  - name: set switchport access_vlan=100
+    args:
+      name: Ethernet1
+      access_vlan: 100
+      config: $config
+      connection: $dut_name
+    setup:
+      - default interface Ethernet1
+
+  - name: set switchport trunk_native_vlan=100
+    args:
+      name: Ethernet1
+      trunk_native_vlan: 100
+      config: $config
+      connection: $dut_name
+    setup:
+      - vlan 100
+      - default interface Ethernet1
+      - interface Ethernet1
+      - switchport mode trunk
+  
+  - name: set switchport trunk_allowed_vlans=100
+    args:
+      name: Ethernet1
+      trunk_allowed_vlans: 100
+      config: $config
+      connection: $dut_name
+    setup: 
+      - default interface Ethernet1
+      - vlan 100
+      - interface Ethernet1
+      - switchport mode trunk
+

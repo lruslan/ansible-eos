@@ -38,122 +38,100 @@ description:
     configuration on Arista EOS nodes. All configuration of
     resources is idempotent unless otherwise specified.
 author: Arista EOS+
-notes:
 requirements:
   - Arista EOS 4.12.0 or later
   - EOS command API enabled
+  - pyeapi 0.1.0 or later
 options:
   name:
-    description:
-      - Provides an arbitrary named description for this interface.  If
-        the interface parameter is not set, then the name value is used
-        as the interface to configure.
-    required: true
-    aliases: []
-  interface:
     description:
       - The unique interface identifier name.  The interface name must use
         the full interface name (no abbreviated names).  For example,
         interfaces should be specified as Ethernet1 not Et1
-    required: false
-    aliases: ['intfid']
-  admin:
+    required: true
+  enable:
     description:
-      - Configures the administrative state for the interface.  Valid
-        values include enable and disable.
+      - Configures the administrative state for the interface.
     required: false
-    default: null
-    choices: ['enable', 'disable']
-    aliases: []
+    choices: BOOLEANS
   description:
     description:
       - Sets a one line ASCII description for the interface.
     required: false
-    aliases: []
+  source_interface:
+    description:
+      - Configures the source interface to source messages from for the
+        Vxlan virtual tunnel interface.  This value must be a Loopback
+        interface
+    required: false
+  multicast_group:
+    description:
+      - Configures the Vxlan multicast group address for flooding.  This
+        value must be a valid mutlicast address
+    required: false
+  config:
+    description:
+      - Configures the path to the pyeapi config file
+  connection:
+    description:
+      - Configures the name of the connection to use from the eapi.conf file
+    default: 'localhost'
+  state:
+    description:
+      - The state of the VLAN related to the current running configuration
+    default: 'present'
+    choices: ['present', 'absent']
   null_as_default:
     description:
       - Instructs the module how to handle null values.  If this flag is set
         then null values trigger default configuration otherwise do nothing
-    required: false
     default: false
-    choices: [true, false]
-    aliases: []
-  state:
-    description:
-      - Identifies the state of the interface.  Interfaces can be either
-        configured, unconfigured or default.   Please beware that an interface with
-        state of default will also wipe out any additional services
-        on top of the physical interface.
-    required: false
-    default: configured
-    choices: ['configured', 'unconfigured', 'default']
-    aliases: []
-  eapi_hostname:
-    description:
-      - The IP address or DNS hostname of the EOS device to be managed.  If
-        local_connection is used, then this value must be configured.  When
-        not using local_connection, this value does not need to be supplied
-        and defaults to 'localhost'
-    required: false
-    default: 'localhost'
-    aliases: []
-  eapi_username:
-    description:
-      - The username to use for calls to eAPI.  If the username is not
-        specified, then the default is used
-    required: false
-    default: 'admin'
-    alias: []
-  eapi_password:
-    description:
-      - The password to use for calls to eAPI.  If the password is not
-        specified then the default is used ('')
-    required: false
-    default: ''
-    alias: []
-  eapi_enable_password:
-    description:
-      - The enable password to use for calls to eAPI.  If the enable
-        password is not specified then the default is used ('')
-    required: false
-    default: ''
-    alias: []
-  eapi_protocol:
-    description:
-      - Configures the transport for connection to eAPI for either local
-        or remote connections.  This value should be the same as shown
-        from the output of 'show management api http-commands'
-    require: false
-    default: 'https'
-    choices: ['http', 'https']
-    alias: []
-  eapi_port:
-    description:
-      - Configures the port used ifor connecting to eAPI for either local
-        or remote connections.  This value should be the same as shown
-        from the output of 'show management api http-commands'
-      - If no value is specified, the the port is automatically determined
-        based on the setting of eapi_protocol (http=80, https=443).
-      - The value for this attribute must be in the range of 1 to 65535
-    require: false
-    default: null
-    alias: []
+    choices: BOOLEANS
 """
 import syslog
 
 from ansible.module_utils.basic import *
 
-import pyeapi.client
+import pyeapi
 
 def log(entry):
+    """ Writes an entry to the local syslog
+
+    Args:
+        entry (str): The text string to write to syslog
+
+    """
     syslog.openlog('ansible-eos')
     syslog.syslog(syslog.LOG_NOTICE, str(entry))
 
 def get_instance(node, name='Vxlan1'):
+    """ Returns the vxlan interface properties for the specified name
+
+    Response
+
+    .. code-block:: json
+
+        {
+            "name": <string>,
+            "state": [absent, present],
+            "enable": [true, false],
+            "description": <string>,
+            "source_interface": <string>
+            "multicast_group": <string>
+        }
+
+    Args:
+        node (Node): An instance of pyeapi.client.Node
+        name (str): The interface identifier to return
+
+    Returns:
+        A Python dictionary object that represents the interface resource
+
+    """
     result = node.api('interfaces').get(name)
-    instance = dict(name=name, state='unconfigured')
+    instance = dict(name=name, state='absent')
     if result:
-        instance['state'] = 'configured'
+        instance['state'] = 'present'
         instance['enable'] = not result['shutdown']
         instance['description'] = result['description']
         instance['source_interface'] = result['source_interface']
@@ -161,47 +139,102 @@ def get_instance(node, name='Vxlan1'):
     return instance
 
 def create_instance(node, name='Vxlan1'):
+    """Creates a new instance of the Vxlan interface on the node
+
+    Args:
+        node (Node): An instance of pyepai.client.Node
+        name (str): The interface identifier to create
+
+    Returns:
+        A Python dictionary object that represents the interface resource from
+            the node's running configuration
+
+    """
     node.api('interfaces').create(name)
     return get_instance(node, name)
 
-def set_source_interface(node, source_interface=None, default=False, **kwargs):
-    log('Invoked set_source_interface for Vxlan1 with value %s and '
-        'default %s' % (source_interface, default))
-    api = node.api('interfaces')
-    if default:
-        return api.set_source_interface('Vxlan1', default=True)
-    else:
-        return api.set_source_interface('Vxlan1', source_interface)
+def set_attribute(node, method_name, name, value, default):
+    log('Invoked %s for interface %s with value %s and default %s'\
+        % (method_name, name, value, default))
+    method = getattr(node.api('interfaces'), method_name)
+    return method(name, value, default)
 
-def set_multicast_group(node, multicast_group=None, default=False, **kwargs):
-    log('Invoked set_multicast_group for Vxlan1 with value %s and '
-        'default %s' % (multicast_group, default))
-    api = node.api('interfaces')
-    if default:
-        return api.set_source_interface('Vxlan1', default=True)
-    else:
-        return api.set_source_interface('Vxlan1', multicast_group)
+def set_description(node, name, **kwargs):
+    """ Configures the description attribute for the interface
 
-def set_description(node, name, description=None, default=False, **kwargs):
-    log('Invoked set_description for interface %s with value %s and '
-        'default %s' % (name, description, default))
-    api = node.api('interfaces')
-    if default:
-        return api.set_description(name, default=True)
-    else:
-        return api.set_description(name, description)
+    Args:
+        node (Node): An instance of pyeapi.client.Node used for sending and
+            receiveing eAPI messages
+        name (str): The interface to configure the value for
+        kwargs: Optional keyword arguments
 
-def set_enable(node, name, enable=None, default=False, **kwargs):
-    log('Invoked set_enable for interface %s with value %s and '
-        'default %s' % (name, enable, default))
-    api = node.api('interfaces')
-    if default:
-        return api.set_shutdown(name, default=True)
-    else:
-        value = not enable
-        return api.set_shutdown(name, value)
+    Returns:
+        True if the command was completed successfully otherwise False is
+            returned
+
+    """
+    default = kwargs.get('default', False)
+    value = kwargs['description']
+    return set_attribute(node, 'set_description', name, value, default)
+
+def set_enable(node, name, **kwargs):
+    """ Configures the enable attribute for the interface
+
+    Args:
+        node (Node): An instance of pyeapi.client.Node used for sending and
+            receiveing eAPI messages
+        name (str): The interface to configure the value for
+        kwargs: Optional keyword arguments
+
+    Returns:
+        True if the command was completed successfully otherwise False is
+            returned
+
+    """
+    default = kwargs.get('default', False)
+    value = not kwargs['enable']
+    return set_attribute(node, 'set_shutdown', name, value, default)
+
+def set_source_interface(node, name, **kwargs):
+    """ Configures the source interface attribute for the interface
+
+    Args:
+        node (Node): An instance of pyeapi.client.Node used for sending and
+            receiveing eAPI messages
+        name (str): The interface to configure the value for
+        kwargs: Optional keyword arguments
+
+    Returns:
+        True if the command was completed successfully otherwise False is
+            returned
+
+    """
+    default = kwargs.get('default', False)
+    value = kwargs['source_interface']
+    return set_attribute(node, 'set_source_interface', name, value, default)
+
+
+def set_multicast_group(node, name, **kwargs):
+    """ Configures the multicast group attribute for the interface
+
+    Args:
+        node (Node): An instance of pyeapi.client.Node used for sending and
+            receiveing eAPI messages
+        name (str): The interface to configure the value for
+        kwargs: Optional keyword arguments
+
+    Returns:
+        True if the command was completed successfully otherwise False is
+            returned
+
+    """
+    default = kwargs.get('default', False)
+    value = kwargs['multicast_group']
+    return set_attribute(node, 'set_multicast_group', name, value, default)
 
 def main():
+    """ The main module routine called when the module is run by Ansible
+    """
 
     argument_spec = dict(
         name=dict(default='Vxlan1'),
@@ -209,17 +242,18 @@ def main():
         description=dict(),
         source_interface=dict(),
         multicast_group=dict(),
-        config=dict(default='/mnt/flash/eapi.conf'),
+        config=dict(),
         connection=dict(default='localhost'),
         null_as_default=dict(type='bool', default=False),
-        state=dict(default='configured', choices=['configured', 'unconfigured'])
+        state=dict(default='present', choices=['present', 'absent'])
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)
 
-    pyeapi.client.load_config(module.params['config'])
-    node = pyeapi.client.connect_to(module.params['connection'])
+    if module.params['config']:
+        pyeapi.load_config(module.params['config'])
+    node = pyeapi.connect_to(module.params['connection'])
 
     result = dict(changed=False, created=False, removed=False, changes=dict())
     state = module.params['state']
@@ -237,8 +271,8 @@ def main():
 
     instance = get_instance(node, name)
 
-    if state == 'configured':
-        if instance['state'] == 'unconfigured':
+    if state == 'present':
+        if instance['state'] == 'absent':
             if not module.check_mode:
                 instance = create_instance(node, name)
             result['created'] = True
@@ -250,12 +284,13 @@ def main():
                 command = globals().get(func)
                 default = value is None and null_as_default
                 if value is not None or default:
-                    result['changes'][key] = value
-                    result['changed'] = True
+                    if not result['created']:
+                        result['changes'][key] = value
+                        result['changed'] = True
                     if not module.check_mode:
                         command(node, **attributes)
 
-    elif instance['state'] == 'configured' and state == 'unconfigured':
+    elif instance['state'] == 'present' and state == 'absent':
         result['removed'] = True
         if not module.check_mode:
             node.api('interfaces').delete(name)
