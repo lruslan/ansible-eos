@@ -1,7 +1,7 @@
 Arista EOS role for Ansible
 ===========================
 
-## v0.1.3 (under development)
+## v0.2.1 (under development)
 
 - added eapi attribute to all modules
 - fixes an issue with switchport trunks being set to none (issue #7)
@@ -10,6 +10,15 @@ Arista EOS role for Ansible
 Updated Modules:
 
 * eos_vlan
+* eos_vxlan
+* eos_switchport
+* eos_portchannel
+* eos_ipv4interface
+
+New Modules:
+
+* eos_ethernet
+* eos_stp_interface
 
 
 ## v0.1.2
