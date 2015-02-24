@@ -273,9 +273,11 @@ def main():
             default = value is None and null_as_default
             if value is not None or default:
                 result['changes'][key] = value
-                result['changed'] = True
                 if not module.check_mode:
                     command(node, **attributes)
+
+    changed = result['removed'] or result['created'] or result['changes']
+    result['changed'] = changed
 
     result['instance'] = get_instance(node, name)
     module.exit_json(**result)
