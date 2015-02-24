@@ -265,7 +265,6 @@ def main():
                 if value is not None or default:
                     if not result['created']:
                         result['changes'][key] = value
-                        result['changed'] = True
                     if not module.check_mode:
                         command(node, **attributes)
 
@@ -273,6 +272,9 @@ def main():
         result['removed'] = True
         if not module.check_mode:
             node.api('vlans').delete(vlanid)
+
+    changed = result['removed'] or result['created'] or result['changes']
+    result['changed'] = changed
 
     result['instance'] = get_instance(node, vlanid)
     module.exit_json(**result)
