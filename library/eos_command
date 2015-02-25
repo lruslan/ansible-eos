@@ -98,59 +98,49 @@ options:
     default: null
     alias: []
 """
-import json
-import urlparse
-import collections
-import socket
+import syslog
 
 from ansible.module_utils.basic import *
 
-from eapilib import create_connection
+import pyeapi
 
-EAPI_KWARG_MAP = {
-    'eapi_hostname': 'hostname',
-    'eapi_username': 'username',
-    'eapi_password': 'password',
-    'eapi_enable_password': 'enable_password',
-    'eapi_protocol': 'protocol',
-    'eapi_port': 'port'
-}
+def log(entry):
+    """ Writes an entry to the local syslog
+
+    Args:
+        entry (str): The text string to write to syslog
+
+    """
+    syslog.open('ansible-eos')
+    syslog.syslog(syslog.LOG_NOTICE, str(entry))
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
-            commands=dict(required=True, type='list'),
-            mode=dict(default='enable', choices=['enable', 'config']),
-            eapi_hostname=dict(default='localhost'),
-            eapi_username=dict(default='admin'),
-            eapi_password=dict(default=''),
-            eapi_enable_password=dict(default=''),
-            eapi_protocol=dict(default='https'),
-            eapi_port=dict(default=None)
-        ),
-        supports_check_mode=False
+    """ The main module routine called when the module is run by Ansible
+    """
+
+    argument_spec = dict(
+        commands=dict(required=True, type='list'),
+        mode=dict(default='enable', choices=['enable', 'config']),
+        config=dict(),
+        connection=dict(default='localhost')
     )
 
+    module = AnsibleModule(argument_spec=argument_spec,
+                           supports_check_mode=True)
+
+    if module.params['config']:
+        pyeapi.load_config(module.params['config'])
+    node = pyeapi.connect_to(module.params['connection'])
+
     result = dict(changed=False)
-
-    kwargs = dict()
-    for key, value in module.params.items():
-        if value and key in EAPI_KWARG_MAP:
-            kwargs[EAPI_KWARG_MAP[key]] = value
-
-    eapi = create_connection(**kwargs)
 
     commands = module.params['commands']
     mode = module.params['mode']
 
-    func = getattr(eapi, mode)
+    func = getattr(node, mode)
     resp = func(commands)
-    output = list()
 
-    for index, data in enumerate(resp):
-        output.append(dict(command=commands[index+2], response=data))
-    result['output'] = output
-
+    result['output'] = resp
     module.exit_json(**result)
 
 main()
