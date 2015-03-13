@@ -59,13 +59,6 @@ options:
     description:
       - Sets a one line ASCII description for the interface.
     required: false
-  null_as_default:
-    description:
-      - Instructs the module how to handle null values.  If this flag is set
-        then null values trigger default configuration otherwise do nothing
-    required: false
-    default: false
-    choices: BOOLEANS
   state:
     description:
       - Identifies the state of the interface.  Interfaces can be either
@@ -236,8 +229,7 @@ def main():
         flowcontrol_send=dict(choices=['on', 'off']),
         flowcontrol_receive=dict(choices=['on', 'off']),
         config=dict(),
-        connection=dict(default='localhost'),
-        null_as_default=dict(type='bool', default=False),
+        connection=dict(default='localhost')
     )
 
     module = AnsibleModule(argument_spec=argument_spec,
@@ -247,8 +239,7 @@ def main():
         pyeapi.load_config(module.params['config'])
     node = pyeapi.connect_to(module.params['connection'])
 
-    result = dict(changed=False, created=False, removed=False, changes=dict())
-    null_as_default = module.params['null_as_default']
+    result = dict(changed=False, changes=dict())
 
     name = module.params['name']
     if not name.startswith('Ethernet'):
@@ -270,14 +261,11 @@ def main():
         func = 'set_%s' % key
         if func in globals():
             command = globals().get(func)
-            default = value is None and null_as_default
-            if value is not None or default:
+            if value is not None:
                 result['changes'][key] = value
                 if not module.check_mode:
                     command(node, **attributes)
-
-    changed = result['removed'] or result['created'] or result['changes']
-    result['changed'] = changed
+                result['changed'] = True
 
     result['instance'] = get_instance(node, name)
     module.exit_json(**result)
