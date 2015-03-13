@@ -99,12 +99,6 @@ options:
     description:
       - Configures the name of the connection to use from the eapi.conf file
     default: 'localhost'
-  null_as_default:
-    description:
-      - Instructs the module how to handle null values.  If this flag is set
-        then null values trigger default configuration otherwise do nothing
-    default: false
-    choices: BOOLEANS
 """
 import syslog
 
@@ -263,7 +257,6 @@ def main():
         trunk_allowed_vlans=dict(),
         config=dict(),
         connection=dict(default='localhost'),
-        null_as_default=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -275,9 +268,8 @@ def main():
         pyeapi.load_config(module.params['config'])
     node = pyeapi.connect_to(module.params['connection'])
 
-    result = dict(changed=False, created=False, removed=False, changes=dict())
+    result = dict(changed=False, changes=dict())
     state = module.params['state']
-    null_as_default = module.params['null_as_default']
 
     name = module.params['name']
 
@@ -286,7 +278,7 @@ def main():
         'mode': module.params['mode'],
         'access_vlan': module.params['access_vlan'],
         'trunk_native_vlan': module.params['trunk_native_vlan'],
-        'trunk_allowed_vlans': module.params['trunk_allowed_vlans'],
+        'trunk_allowed_vlans': module.params['trunk_allowed_vlans']
     }
 
     instance = get_instance(node, name)
@@ -295,27 +287,23 @@ def main():
         if instance['state'] == 'absent':
             if not module.check_mode:
                 instance = create_instance(node, name)
-            result['created'] = True
+            result['changed'] = True
 
         changeset = attributes.viewitems() - instance.viewitems()
         for key, value in changeset:
             func = 'set_%s' % key
             if func in globals():
                 command = globals().get(func)
-                default = value is None and null_as_default
-                if value is not None or default:
-                    if not result['created']:
-                        result['changes'][key] = value
+                if value is not None:
+                    result['changes'][key] = value
+                    result['changed'] = True
                     if not module.check_mode:
                         command(node, **attributes)
 
     elif instance['state'] == 'present' and state == 'absent':
-        result['removed'] = True
+        result['changed'] = True
         if not module.check_mode:
             node.api('switchports').delete(name)
-
-    changed = result['removed'] or result['created'] or result['changes']
-    result['changed'] = changed
 
     result['instance'] = get_instance(node, name)
     module.exit_json(**result)
