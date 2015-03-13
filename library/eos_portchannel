@@ -59,13 +59,6 @@ options:
     description:
       - Sets a one line ASCII description for the interface.
     required: false
-  null_as_default:
-    description:
-      - Instructs the module how to handle null values.  If this flag is set
-        then null values trigger default configuration otherwise do nothing
-    required: false
-    default: false
-    choices: BOOLEANS
   state:
     description:
       - Identifies the state of the interface.  Interfaces can be either
@@ -121,11 +114,9 @@ def get_instance(node, name):
     instance = dict(name=name, state='absent')
     if result:
         instance['state'] = 'present'
+        instance.update(result)
         instance['enable'] = not result['shutdown']
-        instance['description'] = result['description']
         instance['members'] = ','.join(result['members'])
-        instance['minimum_links'] = result['minimum_links']
-        instance['lacp'] = result['lacp_mode']
     return instance
 
 def create_instance(node, name):
@@ -143,11 +134,16 @@ def create_instance(node, name):
     node.api('interfaces').create(name)
     return get_instance(node, name)
 
-def set_attribute(node, method_name, name, value, default):
+def set_attribute(node, method_name, name, value=None, default=False):
     log('Invoked %s for interface %s with value %s and default %s'\
         % (method_name, name, value, default))
     method = getattr(node.api('interfaces'), method_name)
-    return method(name, value, default)
+
+    # not all attributes accept default
+    kwargs = dict()
+    if default is not None:
+        kwargs['default'] = default
+    return method(name, value, **kwargs)
 
 def set_description(node, name, **kwargs):
     """ Configures the description attribute for the interface
@@ -199,9 +195,8 @@ def set_members(node, name, **kwargs):
             returned
 
     """
-    default = kwargs.get('default', False)
     value = kwargs['members'].split(',')
-    return set_attribute(node, 'set_members', name, value, default)
+    return set_attribute(node, 'set_members', name, value, None)
 
 def set_minimum_links(node, name, **kwargs):
     """ Configures the minimum links attribute for the interface
@@ -221,7 +216,7 @@ def set_minimum_links(node, name, **kwargs):
     value = kwargs['minimum_links']
     return set_attribute(node, 'set_minimum_links', name, value, default)
 
-def set_lacp(node, name, **kwargs):
+def set_lacp_mode(node, name, **kwargs):
     """ Configures the lacp mode attribute for the interface
 
     Args:
@@ -235,9 +230,8 @@ def set_lacp(node, name, **kwargs):
             returned
 
     """
-    default = kwargs.get('default', False)
-    value = kwargs['lacp']
-    return set_attribute(node, 'set_lacp_mode', name, value, default)
+    value = kwargs['lacp_mode']
+    return set_attribute(node, 'set_lacp_mode', name, value, None)
 
 def main():
     """ The main module routine called when the module is run by Ansible
@@ -249,10 +243,9 @@ def main():
         description=dict(),
         members=dict(),
         minimum_links=dict(),
-        lacp=dict(choices=['active', 'passive', 'static']),
+        lacp_mode=dict(choices=['active', 'passive', 'disabled']),
         config=dict(),
         connection=dict(default='localhost'),
-        null_as_default=dict(type='bool', default=False),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -267,13 +260,12 @@ def main():
         pyeapi.load_config(module.params['config'])
     node = pyeapi.connect_to(module.params['connection'])
 
-    result = dict(changed=False, created=False, removed=False, changes=dict())
+    result = dict(changed=False, changes=dict())
     state = module.params['state']
-    null_as_default = module.params['null_as_default']
 
-    lacp = module.params['lacp']
-    if lacp:
-        lacp = 'on' if lacp == 'static' else lacp
+    lacp_mode = module.params['lacp_mode']
+    if lacp_mode:
+        lacp_mode = 'on' if lacp_mode == 'static' else lacp_mode
 
     attributes = {
         'name': name,
@@ -281,7 +273,7 @@ def main():
         'description': module.params['description'],
         'members': module.params['members'],
         'minimum_links': module.params['minimum_links'],
-        'lacp': lacp
+        'lacp_mode': lacp_mode
     }
 
     instance = get_instance(node, name)
@@ -290,27 +282,23 @@ def main():
         if instance['state'] == 'absent':
             if not module.check_mode:
                 instance = create_instance(node, name)
-            result['created'] = True
+            result['changed'] = True
 
         changeset = attributes.viewitems() - instance.viewitems()
         for key, value in changeset:
             func = 'set_%s' % key
             if func in globals():
                 command = globals().get(func)
-                default = value is None and null_as_default
-                if value is not None or default:
-                    if not result['created']:
-                        result['changes'][key] = value
+                if value is not None:
+                    result['changes'][key] = value
+                    result['changed'] = True
                     if not module.check_mode:
                         command(node, **attributes)
 
     elif instance['state'] == 'present' and state == 'absent':
-        result['removed'] = True
+        result['changed'] = True
         if not module.check_mode:
             node.api('interfaces').delete(name)
-
-    changed = result['removed'] or result['created'] or result['changes']
-    result['changed'] = changed
 
     result['instance'] = get_instance(node, name)
     module.exit_json(**result)
