@@ -68,12 +68,6 @@ options:
       - The state of the VLAN related to the current running configuration
     default: 'present'
     choices: ['present', 'absent']
-  null_as_default:
-    description:
-      - Instructs the module how to handle null values.  If this flag is set
-        then null values trigger default configuration otherwise do nothing
-    default: false
-    choices: BOOLEANS
 """
 import syslog
 
@@ -81,81 +75,184 @@ from ansible.module_utils.basic import *
 
 import pyeapi
 
+class EosAnsibleModule(AnsibleModule):
+
+    common_args = {
+        'config': dict(),
+        'connection': dict(default='localhost'),
+        'state': dict(default='present', choices=['present', 'absent'])
+    }
+
+    def __init__(self, *args, **kwargs):
+
+        kwargs['argument_spec'].update(self.common_args)
+        super(EosAnsibleModule, self).__init__(*args, **kwargs)
+
+        self._attributes = self.map_argument_spec()
+        self.validate()
+
+        self._node = self.connect()
+
+        self._instance = None
+        self.desired_state = self._attributes['state']
+
+        self.supports_create = True
+        self.supports_remove = True
+        self.supports_state = True
+
+        self.debug = False
+
+        self.result = dict(changed=False, changes=dict())
+
+    def map_argument_spec(self):
+        attrs = dict()
+        attrs = dict([(key, self.params[key]) for key in self.params])
+        return attrs
+
+    def set_supports_create(self, value):
+        self.supports_create = value
+
+    def set_supports_remove(self, value):
+        self.supports_remove = value
+
+    def set_supports_state(self, value):
+        self.supports_state = value
+        if not value:
+            self.supports_create = False
+            self.supports_remove = False
+
+    @property
+    def instance(self):
+        if self._instance:
+            return self._instance
+
+        func = self.func('instance')
+        if not func:
+            self.fail_json(msg='Module does not support "instance"')
+
+        self._instance = func(self)
+
+        return self._instance
+
+    @property
+    def attributes(self):
+        return self._attributes
+
+    @property
+    def node(self):
+        if self._node:
+            return self._node
+        self._node = self.connect()
+        return self._node
+
+    def create(self):
+        if not self.check_mode:
+            func = self.func('create')
+            if not func and self.supports_create:
+                self.fail_json(msg='Module must define "create"')
+            return func(self)
+
+    def remove(self):
+        if not self.check_mode:
+            func = self.func('remove')
+            if not func and self.supports_remove:
+                self.fail_json(msg='Module must define "remove"')
+            return func(self)
+
+    def flush(self):
+        if self.desired_state == 'present' or not self.supports_state:
+            if self.instance.get('state') == 'absent':
+                self.create()
+                self.refresh()
+                self.result['changed'] = True
+
+            changeset = self.attributes.viewitems() - self.instance.viewitems()
+
+            if self.debug:
+                self.result['desired_state'] = self.attributes
+                self.result['current_state'] = self.instance
+
+            changes = self.update(changeset)
+            if changes:
+                self.result['changes'] = changes
+                self.result['changed'] = True
+
+        elif self.desired_state == 'absent' and self.supports_state:
+            if selfinstance.get('state') == 'present':
+                self.remove()
+                self.result['changed'] = True
+
+        self.refresh()
+
+    def update(self, changeset):
+        changes = dict()
+        for key, value in changeset:
+            func_name = 'set_%s' % key
+            func = self.func(func_name)
+            if func and value is not None:
+                changes[key] = value
+                if not self.check_mode:
+                    func(self)
+        return changes
+
+    def validate(self):
+        for key, value in self._attributes.items():
+            func = self.func('validate_%s' % key)
+            if func and value is not None:
+                try:
+                    func(value)
+                except AttributeError as exc:
+                    self.fail_json(msg=exc.message)
+
+    def connect(self):
+        if self.params['config']:
+            pyeapi.load_config(self.params['config'])
+
+        node = pyeapi.connect_to(self.params['connection'])
+        if not node:
+            msg = 'Connection name "%s" not found' % params['connection']
+            self.fail_json(msg=msg)
+
+        return node
+
+    def func(self, name):
+        return globals().get(name)
+
+    def refresh(self):
+        self._instance = None
+
+
+
+
 def log(entry):
     syslog.openlog('ansible-eos')
     syslog.syslog(syslog.LOG_NOTICE, str(entry))
 
-def get_instance(node, name):
+def instance(module):
     """ Returns an instance of Stp interface config from the node
-
-    Response
-
-    .. code-block:: json
-
-        {
-            "name": <string>,
-            "state: [absent, present],
-            "portfast": [edge, network, disable],
-            "bpduguard: [true, false]
-        }
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node
-
-        name (str): The interface name to retrieve the instance for
-
-    Returns:
-        A Ptyhon dictionary object that represents the STP resource
     """
-    result = node.api('stp').interfaces.get(name)
-    instance = dict(name=name, state='absent')
-    if name in result:
-        instance['state'] = 'present'
-        instance['portfast'] = result[name]['portfast']
-        instance['bpduguard'] = result[name]['bpduguard']
-    return instance
+    name = module.attributes['name']
+    result = module.node.api('stp').interfaces.get(name)
+    _instance = dict(name=name)
+    if result:
+        _instance['portfast'] = result['portfast']
+        _instance['bpduguard'] = result['bpduguard']
+    return _instance
 
-def set_attribute(node, method_name, name, value, default):
-    log('Invoked %s for interface  %s with value %s and default %s'\
-        % (method_name, name, value, default))
-    method = getattr(node.api('stp'), method_name)
-    return method(name, value, default)
 
-def set_bpduguard(node, name, **kwargs):
+def set_bpduguard(module):
     """ Configures the bpduguard attribute for the name
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node used for sending and
-            receiveing eAPI messages
-       name (str): The interface name to configure the bpduguard value for
-       kwargs: Optional keyword arguments
-
-    Returns:
-        True if the command was completed successfully otherwise False is
-            returned
-
     """
-    default = kwargs.get('default', False)
-    value = kwargs['name']
-    return set_attribute(node, 'set_bpduguard', name, value, default)
+    value = module.attributes['bpduguard']
+    name = module.attributes['name']
+    module.node.api('stp').interfaces.set_bpduguard(name, value)
 
-def set_portfast(node, name, **kwargs):
+def set_portfast(module):
     """ Configures the portfast attribute for the name
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node used for sending and
-            receiveing eAPI messages
-       name (str): The interface name to configure the portfast value for
-       kwargs: Optional keyword arguments
-
-    Returns:
-        True if the command was completed successfully otherwise False is
-            returned
-
     """
-    default = kwargs.get('default', False)
-    value = kwargs['name']
-    return set_attribute(node, 'set_portfast', name, value, default)
+    value = module.attributes['portfast']
+    name = module.attributes['name']
+    module.node.api('stp').interfaces.set_portfast(name, value)
 
 
 def main():
@@ -165,51 +262,20 @@ def main():
     argument_spec = dict(
         name=dict(required=True),
         portfast=dict(choices=['edge', 'network', 'disable']),
-        bpduguard=dict(type='bool'),
-        config=dict(),
-        connection=dict(default='localhost'),
-        null_as_default=dict(type='bool', default=False),
-        state=dict(default='present', choices=['present', 'absent'])
+        bpduguard=dict(type='bool', choices=BOOLEANS),
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = EosAnsibleModule(argument_spec=argument_spec,
+                              supports_check_mode=True)
 
-    if module.params['config']:
-        pyeapi.load_config(module.params['config'])
-    node = pyeapi.connect_to(module.params['connection'])
+    module.set_supports_state(False)
+    module.debug = True
 
-    result = dict(changed=False, created=False, removed=False, changes=dict())
-    state = module.params['state']
-    null_as_default = module.params['null_as_default']
+    module.flush()
 
-    name = module.params['name']
+    result = module.result
+    result['instance'] = module.instance
 
-    attributes = {
-        'name': name,
-        'portfast': module.params['portfast'],
-        'bpduguard': module.params['bpduguard']
-    }
-
-    instance = get_instance(node, name)
-
-    if state == 'present':
-        changeset = attributes.viewitems() - instance.viewitems()
-        for key, value in changeset:
-            func = 'set_%s' % key
-            if func in globals():
-                command = globals().get(func)
-                default = value is None and null_as_default
-                if value is not None or default:
-                    if not result['created']:
-                        result['changes'][key] = value
-                    if not module.check_mode:
-                        command(node, **attributes)
-
-    changed = result['removed'] or result['created'] or result['changes']
-    result['changed'] = changed
-
-    result['instance'] = get_instance(node, name)
     module.exit_json(**result)
 
 main()

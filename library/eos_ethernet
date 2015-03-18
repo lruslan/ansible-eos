@@ -75,6 +75,153 @@ from ansible.module_utils.basic import *
 
 import pyeapi
 
+
+class EosAnsibleModule(AnsibleModule):
+
+    common_args = {
+        'config': dict(),
+        'connection': dict(default='localhost'),
+        'state': dict(default='present', choices=['present', 'absent'])
+    }
+
+    def __init__(self, *args, **kwargs):
+
+        kwargs['argument_spec'].update(self.common_args)
+        super(EosAnsibleModule, self).__init__(*args, **kwargs)
+
+        self._attributes = self.map_argument_spec()
+        self.validate()
+
+        self._node = self.connect()
+
+        self._instance = None
+        self.desired_state = self._attributes['state']
+
+        self.supports_create = True
+        self.supports_remove = True
+        self.supports_state = True
+
+        self.debug = False
+
+        self.result = dict(changed=False, changes=dict())
+
+    def map_argument_spec(self):
+        attrs = dict()
+        attrs = dict([(key, self.params[key]) for key in self.params])
+        return attrs
+
+    def set_supports_create(self, value):
+        self.supports_create = value
+
+    def set_supports_remove(self, value):
+        self.supports_remove = value
+
+    def set_supports_state(self, value):
+        self.supports_state = value
+        if not value:
+            self.supports_create = False
+            self.supports_remove = False
+
+    @property
+    def instance(self):
+        if self._instance:
+            return self._instance
+
+        func = self.func('instance')
+        if not func:
+            self.fail_json(msg='Module does not support "instance"')
+
+        self._instance = func(self)
+
+        return self._instance
+
+    @property
+    def attributes(self):
+        return self._attributes
+
+    @property
+    def node(self):
+        if self._node:
+            return self._node
+        self._node = self.connect()
+        return self._node
+
+    def create(self):
+        if not self.check_mode:
+            func = self.func('create')
+            if not func and self.supports_create:
+                self.fail_json(msg='Module must define "create"')
+            return func(self)
+
+    def remove(self):
+        if not self.check_mode:
+            func = self.func('remove')
+            if not func and self.supports_remove:
+                self.fail_json(msg='Module must define "remove"')
+            return func(self)
+
+    def flush(self):
+        if self.desired_state == 'present' or not self.supports_state:
+            if self.instance.get('state') == 'absent':
+                self.create()
+                self.refresh()
+                self.result['changed'] = True
+
+            changeset = self.attributes.viewitems() - self.instance.viewitems()
+
+            if self.debug:
+                self.result['desired_state'] = self.attributes
+                self.result['current_state'] = self.instance
+
+            changes = self.update(changeset)
+            if changes:
+                self.result['changes'] = changes
+                self.result['changed'] = True
+
+        elif self.desired_state == 'absent' and self.supports_state:
+            if selfinstance.get('state') == 'present':
+                self.remove()
+                self.result['changed'] = True
+
+        self.refresh()
+
+    def update(self, changeset):
+        changes = dict()
+        for key, value in changeset:
+            func_name = 'set_%s' % key
+            func = self.func(func_name)
+            if func and value is not None:
+                changes[key] = value
+                if not self.check_mode:
+                    func(self)
+        return changes
+
+    def validate(self):
+        for key, value in self._attributes.items():
+            func = self.func('validate_%s' % key)
+            if func and value is not None:
+                try:
+                    func(value)
+                except AttributeError as exc:
+                    self.fail_json(msg=exc.message)
+
+    def connect(self):
+        if self.params['config']:
+            pyeapi.load_config(self.params['config'])
+
+        node = pyeapi.connect_to(self.params['connection'])
+        if not node:
+            msg = 'Connection name "%s" not found' % params['connection']
+            self.fail_json(msg=msg)
+
+        return node
+
+    def func(self, name):
+        return globals().get(name)
+
+    def refresh(self):
+        self._instance = None
+
 def log(entry):
     """ Writes an entry to the local syslog
 
@@ -85,33 +232,12 @@ def log(entry):
     syslog.openlog('ansible-eos')
     syslog.syslog(syslog.LOG_NOTICE, str(entry))
 
-def get_instance(node, name):
+def instance(module):
     """ Returns the interface properties for the specified name
-
-    Response
-
-    .. code-block:: json
-
-        {
-            "name": <string>,
-            "state": "present",
-            "enable": [true, false],
-            "description": <string>
-            "sflow": [true, false],
-            "flowcontrol_send": ["on", "off"],
-            "flowcontrol_recieve": ["on", "off"]
-        }
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node
-        name (str): The interface identifier to return
-
-    Returns:
-        A Python dictionary object that represents the interface resource
-
     """
-    result = node.api('interfaces').get(name)
-    instance = dict(name=name, state='present')
+    name = module.attributes['name']
+    result = module.node.api('interfaces').get(name)
+    instance = dict(name=name)
     instance['enable'] = not result['shutdown']
     instance['description'] = result['description']
     instance['sflow'] = result['sflow']
@@ -119,102 +245,40 @@ def get_instance(node, name):
     instance['flowcontrol_receive'] = result['flowcontrol_receive']
     return instance
 
-def set_attribute(node, method_name, name, value, default):
-    log('Invoked %s for interface %s with value %s and default %s'\
-        % (method_name, name, value, default))
-    method = getattr(node.api('interfaces'), method_name)
-    return method(name, value, default)
-
-
-def set_description(node, name, **kwargs):
+def set_description(module):
     """ Configures the description attribute for the interface
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node used for sending and
-            receiveing eAPI messages
-        name (str): The interface to configure the value for
-        kwargs: Optional keyword arguments
-
-    Returns:
-        True if the command was completed successfully otherwise False is
-            returned
-
     """
-    default = kwargs.get('default', False)
-    value = kwargs['description']
-    return set_attribute(node, 'set_description', name, value, default)
+    value = module.attributes['description']
+    name = module.attributes['name']
+    module.node.api('interfaces').set_description(name, value)
 
-def set_enable(node, name, **kwargs):
+def set_enable(module):
     """ Configures the enable attribute for the interface
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node used for sending and
-            receiveing eAPI messages
-        name (str): The interface to configure the value for
-        kwargs: Optional keyword arguments
-
-    Returns:
-        True if the command was completed successfully otherwise False is
-            returned
-
     """
-    default = kwargs.get('default', False)
-    value = not kwargs['enable']
-    return set_attribute(node, 'set_shutdown', name, value, default)
+    value = not module.attributes['enable']
+    name = module.attributes['name']
+    module.node.api('interfaces').set_shutdown(name, value)
 
-def set_sflow(node, name, **kwargs):
+def set_sflow(module):
     """ Configures the sflow attribute for the interface
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node used for sending and
-            receiveing eAPI messages
-        name (str): The interface to configure the value for
-        kwargs: Optional keyword arguments
-
-    Returns:
-        True if the command was completed successfully otherwise False is
-            returned
-
     """
-    default = kwargs.get('default', False)
-    value = kwargs['sflow']
-    return set_attribute(node, 'set_sflow', name, value, default)
+    value = module.attributes['sflow']
+    name = module.attributes['name']
+    module.node.api('interfaces').set_sflow(name, value)
 
-def set_flowcontrol_send(node, name, **kwargs):
+def set_flowcontrol_send(module):
     """ Configures the flowcontrol send  attribute for the interface
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node used for sending and
-            receiveing eAPI messages
-        name (str): The interface to configure the value for
-        kwargs: Optional keyword arguments
-
-    Returns:
-        True if the command was completed successfully otherwise False is
-            returned
-
     """
-    default = kwargs.get('default', False)
-    value = kwargs['flowcontrol_send']
-    return set_attribute(node, 'set_flowcontrol_send', name, value, default)
+    value = module.attributes['flowcontrol_send']
+    name = module.attributes['name']
+    module.node.api('interfaces').set_flowcontrol_send(name, value)
 
-def set_flowcontrol_receive(node, name, **kwargs):
+def set_flowcontrol_receive(module):
     """ Configures the flowcontrol receive attribute for the interface
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node used for sending and
-            receiveing eAPI messages
-        name (str): The interface to configure the value for
-        kwargs: Optional keyword arguments
-
-    Returns:
-        True if the command was completed successfully otherwise False is
-            returned
-
     """
-    default = kwargs.get('default', False)
-    value = kwargs['flowcontrol_receive']
-    return set_attribute(node, 'set_flowcontrol_receive', name, value, default)
+    value = module.attributes['flowcontrol_receive']
+    name = module.attributes['name']
+    module.node.api('interfaces').set_flowcontrol_receive(name, value)
 
 
 def main():
@@ -227,47 +291,19 @@ def main():
         description=dict(),
         sflow=dict(type='bool', default=True),
         flowcontrol_send=dict(choices=['on', 'off']),
-        flowcontrol_receive=dict(choices=['on', 'off']),
-        config=dict(),
-        connection=dict(default='localhost')
+        flowcontrol_receive=dict(choices=['on', 'off'])
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = EosAnsibleModule(argument_spec=argument_spec,
+                              supports_check_mode=True)
 
-    if module.params['config']:
-        pyeapi.load_config(module.params['config'])
-    node = pyeapi.connect_to(module.params['connection'])
+    module.set_supports_state(False)
 
-    result = dict(changed=False, changes=dict())
+    module.flush()
 
-    name = module.params['name']
-    if not name.startswith('Ethernet'):
-        return module.fail_json(msg='interface must be Ethernet')
+    result = module.result
+    result['instance'] = module.instance
 
-    attributes = {
-        'name': name,
-        'enable': module.params['enable'],
-        'description': module.params['description'],
-        'sflow': module.params['sflow'],
-        'flowcontrol_send': module.params['flowcontrol_send'],
-        'flowcontrol_receive': module.params['flowcontrol_receive']
-    }
-
-    instance = get_instance(node, name)
-
-    changeset = attributes.viewitems() - instance.viewitems()
-    for key, value in changeset:
-        func = 'set_%s' % key
-        if func in globals():
-            command = globals().get(func)
-            if value is not None:
-                result['changes'][key] = value
-                if not module.check_mode:
-                    command(node, **attributes)
-                result['changed'] = True
-
-    result['instance'] = get_instance(node, name)
     module.exit_json(**result)
 
 main()
