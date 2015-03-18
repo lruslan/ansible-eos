@@ -85,6 +85,135 @@ import pyeapi
 
 from pyeapi.api.vlans import isvlan
 
+class EosAnsibleModule(AnsibleModule):
+
+    common_args = {
+        'config': dict(),
+        'connection': dict(default='localhost'),
+        'state': dict(default='present', choices=['present', 'absent'])
+    }
+
+    def __init__(self, *args, **kwargs):
+
+        kwargs['argument_spec'].update(self.common_args)
+        super(EosAnsibleModule, self).__init__(*args, **kwargs)
+
+        self._attributes = self.map_argument_spec()
+        self.validate()
+
+        self._node = self.connect()
+
+        self._instance = None
+        self.desired_state = self._attributes['state']
+
+        self.supports_create = True
+        self.supports_remove = True
+
+        self.result = dict(changed=False, changes=dict())
+
+    def map_argument_spec(self):
+        attrs = dict()
+        attrs = dict([(key, self.params[key]) for key in self.params])
+        return attrs
+
+    def set_supports_create(self, value):
+        self.supports_create = value
+
+    def set_supports_remove(self, value):
+        self.supports_remove = value
+
+    @property
+    def instance(self):
+        if self._instance:
+            return self._instance
+        func = self.func('instance')
+        if not func:
+            self.fail_json(msg='Module does not support "instance"')
+        self._instance = func(self)
+        return self._instance
+
+    @property
+    def attributes(self):
+        return self._attributes
+
+    @property
+    def node(self):
+        if self._node:
+            return self._node
+        self._node = self.connect()
+
+    def create(self):
+        if not self.check_mode:
+            func = self.func('create')
+            if not func and self.supports_create:
+                self.fail_json(msg='Module must define "create"')
+            return func(self)
+
+    def remove(self):
+        if not self.check_mode:
+            func = self.func('remove')
+            if not func and self.supports_remove:
+                self.fail_json(msg='Module must define "remove"')
+            return func(self)
+        return self._node
+
+    def flush(self):
+        if self.desired_state == 'present':
+            if self.instance['state'] == 'absent':
+                self.create()
+                self.refresh()
+                self.result['changed'] = True
+
+            changeset = self.attributes.viewitems() - self.instance.viewitems()
+            changes = self.update(changeset)
+            if changes:
+                self.result['changes'] = changes
+                self.result['changed'] = True
+
+        elif self.instance['state'] == 'present' and self.desired_state == 'absent':
+            self.remove()
+            self.result['changed'] = True
+
+        self.refresh()
+
+    def update(self, changeset):
+        changes = dict()
+        for key, value in changeset:
+            func_name = 'set_%s' % key
+            func = self.func(func_name)
+            if func and value is not None:
+                changes[key] = value
+                if not self.check_mode:
+                    func(self)
+        return changes
+
+    def validate(self):
+        for key, value in self._attributes.items():
+            func = self.func('validate_%s' % key)
+            if func and value is not None:
+                try:
+                    func(value)
+                except AttributeError as exc:
+                    self.fail_json(msg=exc.message)
+
+    def connect(self):
+        if self.params['config']:
+            pyeapi.load_config(self.params['config'])
+
+        node = pyeapi.connect_to(self.params['connection'])
+        if not node:
+            msg = 'Connection name "%s" not found' % params['connection']
+            self.fail_json(msg=msg)
+
+        return node
+
+    def func(self, name):
+        return globals().get(name)
+
+    def refresh(self):
+        self._instance = None
+
+
 
 def log(entry):
     """ Writes an entry to the local syslog
@@ -96,115 +225,47 @@ def log(entry):
     syslog.openlog('ansible-eos')
     syslog.syslog(syslog.LOG_NOTICE, str(entry))
 
-def get_instance(node, vlanid):
+def instance(module):
     """ Returns an instance of Vlan based on vlanid
-
-    Response
-
-    .. code-block:: json
-
-        {
-            "vlanid": <string>,
-            "state": [absent, present],
-            "name:": <string>,
-            "enable": [true, false]
-        }
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node
-
-        vlanid (string): The Vlan ID to retreive an instance for
-
-    Returns:
-        A Python dictionary object that represenses the Vlan resource
-
     """
-    result = node.api('vlans').get(vlanid)
-    instance = dict(vlanid=vlanid, state='absent')
+    vlanid = module.attributes['vlanid']
+    result = module.node.api('vlans').get(vlanid)
+    _instance = dict(vlanid=vlanid, state='absent')
     if result:
-        instance['state'] = 'present'
-        instance['name'] = result['name']
-        instance['enable'] = result['state'] == 'active'
-        instance['trunk_groups'] = ','.join(result['trunk_groups'])
-    return instance
+        _instance['state'] = 'present'
+        _instance['name'] = result['name']
+        _instance['enable'] = result['state'] == 'active'
+        _instance['trunk_groups'] = ','.join(result['trunk_groups'])
+    return _instance
 
-def create_instance(node, vlanid):
+def create(module):
     """ Creates a new instance of a Vlan on the node
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node used for sending and
-            receiveing eAPI messages
-        vlanid (string): The VLAN ID to create an instance for.  This value
-            must be a string in the range of 1 to 4094
-
-    Returns:
-        A Python dictionary object that represents the Vlan resource from
-            the nodes running configuration
-
     """
-    log("Invoked create for vlanid %s" % vlanid)
-    node.api('vlans').create(vlanid)
-    return get_instance(node, vlanid)
+    module.node.api('vlans').create(module.attributes['vlanid'])
 
-def set_attribute(node, method_name, vlanid, value, default):
-    log('Invoked %s for vlan id %s with value %s and default %s'\
-        % (method_name, vlanid, value, default))
-    method = getattr(node.api('vlans'), method_name)
-    return method(vlanid, value, default)
+def remove(module):
+    module.node.api('vlans').delete(module.attributes['vlanid'])
 
-def set_name(node, vlanid, **kwargs):
+def set_name(module):
     """ Configures the name attribute for the vlan id
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node used for sending and
-            receiveing eAPI messages
-        vlanid (str): The Vlan ID to configure the name value for
-       kwargs: Optional keyword arguments
-
-    Returns:
-        True if the command was completed successfully otherwise False is
-            returned
-
     """
-    default = kwargs.get('default', False)
-    value = kwargs['name']
-    return set_attribute(node, 'set_name', vlanid, value, default)
+    value = module.attributes['name']
+    vlanid = module.attributes['vlanid']
+    module.node.api('vlans').set_name(vlanid, value)
 
-def set_enable(node, vlanid, **kwargs):
+def set_enable(module):
     """ Configures the vlan as adminstratively enabled or disabled
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node used for sending and
-            receiveing eAPI messages
-        vlanid (str): The Vlan ID to configure the name value for
-        kwargs: Optional keyword arguments
-
-    Returns:
-        True if the command was completed successfully otherwise False is
-            returned
-
     """
-    default = kwargs.get('default', False)
-    value = 'active' if kwargs['enable'] else 'suspend'
-    return set_attribute(node, 'set_state', vlanid, value, default)
+    value = 'active' if module.attributes['enable'] else 'suspend'
+    vlanid = module.attributes['vlanid']
+    module.node.api('vlans').set_state(vlanid, value)
 
-def set_trunk_groups(node, vlanid, **kwargs):
+def set_trunk_groups(module):
     """ Configures the list of trunk groups assigned to this Vlan
-
-    Args:
-        node (Node): An instance of pyeapi.client.Node used for sending and
-            receiveing eAPI messages
-        vlanid (str): The Vlan ID to configure the name value for
-        kwargs: Optional keyword arguments
-
-    Returns:
-        True if the command was completed successfully otherwise False is
-            returned
-
     """
-    default = kwargs.get('default', False)
-    value = kwargs['trunk_groups']
-    return set_attribute(node, 'set_trunk_groups', vlanid, value, default)
+    value = module.attributes['trunk_groups']
+    vlanid = module.attributes['vlanid']
+    module.node.api('vlans').set_trunk_groups(vlanid, value)
 
 def main():
     """ The main module routine called when the module is run by Ansible
@@ -214,63 +275,17 @@ def main():
         vlanid=dict(required=True),
         enable=dict(type='bool', default=True),
         name=dict(),
-        trunk_groups=dict(),
-        config=dict(),
-        connection=dict(default='localhost'),
-        state=dict(default='present', choices=['present', 'absent'])
+        trunk_groups=dict()
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=True)
+    module = EosAnsibleModule(argument_spec=argument_spec,
+                              supports_check_mode=True)
 
-    if module.params['config']:
-        pyeapi.load_config(module.params['config'])
-    node = pyeapi.connect_to(module.params['connection'])
+    module.flush()
 
-    result = dict(changed=False, changes=dict())
-    state = module.params['state']
+    result = module.result
+    result['instance'] = module.instance
 
-    vlanid = module.params['vlanid']
-    if not isvlan(vlanid):
-        module.fail_json(msg='vlanid is not a valid value')
-
-
-    trunk_groups = module.params['trunk_groups']
-    if trunk_groups is not None:
-        trunk_groups = re.sub(r',\s+', ',', module.params['trunk_groups'])
-
-    attributes = {
-        'vlanid': vlanid,
-        'name': module.params['name'],
-        'enable': module.params['enable'],
-        'trunk_groups': trunk_groups
-    }
-
-    instance = get_instance(node, vlanid)
-
-    if state == 'present':
-        if instance['state'] == 'absent':
-            if not module.check_mode:
-                instance = create_instance(node, vlanid)
-            result['changed'] = True
-
-        changeset = attributes.viewitems() - instance.viewitems()
-        for key, value in changeset:
-            func = 'set_%s' % key
-            if func in globals():
-                command = globals().get(func)
-                if value is not None:
-                    result['changes'][key] = value
-                    result['changed'] = True
-                    if not module.check_mode:
-                        command(node, **attributes)
-
-    elif instance['state'] == 'present' and state == 'absent':
-        result['changed'] = True
-        if not module.check_mode:
-            node.api('vlans').delete(vlanid)
-
-    result['instance'] = get_instance(node, vlanid)
     module.exit_json(**result)
 
 main()
