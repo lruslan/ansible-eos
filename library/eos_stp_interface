@@ -237,6 +237,7 @@ def instance(module):
     if result:
         _instance['portfast'] = result['portfast']
         _instance['bpduguard'] = result['bpduguard']
+        _instance['portfast_type'] = result['portfast_type']
     return _instance
 
 
@@ -254,6 +255,13 @@ def set_portfast(module):
     name = module.attributes['name']
     module.node.api('stp').interfaces.set_portfast(name, value)
 
+def set_portfast_type(module):
+    """ Configures the spanning-tree portfast <type> value
+    """
+    value = module.attributes['portfast_type']
+    name = module.attributes['name']
+    module.node.api('stp').interfaces.set_portfast_type(name, value)
+
 
 def main():
     """ The main module routine called when the module is run by Ansible
@@ -261,7 +269,8 @@ def main():
 
     argument_spec = dict(
         name=dict(required=True),
-        portfast=dict(choices=['edge', 'network', 'disable']),
+        portfast=dict(type='bool', choices=BOOLEANS),
+        portfast_type=dict(choices=['edge', 'network']),
         bpduguard=dict(type='bool', choices=BOOLEANS),
     )
 
