@@ -80,6 +80,8 @@ class EosAnsibleModule(AnsibleModule):
 
     common_args = {
         'config': dict(),
+        'username': dict(),
+        'password': dict(),
         'connection': dict(default='localhost'),
         'state': dict(default='present', choices=['present', 'absent'])
     }
@@ -209,10 +211,19 @@ class EosAnsibleModule(AnsibleModule):
         if self.params['config']:
             pyeapi.load_config(self.params['config'])
 
-        node = pyeapi.connect_to(self.params['connection'])
-        if not node:
+        config = pyeapi.config_for(self.params['connection'])
+        if not config:
             msg = 'Connection name "%s" not found' % params['connection']
             self.fail_json(msg=msg)
+
+        if self.params['username']:
+            config['username'] = self.params['username']
+
+        if self.params['password']:
+            config['password'] = self.params['password']
+
+        connection = pyeapi.connect(**config)
+        node = pyeapi.client.Node(connection)
 
         return node
 
