@@ -205,7 +205,7 @@ class EosAnsibleModule(AnsibleModule):
 
         config = pyeapi.config_for(self.params['connection'])
         if not config:
-            msg = 'Connection name "%s" not found' % params['connection']
+            msg = 'Connection name "%s" not found' % self.params['connection']
             self.fail_json(msg=msg)
 
         if self.params['username']:
