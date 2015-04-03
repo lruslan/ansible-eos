@@ -82,7 +82,7 @@ class EosAnsibleModule(AnsibleModule):
         'username': dict(),
         'password': dict(),
         'connection': dict(default='localhost'),
-        'state': dict(default='present', choices=['present', 'absent'])
+        'state': dict(default='present', choices=['present', 'absent','default'])
     }
 
     def __init__(self, *args, **kwargs):
@@ -100,6 +100,7 @@ class EosAnsibleModule(AnsibleModule):
 
         self.supports_create = True
         self.supports_remove = True
+        self.supports_default = True
 
         self.result = dict(changed=False, changes=dict())
 
@@ -149,6 +150,14 @@ class EosAnsibleModule(AnsibleModule):
             return func(self)
         return self._node
 
+    def default(self):
+        if not self.check_mode:
+            func = self.func('default')
+            if not func and self.supports_default:
+                self.fail_json(msg='Module must define "default"')
+            return func(self)
+        return self._node
+
     def flush(self):
         if self.desired_state == 'present':
             if self.instance['state'] == 'absent':
@@ -164,6 +173,10 @@ class EosAnsibleModule(AnsibleModule):
 
         elif self.instance['state'] == 'present' and self.desired_state == 'absent':
             self.remove()
+            self.result['changed'] = True
+
+        elif self.instance['state'] == 'present' and self.desired_state == 'default':
+            self.default()
             self.result['changed'] = True
 
         self.refresh()
@@ -249,6 +262,11 @@ def remove(module):
     """Removes an existing interface from the node
     """
     module.node.api('interfaces').delete(module.attributes['name'])
+
+def default(module):
+    """Sets an interface back to its default state
+    """
+    module.node.api('interfaces').default(module.attributes['name'])
 
 def set_description(module):
     """ Configures the description attribute for the interface
