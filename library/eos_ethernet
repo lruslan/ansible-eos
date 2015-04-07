@@ -222,7 +222,7 @@ class EosAnsibleModule(AnsibleModule):
         if self.params['password']:
             config['password'] = self.params['password']
 
-        connection = pyeapi.connect(**config)
+        connection = pyeapi.client.make_connection(**config)
         node = pyeapi.client.Node(connection)
 
         return node
@@ -252,8 +252,8 @@ def instance(module):
     instance['enable'] = not result['shutdown']
     instance['description'] = result['description']
     instance['sflow'] = result['sflow']
-    instance['flowcontrol_send'] = result['flowcontrol_send']
-    instance['flowcontrol_receive'] = result['flowcontrol_receive']
+    instance['flowcontrol_send'] = result['flowcontrol_send'] == 'on'
+    instance['flowcontrol_receive'] = result['flowcontrol_receive'] == 'on'
     return instance
 
 def set_description(module):
@@ -281,6 +281,7 @@ def set_flowcontrol_send(module):
     """ Configures the flowcontrol send  attribute for the interface
     """
     value = module.attributes['flowcontrol_send']
+    value = 'on' if value else 'off'
     name = module.attributes['name']
     module.node.api('interfaces').set_flowcontrol_send(name, value)
 
@@ -288,6 +289,7 @@ def set_flowcontrol_receive(module):
     """ Configures the flowcontrol receive attribute for the interface
     """
     value = module.attributes['flowcontrol_receive']
+    value = 'on' if value else 'off'
     name = module.attributes['name']
     module.node.api('interfaces').set_flowcontrol_receive(name, value)
 
@@ -301,8 +303,8 @@ def main():
         enable=dict(type='bool', default=True),
         description=dict(),
         sflow=dict(type='bool', default=True),
-        flowcontrol_send=dict(choices=['on', 'off']),
-        flowcontrol_receive=dict(choices=['on', 'off'])
+        flowcontrol_send=dict(type='bool'),
+        flowcontrol_receive=dict(type='bool')
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,
