@@ -1,0 +1,33 @@
+---
+defaults:
+  inventory: ../../ansible/demo/hosts
+  module_path: ../../ansible/ansible-eos/library
+  module: eos_vxlan_vlan
+
+testcases:
+
+  - name: create vlan to vni mapping
+    arguments:
+      - { name: name, value: Vxlan1 }
+      - { name: vlan, value: 400 }
+      - { name: vni, value: 400 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+
+    setup:
+      - no interface Vxlan1
+      - interface Vxlan1
+
+  - name: remove vlan to vni mapping
+    arguments:
+      - { name: name, value: Vxlan1 }
+      - { name: vlan, value: 400 }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+
+    setup:
+      - no interface Vxlan1
+      - interface Vxlan1
+      - vxlan vlan 400 vni 400
+
+

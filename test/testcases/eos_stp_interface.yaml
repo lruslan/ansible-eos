@@ -1,0 +1,119 @@
+---
+defaults:
+  inventory: ../../ansible/demo/hosts
+  module_path: ../../ansible/ansible-eos/library
+  module: eos_stp_interface
+
+testcases:
+
+  - name: set portfast_type to edge
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: portfast_type, value: edge }
+      - { name: connection, value: $host }
+
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - spanning-tree portfast network
+
+  - name: set portfast_type to network
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: portfast_type, value: network }
+      - { name: connection, value: $host }
+
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - spanning-tree portfast edge
+
+
+  - name: set portfast to true
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: portfast, value: true }
+      - { name: connection, value: $host }
+
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - no spanning-tree portfast
+
+  - name: set portfast to yes
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: portfast, value: yes }
+      - { name: connection, value: $host }
+
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - no spanning-tree portfast
+
+  - name: set portfast to false
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: portfast, value: false }
+      - { name: connection, value: $host }
+
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - spanning-tree portfast
+
+  - name: set portfast to no
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: portfast, value: no }
+      - { name: connection, value: $host }
+
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - spanning-tree portfast
+
+  - name: set bpduguard to true
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: bpduguard, value: true }
+      - { name: connection, value: $host }
+
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - spanning-tree bpduguard disable
+
+  - name: set bpduguard to yes
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: bpduguard, value: yes }
+      - { name: connection, value: $host }
+
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - spanning-tree bpduguard disable
+
+  - name: set bpduguard to false
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: bpduguard, value: false }
+      - { name: connection, value: $host }
+
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - spanning-tree bpduguard enable
+
+  - name: set bpduguard to no
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: bpduguard, value: no }
+      - { name: connection, value: $host }
+
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - spanning-tree bpduguard enable
+

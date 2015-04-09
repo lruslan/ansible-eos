@@ -1,0 +1,33 @@
+---
+defaults:
+  inventory: ../../ansible/demo/hosts
+  module_path: ../../ansible/ansible-eos/library
+  module: eos_vxlan_vtep
+
+testcases:
+
+  - name: create new vtep in global flood list
+    arguments:
+      - { name: name, value: Vxlan1 }
+      - { name: vtep, value: 1.1.1.1 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+
+    setup:
+      - no interface Vxlan1
+      - interface Vxlan1
+      - vxlan flood vtep 2.2.2.2
+
+  - name: remove existing vtep from global flood list
+    arguments:
+      - { name: name, value: Vxlan1 }
+      - { name: vtep, value: 1.1.1.1 }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+
+    setup:
+      - no interface Vxlan1
+      - interface Vxlan1
+      - vxlan flood vtep 1.1.1.1 2.2.2.2
+
+
