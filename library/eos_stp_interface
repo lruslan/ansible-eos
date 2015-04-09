@@ -281,16 +281,15 @@ def main():
 
     argument_spec = dict(
         name=dict(required=True),
-        portfast=dict(type='bool', choices=BOOLEANS),
+        portfast=dict(type='bool'),
         portfast_type=dict(choices=['edge', 'network']),
-        bpduguard=dict(type='bool', choices=BOOLEANS),
+        bpduguard=dict(type='bool'),
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,
                               supports_check_mode=True)
 
     module.set_supports_state(False)
-    module.debug = True
 
     module.flush()
 

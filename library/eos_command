@@ -132,7 +132,7 @@ def main():
         pyeapi.load_config(module.params['config'])
     node = pyeapi.connect_to(module.params['connection'])
 
-    result = dict(changed=False)
+    result = dict(changed=True)
 
     commands = module.params['commands']
     mode = module.params['mode']
