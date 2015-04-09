@@ -1,28 +1,36 @@
-README
-======
+# Ansible EOS Role
+
+#### Table of Contents
+
+1. [Overview](#overview)
+    * [Requirements](#requirements)
+2. [Setup](#setup)
+    * [Enabling EOS Command API](#enablingeoscommandapi)
+    * [Preparing EOS for Ansible](#preparingeosforansible)
+3. [Examples](#examples)
+4. [Development](#development)
+5. [License](#license)
+
+## Overview
+
 The Arista EOS role provides the foundation for working with Arista EOS nodes and Ansible.  The Arista EOS role for Ansible provides the ability to manage configuration resources in EOS.  The architecture of the roles makes inherent use of the Arista EOS command API using either a traditional Ansible SSH connection or by specifying connection: local and using eAPI to send and receive commands.  
 
-This role provides the following modules available for using in playbooks and tasks:
+The Ansible EOS role is freely provided to the open source community for automating Arista EOS node configurations using Ansible.  Support for the modules is provided on a best effort basis by the Arista EOS+ community.  Please file any bugs, questions or enhancement requests using [Github Issues](http://github.com/arista-eosplus/ansible-eos/issues)
 
-* eos_vlan
-* eos_switchport
-* eos_interface
-* eos_portchannel
-* eos_vxlan
-* eos_ipv4interfaces
-* eos_eapi
+### Requirements
 
-All modules are fully documented, please see the module documentation for all available parameters.  See the CHANGELOG.md file for the most update to date changes.
-
-Requirements
-------------
 * Arista EOS 4.13.7M or later
 * EOS Command API enabled (see Enabling EOS Command API)
 * [Python Client for eAPI 0.1.1 or later] [pyeapi]
 * Linux shell account (optional) (see Preparing EOS for Ansible)
 
-Enabling EOS Command API
-------------------------
+## Setup
+
+The instruction below provider a walk through for preparing an Arista EOS node
+to be managinged by Ansible.  
+
+### Enabling EOS Command API
+
 The modules provided in the Arista EOS role require command API (aka eAPI) to be enabled on the switch.   The modules use eAPI to communicate with EOS.  Since eAPI is not enabled by default, it must be initially enabled before the EOS modules can be used.
 
 The steps below provide the basic steps to enable eAPI.  For more advanced configurations, please consult the EOS User Guide.
@@ -53,9 +61,8 @@ for eAPI] [pyeapi] for more details.
 switch(config)# username eapi secret icanttellyou
 ```
 
+### Preparing EOS for Ansible
 
-Preparing EOS for Ansible
--------------------------
 In order to successfully execute playbook tasks using a SSH conneciton, the EOS node must be configured to allow the Ansible control node to directly attach to the Linux shell.  The following steps provide a walk through for setting up password-less access to EOS nodes for use with Ansible
 
 _Note: These steps will create a user that has root priviledges to your EOS node so please handle credentials accordingly_
@@ -121,8 +128,8 @@ __Step 5.__ Reboot the EOS node and start automating with Ansible
 [ansible@veos ~]$ sudo reboot
 ```
 
-Example Playbook
-----------------
+## Examples
+
 The example playbook demostrates how to send a list of commands to the EOS node.  Note the commands send using eos_command are *not* idempotent.
 
 ```
@@ -152,7 +159,7 @@ The example playbook demostrates how to send a list of commands to the EOS node.
         description: managed by Ansible
         enable: true
 
-    eos_ipv4interfaces:
+    eos_ipinterfaces:
       - name: Loopback0
         address: 1.1.1.1/32
       - name: Ethernet1
@@ -181,21 +188,17 @@ The example playbook demostrates how to send a list of commands to the EOS node.
       register: eos_interface_output
 
     - name: Configure EOS IPv4 interfaces
-      eos_ipv4interface: name={{ item.name }}
+      eos_ipinterface: name={{ item.name }}
                          address={{ item.address }}
                          connection={{ inventory_hostname }}
-      with_items: eos_ipv4interfaces
-      when: eos_ipv4interfaces is defined
-      register: eos_ipv4interfaces_output
+      with_items: eos_ipinterfaces
+      when: eos_ipinterfaces is defined
+      register: eos_ipinterfaces_output
 
 ```
 
-Author Information
-------------------
-Arista EOS+ (eosplus-dev@arista.com)
+## License
 
-License
--------
 Copyright (c) 2015, Arista Networks, Inc.
 All rights reserved.
 
