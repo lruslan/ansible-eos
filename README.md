@@ -8,8 +8,7 @@
     * [Enabling EOS Command API](#enablingeoscommandapi)
     * [Preparing EOS for Ansible](#preparingeosforansible)
 3. [Examples](#examples)
-4. [Development](#development)
-5. [License](#license)
+4. [License](#license)
 
 ## Overview
 
@@ -129,6 +128,12 @@ __Step 5.__ Reboot the EOS node and start automating with Ansible
 ```
 
 ## Examples
+
+The example command can be used to validate that Ansible can properly communicate with EOS nodes.
+
+```
+$ ansible -m ping eos_nodes
+```
 
 The example playbook demostrates how to send a list of commands to the EOS node.  Note the commands send using eos_command are *not* idempotent.
 
