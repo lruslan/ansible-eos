@@ -52,7 +52,7 @@ simply enter the following command from a shell prompt.
   sudo pip install ansible
 
 ****************************
-Install The EOS Ansible Role
+Install the Ansible EOS Role
 ****************************
 Arista EOS+ Consulting Services maintains a set of modules that provide
 native integration with Ansible. All of the modules are available via
@@ -87,6 +87,7 @@ second command as the <tag name>.
 For instance, to use the v1.0 release, enter the command
 
 .. code-block:: console
+
   git checkout tags/v1.0
 
 
