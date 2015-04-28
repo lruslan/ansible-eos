@@ -37,6 +37,7 @@ description:
   - The purge module provides a mechanism to purge all resources of a given
     type from the running configuration unless the resource has been
     specified in the playbook.
+version_added: 0.1.0
 author: Arista EOS+
 notes:
   - Please be sure to fully understand the implications of this module

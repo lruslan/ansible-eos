@@ -12,7 +12,7 @@ This project is maintained by the `Arista Networks <http://arista.com/>`_ EOS+ C
    overview
    quickstart
    install
-   modules
+   _modules/list_of_all_modules
    cookbook
    troubleshoot
    development

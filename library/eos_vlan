@@ -37,6 +37,7 @@ description:
   - Provides active state management of VLAN configuration on Arista EOS
     nodes. All configuration of resources is idempotent unless
     otherwise specified.
+version_added: 0.1.0
 author: Arista EOS+
 notes:
 requirements:
@@ -137,7 +138,7 @@ options:
   eapi:
     description:
       - Configures the eAPI attributes for connecting to EOS.  This options
-        must be a dictionary with the following keys: hostname, username
+        must be a dictionary with the following keys - hostname, username
         password, protocol, port
     require: false
     default: null

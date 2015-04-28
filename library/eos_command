@@ -36,7 +36,8 @@ short_description: Communicate with Arista EOS nodes over eAPI
 description:
   - Provides a module for sending and receiving commands to Arista EOS
     nodes over eAPI.  This module does not provide idempotent operations.
-    author: Arista EOS+
+version_added: 0.1.0
+author: Arista EOS+
 notes:
 requirements:
   - Arista EOS 4.12.0 or later

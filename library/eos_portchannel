@@ -37,6 +37,7 @@ description:
   - Provides active state management of logical port-channel interface
     configuration on Arista EOS nodes. All configuration of
     resources is idempotent unless otherwise specified.
+version_added: 0.1.0
 author: Arista EOS+
 notes:
 requirements:

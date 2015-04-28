@@ -6,6 +6,11 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
+ANSIBLE_CORE	= ../../ansible/lib/
+
+#  Added for ansible-style module documentation
+SITELIB 			= $(shell python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
+FORMATTER			= _formatter/module_formatter.py
 
 # User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
@@ -47,12 +52,15 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	rm -rf $(BUILDDIR)/*
+	rm -rf $(BUILDDIR)/* _modules/*
 
-html:
+html: modules
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
+
+modules: $(FORMATTER) _formatter/templates/rst.j2
+	PYTHONPATH=$(ANSIBLE_CORE):../library $(FORMATTER) -t rst --template-dir=_formatter/templates --module-dir=../library/ -o _modules
 
 dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
