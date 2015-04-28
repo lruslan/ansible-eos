@@ -91,7 +91,7 @@ For instance, to use the v1.0 release, enter the command
 
 .. code-block:: console
 
-  git checkout tags/v1.0
+  git checkout tags/v1.0.0
 
 
 At any point in time switching to a different release is as easy as changing
