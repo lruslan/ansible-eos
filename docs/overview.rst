@@ -55,6 +55,86 @@ its duties locally on the node. The pull model executes a local utility that
 retrieves the configuration data and proceeds to execute all of the activity
 locally on the node.
 
+
+********************
+The Ansible EOS Role
+********************
+
+Integration with the Python Client for eAPI
+===========================================
+The Ansible Role for EOS does not rely on jsonrpclib to control
+the node's Command API interface, rather, the `Python Client for eAPI <https://github.com/arista-eosplus/pyeapi>`_
+is used.
+
+
+Topologies
+==========
+Above, we discussed how Ansible is typically used to control a node. These
+principles remain true for Arista EOS nodes, however, there are some nuances
+that are important to understand. Next, we will discuss the two main
+methods used to control an Arista EOS node using Ansible.
+
+.. image:: _img/ansible-deploy.jpg
+        :width: 85%
+        :align: center
+
+The illustration above demonstrates a typical scenario. You, as the user, want
+to execute an Ansible Playbook on one (or many) of your Arista nodes. From the
+user's perspective the interaction with the Ansible Control Host is the same,
+from your shell you would type
+
+.. code-block:: console
+
+  ansible-playbook eos.yaml
+
+but the way in which the playbook is executed will differ between Option A and
+Option B. Let's discuss those differences below.
+
+Option A
+========
+This method follows the traditional Ansible control procedure, namely:
+
+1. Execute ``ansible-playbook eos.yaml`` from the Ansible Control Host
+2. Collect Fact information from the node
+3. Download the module to the node
+4. Execute the module on the node
+5. Read stdout and parse it into JSON
+6. Return the result to the Ansible Control Host
+
+**Assumption 1**
+You'll notice that this method uses SSH to communicate with the node. This
+implies that you have already included the Ansible Control Host's public SSH
+key in the nodes ``authorized_keys`` file, or you are providing a password
+when the playbook executes.
+
+**Assumption 2**
+Pyeapi is being used by the module to make configuration changes on the
+node. This implies that ``pyeapi`` is already installed on the node. The pyeapi
+module is NOT installed on Arista EOS nodes by default, so installation would
+be required by the user.
+
+
+Option B
+========
+This method uses the ``connection: local`` feature within the ``eos.yaml``
+playbook. This changes how the playbook gets executed in the following way:
+
+1. Include ``connection: local`` in ``eos.yaml``
+2. Execute ``ansible-playbook eos.yaml`` from the Ansible Control Host
+3. pyeapi consults the local eapi.conf file which provide node connection information
+4. Collect Fact information from the node
+5. Execute the module on the Ansible Control Host
+6. Read stdout and parse it into JSON
+7. Return the result to the Ansible Control Host
+
+**Assumption 1**
+Here, the connection between the Ansible Control Host and the Arista node is
+an eAPI connection. This implies that you have an ``eapi.conf`` file on your
+Ansible Control Host that contains the connection parameters for this node.
+The caveat here is that the password for the eAPI connection is stored as
+plaintext in ``eapi.conf``.
+
+
 *************
 Ansible Tower
 *************
