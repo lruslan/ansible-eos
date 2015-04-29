@@ -122,11 +122,11 @@ EXAMPLES = """
   eos_ethernet: name=Ethernet10 flowcontrol_send=yes flowcontrol_receive=yes
 
 """
-
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
 import collections
+import json
 
 from ansible.module_utils.basic import *
 
@@ -386,14 +386,6 @@ class EosAnsibleModule(AnsibleModule):
         cls.stateful_args['state']['choices'].append(name)
 
 #<<EOS_COMMON_MODULE_END>>
-
-
-
-
-
-
-
-
 
 def instance(module):
     """ Returns the interface properties for the specified name

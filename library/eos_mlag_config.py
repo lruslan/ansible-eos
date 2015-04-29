@@ -111,11 +111,11 @@ EXAMPLES = """
   eos_mlag_config: peer_address=2.2.2.2 local_interface=Vlan4094
 
 """
-
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
 import collections
+import json
 
 from ansible.module_utils.basic import *
 
@@ -375,14 +375,6 @@ class EosAnsibleModule(AnsibleModule):
         cls.stateful_args['state']['choices'].append(name)
 
 #<<EOS_COMMON_MODULE_END>>
-
-
-
-
-
-
-
-
 
 def instance(module):
     """Returns an instance of Mlag global config from the node

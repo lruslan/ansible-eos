@@ -100,11 +100,11 @@ EXAMPLES = """
 
 """
 import re
-
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
 import collections
+import json
 
 from ansible.module_utils.basic import *
 
@@ -364,14 +364,6 @@ class EosAnsibleModule(AnsibleModule):
         cls.stateful_args['state']['choices'].append(name)
 
 #<<EOS_COMMON_MODULE_END>>
-
-
-
-
-
-
-
-
 
 def section(module):
     if not module.attributes['section']:

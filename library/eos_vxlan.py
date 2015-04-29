@@ -126,11 +126,11 @@ EXAMPLES = """
   eos_vxlan: name=Vxlan1 source_interface=Loopback0
 
 """
-
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
 import collections
+import json
 
 from ansible.module_utils.basic import *
 
@@ -390,14 +390,6 @@ class EosAnsibleModule(AnsibleModule):
         cls.stateful_args['state']['choices'].append(name)
 
 #<<EOS_COMMON_MODULE_END>>
-
-
-
-
-
-
-
-
 
 def instance(module):
     """ Returns the vxlan interface properties for the specified name

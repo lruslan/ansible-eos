@@ -80,11 +80,11 @@ EXAMPLES = """
   eos_vxlan_vtep: name=Vxlan1 state=absent vtep=2.2.2.2
 
 """
-
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
 import collections
+import json
 
 from ansible.module_utils.basic import *
 
@@ -344,14 +344,6 @@ class EosAnsibleModule(AnsibleModule):
         cls.stateful_args['state']['choices'].append(name)
 
 #<<EOS_COMMON_MODULE_END>>
-
-
-
-
-
-
-
-
 
 def instance(module):
     """ Returns an instance of Vlan based on vlanid
