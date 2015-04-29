@@ -86,7 +86,6 @@ EXAMPLES = """
 
 import syslog
 import collections
-import json
 
 from ansible.module_utils.basic import *
 
@@ -98,6 +97,7 @@ except ImportError:
 
 DEFAULT_SYSLOG_PRIORITY = syslog.LOG_NOTICE
 DEFAULT_CONNECTION = 'localhost'
+TRANSPORTS = ['socket', 'http', 'https', 'http_local']
 
 class EosAnsibleModule(AnsibleModule):
 
@@ -105,7 +105,10 @@ class EosAnsibleModule(AnsibleModule):
         'config': dict(),
         'username': dict(),
         'password': dict(),
+        'host': dict(),
         'connection': dict(default=DEFAULT_CONNECTION),
+        'transport': dict(choices=TRANSPORTS),
+        'port': dict(),
         'debug': dict(type='bool', default='false'),
         'logging': dict(type='bool', default='true')
     }
@@ -142,10 +145,6 @@ class EosAnsibleModule(AnsibleModule):
 
         self.desired_state = self.params['state'] if self._stateful else None
         self.exit_after_flush = kwargs.get('exit_after_flush')
-
-    def __getattr__(self, name):
-        if name in self.__dict__['_attributes']:
-            return self.__dict__['_attributes'][name]
 
     @property
     def instance(self):
@@ -270,16 +269,31 @@ class EosAnsibleModule(AnsibleModule):
         if self.params['config']:
             pyeapi.load_config(self.params['config'])
 
-        config = pyeapi.config_for(self.params['connection'])
-        if not config:
-            msg = 'Connection name "%s" not found' % self.params['connection']
-            self.fail(msg)
+        config = dict()
+
+        if self.params['connection']:
+            config = pyeapi.config_for(self.params['connection'])
+            if not config:
+                msg = 'Connection name "%s" not found' % self.params['connection']
+                self.fail(msg)
 
         if self.params['username']:
             config['username'] = self.params['username']
 
         if self.params['password']:
             config['password'] = self.params['password']
+
+        if self.params['transport']:
+            config['transport'] = self.params['transport']
+
+        if self.params['port']:
+            config['port'] = self.params['port']
+
+        if self.params['host']:
+            config['host'] = self.params['host']
+
+        if 'transport' not in config:
+            self.fail('Connection must define a transport')
 
         connection = pyeapi.client.make_connection(**config)
         node = pyeapi.client.Node(connection)
