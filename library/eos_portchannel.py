@@ -37,6 +37,8 @@ short_description: Manage Port-Channel interfaces in EOS
 description:
   - The eos_portchannel module manages the interface configuration for
     logical Port-Channel interfaces on EOS nodes.
+version_added: 1.0.0
+category: Interfaces
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

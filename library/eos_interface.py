@@ -37,6 +37,8 @@ short_description: Manage generic interfaces on EOS nodes
 description:
   - The eos_interface module manages the interface configuration for any
     valid interface on EOS nodes.
+version_added: 1.0.0
+category: Interfaces
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

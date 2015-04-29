@@ -38,6 +38,8 @@ description:
   - Provides active state management of switchport (layer 2) interface
     configuration in Arista EOS.  Logical switchports are mutually exclusive
     with M(eos_ipinterface).
+version_added: 1.0.0
+category: Bridging
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

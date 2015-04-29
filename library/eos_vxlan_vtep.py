@@ -37,6 +37,8 @@ short_description: Manages Vxlan global VTEP flood list
 description:
   - The eos_vxlan_vtep module manages the Vxlan global VTEP flood list
     configure on Arista EOS nodes that are operating as VTEPs
+version_added: 1.0.0
+category: VXLAN
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

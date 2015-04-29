@@ -37,6 +37,8 @@ short_description: Manages Vxlan VLAN to VNI mappings for a VTEP
 description:
   - The eos_vxlan_vlan module manages the Vxlan VLAN to VNI mappings
     for an Arista EOS node that is operating as a VTEP
+version_added: 1.0.0
+category: VXLAN
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

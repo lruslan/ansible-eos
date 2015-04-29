@@ -39,6 +39,8 @@ description:
     commands to the EOS node and returns the ouput.  Commands can
     be either priviledged mode (enable) commands or configuration
     commands.
+version_added: 1.0.0
+category: System
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

@@ -37,6 +37,8 @@ short_description: Manage physical Ethernet interfaces in EOS
 description:
   - The eos_ethernet module manages the interface configuration for
     physical Ethernet interfaces on EOS nodes.
+version_added: 1.0.0
+category: Interfaces
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

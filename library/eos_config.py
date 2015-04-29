@@ -39,6 +39,8 @@ description:
     commands.  If the commands are either present or absent (depending on
     the function argument, the eos_config module will configure the node
     using the command argument.
+version_added: 1.0.0
+category: System
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

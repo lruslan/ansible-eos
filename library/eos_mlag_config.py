@@ -38,6 +38,8 @@ description:
   - The eos_mlag_interface module manages the MLAG interfaces on Arista
     EOS nodes.  This module is fully stateful and all configuration of
     resources is idempotent unless otherwise specified.
+version_added: 1.0.0
+category: MLAG
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

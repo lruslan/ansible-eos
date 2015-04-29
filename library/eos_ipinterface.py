@@ -38,6 +38,8 @@ description:
   - The eos_ipinterface module amanges logical layer 3 interface
     configurations.
   - Note: Currently this module only supports IPv4
+version_added: 1.0.0
+category: IP
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

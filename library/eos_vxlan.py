@@ -37,6 +37,8 @@ short_description: Manage logical VxLAN interfaces in EOS
 description:
   - The eos_vxlan module manages the logical VxLAN interface configuration
     on Arista EOS nodes.
+version_added: 1.0.0
+category: VXLAN
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

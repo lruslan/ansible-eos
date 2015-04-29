@@ -37,6 +37,8 @@ short_description: Manage global system resources in EOS
 description:
   - The eos_system module manages global system configuration options
     on Arista EOS nodes.
+version_added: 1.0.0
+category: System
 author: Arista EOS+ CS
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled
