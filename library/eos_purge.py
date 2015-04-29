@@ -30,11 +30,73 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+DOCUMENTATION = """
+---
+module: eos_purge
+short_description: Purges resources from an Arista EOS node
+description:
+  - The eos_purge module will scan the current nodes running-configuration
+    and purge resources of a specified type if the resource is not explicitly
+    configured in the playbook.  This module will allow a playbook task to
+    dynamically determine which resources should be removed from the nodes
+    running-configuration based on the playbook.
+  - Note Purge is not supported for all EOS modules
+version_added: 1.0.0
+category: System
+author: Arista EOS+
+requirements:
+  - Arista EOS 4.13.7M or later with command API enabled
+  - Python Client for eAPI 0.3.0 or later
+notes:
+  - All configuration is idempotent unless otherwise specified
+  - Supports eos metaparameters for using the eAPI transport
+  - Does not support stateful resource configuration.
+options:
+  resource:
+    description:
+      - The name of the resource module to purge from the configuration.  If
+        the provided resource name does not support purge, the module will
+        simply exit with an error message.
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.0
+  results:
+    description:
+      - The results argument is used to store the output from a previous
+        module run.   Using the output from the module run allows the purge
+        function to filter which resources should be removed.  See the
+        Examples for more
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.0
+"""
 
+EXAMPLES = """
+
+# configure the set of vlans for the node
+
+- name: configure vlans
+  eos_vlan: vlanid={{ item }}
+  with_items: ['1', '10', '11', '12', '13', '14', '15']
+  register: required_vlans
+
+
+# note the value for results is the registered vlan variable.  Also of
+# importance is the to_nice_json filter which is required
+
+- name: purge vlans not on the list
+  eos_purge: resource=eos_vlan results='{{ required_vlans|to_nice_json }}'
+
+"""
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
 import collections
+import json
 
 from ansible.module_utils.basic import *
 
@@ -295,11 +357,9 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
+def eos_vxlan_vlan(module):
 
-
-
-def eos_vxlan_vlan(node, results):
-    resp = node.api('interfaces').get('Vxlan1')
+    resp = module.api('interfaces').get('Vxlan1')
     if not resp:
         return dict(purged=[])
 
@@ -317,29 +377,47 @@ def eos_vxlan_vlan(node, results):
     return dict(purged=purged)
 
 
+def eos_vlan(module):
+    current = module.api('vlans').getall()
+
+    results = module.from_json(module.attributes['results'])
+    expected = list()
+    for item in results['results']:
+        expected.append(item['instance']['vlanid'])
+
+    purgeset = set(current.keys()).difference(expected)
+    for item in purgeset:
+        if not module.check_mode:
+            module.api('vlans').delete(item)
+
+    purged = [{'vlanid': vid, 'state': 'absent'} for vid in purgeset]
+    return dict(purged=purged)
+
+
 def main():
     """ The main module routine called when the module is run by Ansible
     """
 
     argument_spec = dict(
         resource=dict(required=True),
-        results=dict(required=True, type='list')
+        results=dict(required=True)
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec, stateful=False)
 
     func = globals().get(module.params['resource'])
     if not func:
-        module.fail_json(msg='Resource "%s" does not currently support the '
-                             'purge function' % module.params['resource'])
+        module.fail('Resource "%s" does not currently support the '
+                    'purge function' % module.params['resource'])
 
-    resp = func(node, module.params['results']) or False
+    resp = func(module)
     if resp:
         if resp.get('purged'):
-            result.update(resp)
-            result['changed'] = True
+            module.result.update(resp)
+            module.result['changed'] = True
+        else:
+            module.result['purged'] = list()
 
-    module.exit_json(**result)
+    module.exit()
 
 main()
-
