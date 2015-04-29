@@ -1,7 +1,7 @@
 ---
 defaults:
   inventory: ../../ansible/demo/hosts
-  module_path: ../../ansible/ansible-eos/library
+  module_path: ../../ansible/ansible-eos-core/library
   module: eos_stp_interface
 
 testcases:
@@ -11,7 +11,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: portfast_type, value: edge }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -22,7 +22,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: portfast_type, value: network }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -34,7 +34,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: portfast, value: true }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -45,7 +45,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: portfast, value: yes }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -56,7 +56,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: portfast, value: false }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -67,7 +67,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: portfast, value: no }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -78,7 +78,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: bpduguard, value: true }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -89,7 +89,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: bpduguard, value: yes }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -100,7 +100,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: bpduguard, value: false }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -111,7 +111,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: bpduguard, value: no }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1

@@ -85,12 +85,12 @@ class TestModule(object):
     def __call__(self):
         self.output('Run first pass')
         response = self.run_module()
-        assert(response['changed'] == True)
+        assert(response['changed'])
 
         if self.testcase.idempotent:
             self.output('Run second pass')
             response = self.run_module()
-            assert(response['changed'] == False)
+            assert(not response['changed'])
 
     def setUp(self):
         if self.testcase.setup:
@@ -99,7 +99,8 @@ class TestModule(object):
                 self.output(self.testcase.setup)
                 self.node.config(self.testcase.setup)
             except pyeapi.eapilib.CommandError as exc:
-                log(self.testcase.setup)
+                print exc
+                print self.testcase.setup
                 raise
 
     def tearDown(self):
@@ -147,7 +148,7 @@ def filter_modules(modules, filenames):
 
 def setup():
     pyeapi.load_config(os.path.join(here, 'fixtures/eapi.conf'))
-    for name in pyeapi.client.config.profiles:
+    for name in pyeapi.client.config.connections:
         if name != 'localhost':
             nodes[name] = pyeapi.connect_to(name)
 
@@ -175,4 +176,3 @@ def test_module():
             testcase.set_host(name)
             testcase.add_variable('host', name)
             yield TestModule(testcase, node)
-

@@ -1,7 +1,7 @@
 ---
 defaults:
   inventory: ../../ansible/demo/hosts
-  module_path: ../../ansible/ansible-eos/library
+  module_path: ../../ansible/ansible-eos-core/library
   module: eos_vlan
 
 testcases:
@@ -11,6 +11,7 @@ testcases:
       - { name: vlanid, value: 100 }
       - { name: state, value: present }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
     setup:
       - no vlan 100
 
@@ -19,6 +20,7 @@ testcases:
       - { name: vlanid, value: 100 }
       - { name: state, value: absent }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
     setup:
       - vlan 100
 
@@ -27,6 +29,7 @@ testcases:
       - { name: vlanid, value: 100 }
       - { name: enable, value: true }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
     setup:
       - no vlan 100
       - vlan 100
@@ -37,6 +40,7 @@ testcases:
       - { name: vlanid, value: 100 }
       - { name: enable, value: yes }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
     setup:
       - no vlan 100
       - vlan 100
@@ -47,6 +51,7 @@ testcases:
       - { name: vlanid, value: 100 }
       - { name: enable, value: false }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
     setup:
       - no vlan 100
       - vlan 100
@@ -56,6 +61,7 @@ testcases:
       - { name: vlanid, value: 100 }
       - { name: enable, value: no }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
     setup:
       - no vlan 100
       - vlan 100
@@ -65,6 +71,7 @@ testcases:
       - { name: vlanid, value: 100 }
       - { name: name, value: test_vlan }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
     setup:
       - no vlan 100
       - vlan 100
@@ -74,6 +81,7 @@ testcases:
       - { name: vlanid, value: 100 }
       - { name: trunk_groups, value: foo }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
     setup:
       - no vlan 100
       - vlan 100
@@ -83,6 +91,7 @@ testcases:
       - { name: vlanid, value: 100 }
       - { name: trunk_groups, value: foo,bar }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
     setup:
       - no vlan 100
       - vlan 100

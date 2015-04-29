@@ -1,5 +1,6 @@
+#!/usr/bin/python
 #
-# Copyright (c) 2014, Arista Networks, Inc.
+# Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,14 +30,27 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
----
-galaxy_info:
-  author: EOS+ CS
-  description: Role for managing Arista EOS nodes
-  company: Arista
-  license: BSD-3
-  min_ansible_version: 1.2
-  categories:
-    - networking
+import glob
+import re
 
-dependencies: []
+common = open('common/eos.py').read()
+
+start_re = re.compile(r'#<<EOS_COMMON_MODULE_START>>', re.M)
+stop_re = re.compile(r'#<<EOS_COMMON_MODULE_END>>', re.M)
+
+def main():
+    for name in glob.glob('library/*.py'):
+        if not name.startswith('library/__') and name.endswith('.py'):
+            print 'processing', name
+            mod = open(name).read()
+
+            start = start_re.search(mod, re.M)
+            stop = stop_re.search(mod, re.M)
+
+            with open(name, 'w') as f:
+                f.write(mod[:start.start()])
+                f.write(common)
+                f.write(mod[stop.end():])
+
+if __name__ == '__main__':
+    main()

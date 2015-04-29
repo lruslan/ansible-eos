@@ -1,7 +1,7 @@
 ---
 defaults:
   inventory: ../../ansible/demo/hosts
-  module_path: ../../ansible/ansible-eos/library
+  module_path: ../../ansible/ansible-eos-core/library
   module: eos_interface
 
 testcases:
@@ -11,7 +11,7 @@ testcases:
       - { name: name, value: Loopback0 }
       - { name: state, value: present }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - no interface Loopback0
 
@@ -20,7 +20,7 @@ testcases:
       - { name: name, value: Loopback0 }
       - { name: state, value: absent }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - interface Loopback0
 
@@ -29,7 +29,7 @@ testcases:
       - { name: name, value: Loopback0 }
       - { name: enable, value: true }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - no interface Loopback0
       - interface Loopback0
@@ -40,7 +40,7 @@ testcases:
       - { name: name, value: Loopback0 }
       - { name: enable, value: yes }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - no interface Loopback0
       - interface Loopback0
@@ -51,7 +51,7 @@ testcases:
       - { name: name, value: Loopback0 }
       - { name: enable, value: false }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - no interface Loopback0
       - interface Loopback0
@@ -61,7 +61,7 @@ testcases:
       - { name: name, value: Loopback0 }
       - { name: enable, value: no }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - no interface Loopback0
       - interface Loopback0
@@ -71,7 +71,7 @@ testcases:
       - { name: name, value: Loopback0 }
       - { name: description, value: "'test interface string'" }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - no interface Loopback0
       - interface Loopback0

@@ -1,7 +1,7 @@
 ---
 defaults:
   inventory: ../../ansible/demo/hosts
-  module_path: ../../ansible/ansible-eos/library
+  module_path: ../../ansible/ansible-eos-core/library
   module: eos_ipinterface
   teardown:
     - default interface Ethernet1
@@ -13,7 +13,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: state, value: present }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
 
@@ -22,7 +22,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: state, value: absent }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -34,7 +34,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: address, value: 99.99.99.99/8 }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -45,7 +45,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: mtu, value: 2000 }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1

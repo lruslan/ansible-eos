@@ -1,7 +1,7 @@
 ---
 defaults:
   inventory: ../../ansible/demo/hosts
-  module_path: ../../ansible/ansible-eos/library
+  module_path: ../../ansible/ansible-eos-core/library
   module: eos_command
   idempotent: false
 
@@ -12,24 +12,28 @@ testcases:
       - { name: commands, value: "'show version'" }
       - { name: mode, value: enable }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
 
   - name: runs multiple enable commands
     arguments:
       - { name: commands, value: "'show version, show ip route'" }
       - { name: mode, value: enable }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
 
   - name: runs a single config command
     arguments:
       - { name: commands, value: "'hostname teststring'" }
       - { name: mode, value: config }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
 
   - name: runs multiple enable commands
     arguments:
       - { name: commands, value: "'vlan 250, name TEST_VLAN_250'" }
       - { name: mode, value: config }
       - { name: connection, value: $host }
+      - { name: debug, value: true }
 
 
 

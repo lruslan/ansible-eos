@@ -1,0 +1,36 @@
+---
+defaults:
+  inventory: ../../ansible/demo/hosts
+  module_path: ../../ansible/ansible-eos-core/library
+  module: eos_acl_entry
+
+testcases:
+
+  - name: create acl entry
+    arguments:
+      - { name: acltype, value: standard }
+      - { name: seqno, value: 10 }
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: srcaddr, value: 0.0.0.0 }
+      - { name: srcprefixlen, value: 32 }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no ip access-list standard test
+      - no ip access-list test
+
+  - name: remove acl entry
+    arguments:
+      - { name: acltype, value: standard }
+      - { name: seqno, value: 10 }
+      - { name: name, value: test }
+      - { name: state, value: absent }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no ip access-list standard test
+      - ip access-list standard test
+      - 10 permit any
+      - 20 deny any
+      - exit

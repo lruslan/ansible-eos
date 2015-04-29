@@ -1,7 +1,7 @@
 ---
 defaults:
   inventory: ../../ansible/demo/hosts
-  module_path: ../../ansible/ansible-eos/library
+  module_path: ../../ansible/ansible-eos-core/library
   module: eos_vxlan_vlan
 
 testcases:
@@ -13,7 +13,7 @@ testcases:
       - { name: vni, value: 400 }
       - { name: state, value: present }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - no interface Vxlan1
       - interface Vxlan1
@@ -24,7 +24,7 @@ testcases:
       - { name: vlan, value: 400 }
       - { name: state, value: absent }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - no interface Vxlan1
       - interface Vxlan1

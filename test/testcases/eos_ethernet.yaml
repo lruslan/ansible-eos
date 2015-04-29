@@ -1,7 +1,7 @@
 ---
 defaults:
   inventory: ../../ansible/demo/hosts
-  module_path: ../../ansible/ansible-eos/library
+  module_path: ../../ansible/ansible-eos-core/library
   module: eos_ethernet
 
 testcases:
@@ -11,7 +11,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: enable, value: true }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -22,7 +22,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: enable, value: yes }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -33,7 +33,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: enable, value: false }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
 
@@ -42,7 +42,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: enable, value: no }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
 
@@ -51,7 +51,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: description, value: "'test interface description'" }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
 
@@ -60,7 +60,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: sflow, value: true }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -71,7 +71,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: sflow, value: yes }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -82,7 +82,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: sflow, value: false }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
 
@@ -91,7 +91,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: sflow, value: no }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
 
@@ -100,7 +100,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: flowcontrol_send, value: on }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -111,7 +111,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: flowcontrol_send, value: true }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -122,7 +122,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: flowcontrol_send, value: off }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -133,7 +133,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: flowcontrol_send, value: false }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -144,7 +144,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: flowcontrol_receive, value: on }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -155,7 +155,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: flowcontrol_receive, value: true }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -166,7 +166,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: flowcontrol_receive, value: off }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
@@ -177,7 +177,7 @@ testcases:
       - { name: name, value: Ethernet1 }
       - { name: flowcontrol_receive, value: false }
       - { name: connection, value: $host }
-
+      - { name: debug, value: true }
     setup:
       - default interface Ethernet1
       - interface Ethernet1
