@@ -36,38 +36,41 @@ from jinja2 import Environment, FileSystemLoader
 import ansible.utils
 import ansible.utils.module_docs as module_docs
 
-#####################################################################################
 # constants and paths
 
 # The list of modules that do no require documentation
-ANSIBLE_EOS_BLACKLIST = ('eos_facts')
+ANSIBLE_EOS_BLACKLIST = ('eos_facts', 'eos_purge')
 
-# if a module is added in a version of Ansible older than this, don't print the version added information
-# in the module documentation because everyone is assumed to be running something newer than this already.
-TO_OLD_TO_BE_NOTABLE = 1.0
+# if a module is added in a version of Ansible older than this, don't print
+# the version added information
+# in the module documentation because everyone is assumed to be running
+# something newer than this already.
+TO_OLD_TO_BE_NOTABLE = 0.1
 
 # Get parent directory of the directory this script lives in
-MODULEDIR=os.path.abspath(os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'lib', 'ansible', 'modules'
+MODULEDIR = os.path.abspath(os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'lib', 'ansible',
+    'modules'
 ))
 
 # The name of the DOCUMENTATION template
-EXAMPLE_YAML=os.path.abspath(os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'examples', 'DOCUMENTATION.yml'
+EXAMPLE_YAML = os.path.abspath(os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'examples',
+    'DOCUMENTATION.yml'
 ))
 
 _ITALIC = re.compile(r"I\(([^)]+)\)")
-_BOLD   = re.compile(r"B\(([^)]+)\)")
+_BOLD = re.compile(r"B\(([^)]+)\)")
 _MODULE = re.compile(r"M\(([^)]+)\)")
-_URL    = re.compile(r"U\(([^)]+)\)")
-_CONST  = re.compile(r"C\(([^)]+)\)")
+_URL = re.compile(r"U\(([^)]+)\)")
+_CONST = re.compile(r"C\(([^)]+)\)")
 
 DEPRECATED = " (D)"
-NOTCORE    = " (E)"
-#####################################################################################
+NOTCORE = " (E)"
+
 
 def rst_ify(text):
-    ''' convert symbols like I(this is in italics) to valid restructured text '''
+    '''convert symbols like I(this is in italics) to valid restructured text'''
 
     t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
     t = _BOLD.sub(r'**' + r"\1" + r"**", t)
@@ -77,7 +80,6 @@ def rst_ify(text):
 
     return t
 
-#####################################################################################
 
 def html_ify(text):
     ''' convert symbols like I(this is in italics) to valid HTML '''
@@ -92,42 +94,37 @@ def html_ify(text):
     return t
 
 
-#####################################################################################
-
 def rst_fmt(text, fmt):
     ''' helper for Jinja2 to do format strings '''
 
     return fmt % (text)
 
-#####################################################################################
 
 def rst_xline(width, char="="):
     ''' return a restructured text line of a given length '''
 
     return char * width
 
-#####################################################################################
 
 def write_data(text, options, outputname, module):
     ''' dumps module output to a file or the screen, as requested '''
 
     if options.output_dir is not None:
         fname = os.path.join(options.output_dir, outputname % module)
-        fname = fname.replace(".py","")
+        fname = fname.replace(".py", "")
         f = open(fname, 'w')
         f.write(text.encode('utf-8'))
         f.close()
     else:
         print text
 
-#####################################################################################
-
 
 def list_modules(module_dir, depth=0):
-    ''' returns a hash of categories, each category being a hash of module names to file paths '''
+    ''' returns a hash of categories, each category being a hash of module
+    names to file paths '''
 
-    categories = dict(all=dict(),_aliases=dict())
-    if depth <= 3: # limit # of subdirs
+    categories = dict(all=dict(), _aliases=dict())
+    if depth <= 3:
 
         files = glob.glob("%s/*" % module_dir)
         for d in files:
@@ -138,14 +135,15 @@ def list_modules(module_dir, depth=0):
                 res = list_modules(d, depth + 1)
                 for key in res.keys():
                     if key in categories:
-                        categories[key] = ansible.utils.merge_hash(categories[key], res[key])
+                        categories[key] = ansible.utils.merge_hash(
+                                              categories[key], res[key])
                         res.pop(key, None)
 
                 if depth < 2:
                     categories.update(res)
                 else:
                     category = module_dir.split("/")[-1]
-                    if not category in categories:
+                    if category not in categories:
                         categories[category] = res
                     else:
                         categories[category].update(res)
@@ -153,19 +151,22 @@ def list_modules(module_dir, depth=0):
                 module = category
                 category = os.path.basename(module_dir)
                 if not d.endswith(".py") or d.endswith('__init__.py'):
-                    # windows powershell modules have documentation stubs in python docstring
-                    # format (they are not executed) so skip the ps1 format files
+                    # windows powershell modules have documentation stubs in
+                    # python docstring
+                    # format (they are not executed) so skip the ps1 format
+                    # files
                     continue
                 elif module.startswith("_") and os.path.islink(d):
-                    source = os.path.splitext(os.path.basename(os.path.realpath(d)))[0]
-                    module = module.replace("_","",1)
-                    if not d in categories['_aliases']:
+                    source = os.path.splitext(os.path.basename(
+                                              os.path.realpath(d)))[0]
+                    module = module.replace("_", "", 1)
+                    if d not in categories['_aliases']:
                         categories['_aliases'][source] = [module]
                     else:
                         categories['_aliases'][source].update(module)
                     continue
 
-                if not category in categories:
+                if category not in categories:
                     categories[category] = {}
                 categories[category][module] = d
                 categories['all'][module] = d
@@ -173,34 +174,42 @@ def list_modules(module_dir, depth=0):
     return categories
 
 
-def list_eos_modules(module_dir, depth=0):
-    ''' returns the modules within the lib directory '''
+def list_eos_modules(module_dir):
+    '''returns the modules within the lib directory'''
 
-    categories = dict(all=dict(),_aliases=dict())
-    if depth <= 3: # limit # of subdirs
+    categories = dict(All=dict())
+    files = glob.glob("%s/*" % module_dir)
 
-        files = glob.glob("%s/*" % module_dir)
+    for d in files:
 
-        for d in files:
-
-            if os.path.isdir(d):
-                pass
+        if os.path.isdir(d):
+            pass
+        else:
+            module = os.path.basename(d)
+            if d.endswith('__init__.py') or module in ANSIBLE_EOS_BLACKLIST:
+                # windows powershell modules have documentation stubs in python
+                # docstring
+                # format (they are not executed) so skip the ps1 format files
+                continue
             else:
-                module = os.path.basename(d)
-                # module = "ansible-eos"
-                # category = "ansible-eos"
-                if d.endswith('__init__.py'):
-                    # windows powershell modules have documentation stubs in python docstring
-                    # format (they are not executed) so skip the ps1 format files
-                    continue
+                try:
+                    M = ast.parse(''.join(open(d)))
+                    for child in M.body:
+                        if isinstance(child, ast.Assign):
+                            if 'DOCUMENTATION' in (t.id for t in child.targets):
+                                doc = yaml.safe_load(child.value.s)
+                                category = doc.get('category', 'Misc')
+                                print "Found module %s under category: %s" % (module, category)
+                                if category not in categories:
+                                    categories[category] = {}
+                                categories[category][module] = d
+                                categories['All'][module] = d
 
-                else:
-                    categories['all'][module] = d
+                except:
+                    print "unable to parse %s" % d
 
     return categories
 
-
-#####################################################################################
 
 def generate_parser():
     ''' generate an optparse parser '''
@@ -250,15 +259,10 @@ def process_module(module, options, env, template, outputname, module_map, alias
 
     fname = module_map[module]
 
-    print "fname %s" % fname
-    print "module %s" % module
-
     if isinstance(fname, dict):
         return "SKIPPED"
 
     basename = os.path.basename(fname)
-
-    print "bname %s" % basename
 
     deprecated = False
 
@@ -401,8 +405,8 @@ def process_category(category, categories, options, env, template, outputname):
 
     modules.sort()
 
-    #category_header = "%s Modules" % (category.title())
-    category_header = "Modules"
+    category_header = "%s Modules" % (category.title())
+    # category_header = "Modules"
     underscores = "`" * len(category_header)
 
     category_file.write("""\
@@ -472,21 +476,21 @@ def main():
     category_names = categories.keys()
     category_names.sort()
 
-    #category_list_path = os.path.join(options.output_dir, "modules_by_category.rst")
-    #category_list_file = open(category_list_path, "w")
-    #category_list_file.write("Module Index\n")
-    #category_list_file.write("============\n")
-    #category_list_file.write("\n\n")
-    #category_list_file.write(".. toctree::\n")
-    #category_list_file.write("   :maxdepth: 1\n\n")
+    category_list_path = os.path.join(options.output_dir, "modules_by_category.rst")
+    category_list_file = open(category_list_path, "w")
+    category_list_file.write("Modules\n")
+    category_list_file.write("============\n")
+    category_list_file.write("\n\n")
+    category_list_file.write(".. toctree::\n")
+    category_list_file.write("   :maxdepth: 1\n\n")
 
     for category in category_names:
         if category.startswith("_"):
             continue
-        #category_list_file.write("   list_of_%s_modules\n" % category)
+        category_list_file.write("   list_of_%s_modules\n" % category)
         process_category(category, categories, options, env, template, outputname)
 
-    #category_list_file.close()
+    category_list_file.close()
 
 if __name__ == '__main__':
     main()

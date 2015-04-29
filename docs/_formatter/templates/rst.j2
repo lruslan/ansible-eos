@@ -25,18 +25,11 @@
 Aliases: @{ ','.join(aliases) }@
 {% endif %}
 
-{% if deprecated is defined -%}
-DEPRECATED
-----------
-
-@{ deprecated }@
-{% endif %}
-
 Synopsis
 --------
 
 {% if version_added is defined -%}
-.. versionadded:: @{ version_added }@
+Added in version @{ version_added }@
 {% endif %}
 
 {% for desc in description -%}
@@ -169,6 +162,3 @@ Common return values are documented here :doc:`common_return_values`, the follow
 .. note:: @{ note | convert_symbols_to_format }@
 {% endfor %}
 {% endif %}
-
-
-<!-- For help in developing on modules, should you be so inclined, please read :doc:`development`. -->

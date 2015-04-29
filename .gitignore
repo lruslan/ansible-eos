@@ -51,5 +51,4 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
-docs/_modules/eos_*
-docs/_modules/list_*
+docs/_modules/*
