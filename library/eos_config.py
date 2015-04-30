@@ -70,7 +70,7 @@ options:
     aliases: []
     version_added: 1.0
   expression:
-    description
+    description:
       - Specifies the expression to use to evaluate the current nodes running
         configuration along with the function.  This optional argument will
         default to use the command argument if none is provided.
@@ -80,7 +80,7 @@ options:
     aliases: []
     version_added: 1.0
   function:
-    description
+    description:
       - Specifies the function to use for evaluating the current node
         running-config.  Include and exclude functions require a string value
         and regex functions require any valid regular expression.  If the

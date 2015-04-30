@@ -115,61 +115,6 @@ def write_data(text, options, outputname, module):
         print text
 
 
-def list_modules(module_dir, depth=0):
-    ''' returns a hash of categories, each category being a hash of module
-    names to file paths '''
-
-    categories = dict(all=dict(), _aliases=dict())
-    if depth <= 3:
-
-        files = glob.glob("%s/*" % module_dir)
-        for d in files:
-
-            category = os.path.splitext(os.path.basename(d))[0]
-            if os.path.isdir(d):
-
-                res = list_modules(d, depth + 1)
-                for key in res.keys():
-                    if key in categories:
-                        categories[key] = ansible.utils.merge_hash(
-                                              categories[key], res[key])
-                        res.pop(key, None)
-
-                if depth < 2:
-                    categories.update(res)
-                else:
-                    category = module_dir.split("/")[-1]
-                    if category not in categories:
-                        categories[category] = res
-                    else:
-                        categories[category].update(res)
-            else:
-                module = category
-                category = os.path.basename(module_dir)
-                if not d.endswith(".py") or d.endswith('__init__.py'):
-                    # windows powershell modules have documentation stubs in
-                    # python docstring
-                    # format (they are not executed) so skip the ps1 format
-                    # files
-                    continue
-                elif module.startswith("_") and os.path.islink(d):
-                    source = os.path.splitext(os.path.basename(
-                                              os.path.realpath(d)))[0]
-                    module = module.replace("_", "", 1)
-                    if d not in categories['_aliases']:
-                        categories['_aliases'][source] = [module]
-                    else:
-                        categories['_aliases'][source].update(module)
-                    continue
-
-                if category not in categories:
-                    categories[category] = {}
-                categories[category][module] = d
-                categories['all'][module] = d
-
-    return categories
-
-
 def list_eos_modules(module_dir):
     '''returns the modules within the lib directory'''
 
@@ -182,6 +127,11 @@ def list_eos_modules(module_dir):
             pass
         else:
             module = os.path.basename(d)
+
+            # remove .py from module name
+            if module.endswith(".py"):
+                module = module.replace(".py","")
+
             if d.endswith('__init__.py') or module in ANSIBLE_EOS_BLACKLIST:
                 # windows powershell modules have documentation stubs in python
                 # docstring
@@ -190,19 +140,22 @@ def list_eos_modules(module_dir):
             else:
                 try:
                     M = ast.parse(''.join(open(d)))
+                    print "Analyzing file: %s" % d
                     for child in M.body:
                         if isinstance(child, ast.Assign):
                             if 'DOCUMENTATION' in (t.id for t in child.targets):
                                 doc = yaml.safe_load(child.value.s)
                                 category = doc.get('category', 'Misc')
-                                print "Found module %s under category: %s" % (module, category)
+                                print " - Found module %s under category: %s" % (module, category)
+
                                 if category not in categories:
                                     categories[category] = {}
                                 categories[category][module] = d
                                 categories['All'][module] = d
 
-                except:
-                    print "unable to parse %s" % d
+                except Exception as exc:
+                    print "unable to parse %s:%s" % (d, exc)
+                    raise
 
     return categories
 
@@ -376,7 +329,7 @@ def process_category(category, categories, options, env, template, outputname):
     # TODO: start a new category file
 
     category = category.replace("_"," ")
-    category = category.title()
+    # category = category.title()
 
     modules = []
     deprecated = []
@@ -401,7 +354,7 @@ def process_category(category, categories, options, env, template, outputname):
 
     modules.sort()
 
-    category_header = "%s Modules" % (category.title())
+    category_header = "%s Modules" % category
     # category_header = "Modules"
     underscores = "`" * len(category_header)
 

@@ -53,7 +53,7 @@ options:
       - The unique interface identifier name.  The interface name must use
         the full interface name (no abbreviated names).  For example,
         interfaces should be specified as Ethernet1 not Et1
-      - Note: The name parameter only accepts Vxlan1 as the identifier
+      - "Note: The name parameter only accepts Vxlan1 as the identifier"
     required: true
     default: null
     choices: []

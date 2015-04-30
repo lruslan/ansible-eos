@@ -35,8 +35,7 @@ DOCUMENTATION = """
 module: eos_vlan
 short_description: Manage VLAN resources in EOS
 description:
-  - The eos_vlan module manages VLAN configurations on Arista EOS
-    nodes.
+  - The eos_vlan module manages VLAN configurations on Arista EOS nodes.
 version_added: 1.0.0
 category: Bridging
 author: Arista EOS+
@@ -81,7 +80,7 @@ options:
       - Configures the list of trunk groups associated with the VLAN in the
         node configuration.  The list of trunk groups is a comma separated
         list.  The default value for trunk_groups is an empty list.
-      - Note: The list of comma delimited values must not include spaces.
+      - "Note: The list of comma delimited values must not include spaces."
     required: false
     default: null
     choices: []

@@ -61,7 +61,10 @@ Options
     {% else %}
     <td style="vertical-align:middle"><ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul></td>
     {% endif %}
-    <td style="vertical-align:middle;text-align:left">{% for desc in v.description -%}@{ desc | html_ify }@{% endfor -%}{% if v['version_added'] %} (added in Ansible @{v['version_added']}@){% endif %}</td>
+    <td style="vertical-align:middle;text-align:left">
+      {% for desc in v.description -%}@{ desc | html_ify }@<br>{% endfor -%}
+      {% if v['version_added'] %}(added in @{v['version_added']}@){% endif %}
+    </td>
     </tr>
     {% endfor %}
     </table>

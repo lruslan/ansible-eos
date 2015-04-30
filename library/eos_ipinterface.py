@@ -35,9 +35,8 @@ DOCUMENTATION = """
 module: eos_ipinterface
 short_description: Manage logical layer 3 interfaces in EOS
 description:
-  - The eos_ipinterface module amanges logical layer 3 interface
+  - The eos_ipinterface module manages logical layer 3 interface
     configurations.
-  - Note: Currently this module only supports IPv4
 version_added: 1.0.0
 category: IP
 author: Arista EOS+
@@ -45,6 +44,7 @@ requirements:
   - Arista EOS 4.13.7M or later with command API enabled
   - Python Client for eAPI 0.3.0 or later
 notes:
+  - Currently this module only supports IPv4
   - All configuration is idempotent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
   - Supports stateful resource configuration.
