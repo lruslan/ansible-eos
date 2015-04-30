@@ -31,9 +31,60 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 DOCUMENTATION = """
+---
+module: eos_facts
+short_description: Gathers facts from Arista EOS nodes
+description:
+  - The eos_facts module collects facts from the EOS for use in
+    Ansible playbooks.  It can be used independently as well to discover
+    what facts are availble from the node.  This facts module does not
+    cache any facts.  If no configuration options are specified, then all
+    facts are returned.
+version_added: 1.0.0
+category: System
+author: Arista EOS+
+requirements:
+  - Arista EOS 4.13.7M or later with command API enabled
+  - Python Client for eAPI 0.3.0 or later
+notes:
+  - Supports eos metaparameters for using the eAPI transport
+  - The include and exclude options are mutually exclusive
+options:
+  include:
+    description:
+      - Specifies the list of facts to include when the fact module runs.  The
+        include list is comma delimited and, when included, will only
+        return the facts named in the include list.  All other facts will
+        not be returned.
+    required: false
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.0
+  exclude:
+    description:
+      - Specifies the list of facts to exclude when the fact module runs.  The
+        exclude list is comma delimited and, when configured, will not
+        return the facts named in the exclude list.  All other facts will
+        be returned.
+    required: false
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.0
 """
 
 EXAMPLES = """
+
+- name: collect all facts from node
+  eos_facts:
+
+- name: include only a filtered set of facts returned
+  eos_facts: include=interfaces
+
+- name: exclude a specific set of facts
+  eos_facts: exclude=vlans
+
 """
 #<<EOS_COMMON_MODULE_START>>
 
@@ -281,7 +332,7 @@ class EosAnsibleModule(AnsibleModule):
     def invoke_function(self, name, *args, **kwargs):
         func = self.func(name)
         if func:
-            return invoke(func, args, kwargs)
+            return self.invoke(func, *args, **kwargs)
 
     def fail(self, msg):
         self.invoke_function('on_fail', self)
@@ -314,26 +365,56 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
-def show_interfaces(module):
+def do_interfaces(module):
     resp = module.node.enable('show interfaces')
     return resp[0]['result']
 
-def show_version(module):
+def do_version(module):
     resp = module.node.enable('show version')
     return dict(version=resp[0]['result'])
 
+def do_vlans(module):
+    resp = module.node.enable('show vlan')
+    return dict(vlans=resp[0]['result'])
 
+
+def collect_facts(module):
+    functions = frozenset([f for f in globals().keys() if f.startswith('do_')])
+
+    if module.attributes['include']:
+        include = module.attributes['include']
+        include = ['do_%s' % str(s).strip() for s in include.split(',')]
+        functions = functions.intersection(include)
+
+    if module.attributes['exclude']:
+        exclude = module.attributes['exclude']
+        exclude = ['do_%s' % str(s).strip() for s in exclude.split(',')]
+        functions = functions.difference(exclude)
+
+    facts = dict()
+    for func in functions:
+        key = func.replace('do_', '')
+        module.log('collecting facts for %s' % key)
+        facts[key] = module.invoke_function(func, module)
+
+    return facts
 
 def main():
     """ The main module routine called when the module is run by Ansible
     """
 
-    module = EosAnsibleModule(argument_spec=dict(), stateful=False)
+    argument_spec = dict(
+        include=dict(),
+        exclude=dict()
+    )
 
-    facts = dict()
-    facts.update(show_version(module))
-    facts.update(show_interfaces(module))
+    exclusive = [['include', 'exclude']]
 
+    module = EosAnsibleModule(argument_spec=argument_spec,
+                              stateful=False,
+                              mutually_exclusive=exclusive)
+
+    facts = collect_facts(module)
     module.result['ansible_facts'] = dict(eos=facts)
     module.exit()
 
