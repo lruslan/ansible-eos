@@ -35,7 +35,7 @@ import ansible.utils.module_docs as module_docs
 # constants and paths
 
 # The list of modules that do no require documentation
-ANSIBLE_EOS_BLACKLIST = ('eos_facts', 'eos_purge')
+ANSIBLE_EOS_BLACKLIST = ('eos_facts')
 
 # if a module is added in a version of Ansible older than this, don't print
 # the version added information

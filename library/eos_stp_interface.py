@@ -57,7 +57,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   portfast:
     description:
       - Specifies whether or not portfast should be enabled on the named
@@ -67,9 +67,9 @@ options:
         for portfast is false
     required: false
     default: null
-    choices: BOOLEANS
+    choices: ['True', 'False']
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   portfast_type:
     description:
       - Configures the portfast port type value for the named interface
@@ -78,7 +78,7 @@ options:
     default: null
     choices: ['edge', 'network']
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   bpduguard:
     description:
       - Specifies whether or not bpduguard should be enabled on the named
@@ -88,9 +88,9 @@ options:
         bpduguard is false
     required: false
     default: null
-    choices: BOOLEANS
+    choices: ['True', 'False']
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """

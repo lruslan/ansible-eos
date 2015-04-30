@@ -59,7 +59,7 @@ Options
     {% if v.get('type', 'not_bool') == 'bool' %}
     <td style="vertical-align:middle"><ul><li>yes</li><li>no</li></ul></td>
     {% else %}
-    <td style="vertical-align:middle"><ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul></td>
+    <td style="vertical-align:middle;text-align:left"><ul style="margin:0;">{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul></td>
     {% endif %}
     <td style="vertical-align:middle;text-align:left">
       {% for desc in v.description -%}@{ desc | html_ify }@<br>{% endfor -%}
@@ -67,13 +67,13 @@ Options
     </td>
     </tr>
     {% endfor %}
-    </table>
+    </table><br>
 {% endif %}
 
 {% if requirements %}
 {% for req in requirements %}
 
-.. note:: Requires @{ req | convert_symbols_to_format }@
+.. important:: Requires @{ req | convert_symbols_to_format }@
 
 {% endfor %}
 {% endif %}

@@ -58,7 +58,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   vlan:
     description:
       - Specifies the VLAN ID that is assocated with the Vxlan interface
@@ -68,7 +68,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   vni:
     description:
       - Specifies the VNI value to assoicate with the Vxlan interface for
@@ -79,7 +79,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """

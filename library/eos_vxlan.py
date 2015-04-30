@@ -58,7 +58,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   enable:
     description:
       - Configures the administrative state for the interface.  Setting
@@ -67,9 +67,9 @@ options:
         interface.  The EOS default value for enable is true
     required: false
     default: true
-    choices: BOOLEANS
+    choices: ['True', 'False']
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   description:
     description:
       - Configures a one lne ASCII description for the interface.  The EOS
@@ -78,7 +78,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   source_interface:
     description:
       - Configures the vxlan source-interface value which directs the
@@ -89,7 +89,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   multicast_group:
     description:
       - Configures the vxlan multicast-group address used for flooding
@@ -100,7 +100,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   udp_port:
     description:
       - Configures the vxlan udp-port value used to terminate mutlicast
@@ -111,7 +111,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """

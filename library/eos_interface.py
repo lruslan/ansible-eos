@@ -57,7 +57,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   enable:
     description:
       - Configures the administrative state for the interface.  Setting
@@ -66,9 +66,9 @@ options:
         interface.  The EOS default value for enable is true
     required: false
     default: true
-    choices: BOOLEANS
+    choices: ['True', 'False']
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   description:
     description:
       - Configures a one lne ASCII description for the interface.  The EOS
@@ -77,7 +77,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """
