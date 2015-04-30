@@ -22,8 +22,8 @@ def install():
 
 if install() and os.environ.get('READTHEDOCS'):
     print 'Customizing install for ReadTheDocs.org build servers...'
-    from subprocess import call
-    call(['docs/build_modules.sh'])
+    from subprocess import Popen
+    Popen(['docs/build_modules.sh'], cwd='docs/')
 
 # setup(name='ansible-eos',
 #      version=VERSION,
