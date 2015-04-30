@@ -1,0 +1,40 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_facts
+  idempotent: false
+  changed: false
+
+testcases:
+
+  - name: runs the facts module
+    arguments:
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+  - name: runs the facts module with include
+    arguments:
+      - { name: include, value: version }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+  - name: runs the facts module with multiple includes
+    arguments:
+      - { name: include, value: version,interfaces }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+  - name: runs the facts module with exclude
+    arguments:
+      - { name: exclude, value: version }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+  - name: runs the facts module with multiple excludes
+    arguments:
+      - { name: exclude, value: version,interfaces }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+

@@ -28,6 +28,7 @@ class TestCase(object):
         self.inventory = kwargs.get('inventory')
         self.exitcode = kwargs.get('exitcode', 0)
         self.idempotent = kwargs.get('idempotent', True)
+        self.changed = kwargs.get('changed', True)
 
         self.arguments = kwargs.get('arguments', list())
         self.variables = dict()
@@ -85,12 +86,12 @@ class TestModule(object):
     def __call__(self):
         self.output('Run first pass')
         response = self.run_module()
-        assert(response['changed'])
+        assert response['changed'] == self.testcase.changed
 
         if self.testcase.idempotent:
             self.output('Run second pass')
             response = self.run_module()
-            assert(not response['changed'])
+            assert not response['changed']
 
     def setUp(self):
         if self.testcase.setup:
@@ -176,3 +177,4 @@ def test_module():
             testcase.set_host(name)
             testcase.add_variable('host', name)
             yield TestModule(testcase, node)
+
