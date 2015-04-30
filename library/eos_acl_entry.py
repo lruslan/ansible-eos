@@ -312,9 +312,10 @@ class EosAnsibleModule(AnsibleModule):
 def instance(module):
     """ Returns an instance of Vlan based on vlanid
     """
-    seqno = module.seqno
-    _instance = dict(name=module.name, seqno=seqno, state='absent')
-    result = module.node.api('acl').get(module.name)
+    seqno = module.attributes['seqno']
+    aclname = module.attributes['name']
+    _instance = dict(name=aclname, seqno=seqno, state='absent')
+    result = module.api('acl').get(aclname)
     if result:
         if seqno in result['entries']:
             _instance['state'] = 'present'
@@ -328,23 +329,25 @@ def instance(module):
 
 
 def create(module):
-    module.log('Invoked create for eos_acl_entry[%s]' % module.name)
-    module.node.api('acl').create(module.name)
+    value = module.attribtes['name']
+    module.log('Invoked create for eos_acl_entry[%s]' % value)
+    module.api('acl').create(value)
 
 def remove(module):
-    module.log('Invoked remove for eos_acl_entry[%s]' % module.name)
-    module.node.api('acl').remove_entry(module.name, module.seqno)
+    value = module.attributes['value']
+    seqno = module.attributes['seqno']
+    module.log('Invoked remove for eos_acl_entry[%s]' % value)
+    module.api('acl').remove_entry(value, seqno)
 
 def flush(module):
     args = list()
-    args.append(module.name)
-    args.append(module.seqno)
-    args.append(module.action)
-    args.append(module.srcaddr)
-    args.append(module.srcprefixlen)
-    # TODO: need to change the log argument so as to not conflict
-    # args.append(module.log)
-    module.node.api('acl').update_entry(*args)
+    args.append(module.attributes['name'])
+    args.append(module.attributes['seqno'])
+    args.append(module.attributes['action'])
+    args.append(module.attribures['srcaddr'])
+    args.append(module.attributes['srcprefixlen'])
+    args.append(module.attributes['log'])
+    module.api('acl').update_entry(*args)
 
 def main():
     """ The main module routine called when the module is run by Ansible
@@ -363,8 +366,6 @@ def main():
     module = EosAnsibleModule(argument_spec=argument_spec,
                               supports_check_mode=True)
 
-    module.flush()
-
-    module.exit()
+    module.flush(True)
 
 main()
