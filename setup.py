@@ -23,7 +23,12 @@ def install():
 if install() and os.environ.get('READTHEDOCS'):
     print 'Customizing install for ReadTheDocs.org build servers...'
     from subprocess import Popen
-    Popen(['docs/build_modules.sh'], cwd='docs/')
+    proc = Popen(['make', 'modules'], cwd='docs/')
+    (_, err) = proc.communicate()
+    return_code = proc.wait()
+
+    if return_code or err:
+        raise ('Failed to make modules.(%s:%s)' % (return_code, err))
 
 # setup(name='ansible-eos',
 #      version=VERSION,
