@@ -368,7 +368,7 @@ class EosAnsibleModule(AnsibleModule):
     def invoke_function(self, name, *args, **kwargs):
         func = self.func(name)
         if func:
-            return invoke(func, args, kwargs)
+            return self.invoke(func, *args, **kwargs)
 
     def fail(self, msg):
         self.invoke_function('on_fail', self)
