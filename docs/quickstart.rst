@@ -130,7 +130,7 @@ verify access from remote host
 
 .. code-block:: console
 
-  ansible@hub:~$ scp ./.ssh/id_rsa.pub ansible@veos01:.ssh/authorized_keys
+  ansible@hub:~$ scp ~/.ssh/id_rsa.pub ansible@veos01:.ssh/authorized_keys
   Password:
 
   ansible@hub:~$ ssh ansible@veos01
@@ -156,3 +156,37 @@ This will only allow the Ansible user to login with keys.
 .. code-block:: console
 
   [ansible@veos ~]$ sudo reboot
+
+.. tip:: Wait for your node to come back before going to the next section
+
+
+Running Adhoc Commands
+======================
+If you are new to Ansible then it's easier to dip your toes in using `Adhoc <http://docs.ansible.com/intro_adhoc.html>`_
+commands versus writing a full `playbook <http://docs.ansible.com/playbooks.html>`_.
+The section below will help guide you through running some Adhoc commands
+to configure basic settings on your node.
+
+
+**1. Create an Ansible Inventory File**
+
+Let's add the details of our test node to an Ansible Inventory file.
+
+.. hint:: Learn more about `Ansible Inventory <http://docs.ansible.com/intro_inventory.html>`_.
+
+.. code-block:: console
+
+  [ansible@ansible-control-host ~]$ sudo vi /etc/ansible/hosts
+
+and add the connection info for your host substituting the IP or FQDN of your node:
+
+.. code-block:: console
+
+
+
+
+**2. Configure the Hostname**
+
+.. code-block:: console
+
+  [ansible@ansible-control-host ~]$

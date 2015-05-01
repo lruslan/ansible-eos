@@ -140,6 +140,11 @@ connection is stored as plaintext.
 
 .. code-block:: yaml
 
+  - name: eos nodes
+    hosts: eos_switches
+
+  (truncated)
+
   tasks:
   - name: Configure EOS VLAN resources
     eos_vlan: vlanid=100
@@ -161,7 +166,7 @@ Sample ``eapi.conf``
 .. code-block:: ini
 
   [connection:veos02]
-  host: 172.16.10.1
+  host: 192.0.2.2
   username: eapi
   password: password
   enablepwd: itsasecret

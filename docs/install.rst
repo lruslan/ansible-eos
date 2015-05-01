@@ -87,7 +87,7 @@ Each release has a corresponding tag that denotes the released code.
 To switch to a specific release simply use the name of the tag in the
 second command as the <tag name>.
 
-For instance, to use the v1.0 release, enter the command
+For instance, to use the v1.0.0 release, enter the command
 
 .. code-block:: console
 
