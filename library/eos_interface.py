@@ -377,7 +377,8 @@ def instance(module):
     if result:
         _instance['state'] = 'present'
         _instance['enable'] = not result['shutdown']
-        _instance['description'] = result['description']
+        desc = '' if not result['description'] else result['description']
+        _instance['description'] = desc
     return _instance
 
 def create(module):
@@ -399,6 +400,7 @@ def set_description(module):
     """
     name = module.attributes['name']
     value = module.attributes['description']
+    value = None if value == '' else value
     module.log('Invoked set_description for eos_interface[%s] '
                'with value %s' % (name, value))
     module.node.api('interfaces').set_description(name, value)
