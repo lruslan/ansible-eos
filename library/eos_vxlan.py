@@ -414,7 +414,8 @@ def instance(module):
     if result:
         _instance['state'] = 'present'
         _instance['enable'] = not result['shutdown']
-        _instance['description'] = result['description']
+        desc = '' if not result['description'] else result['description']
+        _instance['description'] = desc
         _instance['source_interface'] = result['source_interface']
         _instance['multicast_group'] = result['multicast_group']
         _instance['udp_port'] = result['udp_port']
@@ -439,6 +440,7 @@ def set_description(module):
     """
     value = module.attributes['description']
     name = module.attributes['name']
+    value = None if value == '' else value
     module.log('Invoked set_description for eos_vxlan[%s] '
                'with value %s' % (name, value))
     module.node.api('interfaces').set_description(name, value)

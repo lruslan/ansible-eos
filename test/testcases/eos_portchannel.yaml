@@ -76,6 +76,17 @@ testcases:
       - no interface Port-Channel1
       - interface Port-Channel1
 
+  - name: set portchannel description to empty string
+    arguments:
+      - { name: name, value: Port-Channel1 }
+      - { name: description, value: "''" }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no interface Port-Channel1
+      - interface Port-Channel1
+      - description test string
+
   - name: config members with single value
     arguments:
       - { name: name, value: Port-Channel1 }

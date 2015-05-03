@@ -55,6 +55,17 @@ testcases:
     setup:
       - default interface Ethernet1
 
+  - name: set interface description to empty string
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: description, value: "''" }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - description test string
+
   - name: set interface sflow to true
     arguments:
       - { name: name, value: Ethernet1 }

@@ -410,7 +410,8 @@ def instance(module):
         module.fail('Unknown interface: %s' % name)
     instance = dict(name=name)
     instance['enable'] = not result['shutdown']
-    instance['description'] = result['description']
+    desc = '' if not result['description'] else result['description']
+    instance['description'] = desc
     instance['sflow'] = result['sflow']
     instance['flowcontrol_send'] = result['flowcontrol_send'] == 'on'
     instance['flowcontrol_receive'] = result['flowcontrol_receive'] == 'on'
@@ -421,6 +422,7 @@ def set_description(module):
     """
     value = module.attributes['description']
     name = module.attributes['name']
+    value = None if value == '' else value
     module.log('Invoked set_description for eos_ethernet[%s] '
                'with value %s' % (name, value))
     module.node.api('interfaces').set_description(name, value)

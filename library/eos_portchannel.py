@@ -409,6 +409,8 @@ def instance(module):
     if result:
         _instance['state'] = 'present'
         _instance.update(result)
+        desc = '' if not result['description'] else result['description']
+        _instance['description'] = desc
         _instance['enable'] = not result['shutdown']
         _instance['members'] = ','.join(result['members'])
         lacp_mode = result['lacp_mode']
@@ -434,6 +436,7 @@ def set_description(module):
     """
     value = module.attributes['description']
     name = module.attributes['name']
+    value = None if value == '' else value
     module.log('Invoked set_description for eos_portchannel[%s] '
                'with value %s' % (name, value))
     module.node.api('interfaces').set_description(name, value)
