@@ -143,7 +143,7 @@ class TestModule(object):
 
 def filter_modules(modules, filenames):
     if modules:
-        modules = str(modules).split(',')
+        modules = ['{0}.yaml'.format(s) for s in modules.split(',')]
         return list(set(modules).intersection(filenames))
     return filenames
 
@@ -155,7 +155,7 @@ def setup():
 
     assert len(nodes) > 0, 'no test nodes loaded, does eapi.conf exist?'
 
-    modules = os.environ.get('ANSIBLE_TEST_MODULES')
+    modules = os.environ.get('ANSIBLE_TEST_CASES')
 
     testcases_home = os.path.join(here, 'testcases')
     filenames = os.listdir(testcases_home)
