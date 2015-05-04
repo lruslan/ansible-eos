@@ -71,9 +71,7 @@ configurations, please consult the EOS User Guide.
 
 
 The configuration above enables eAPI with the default settings.  This enables
-eAPI to listen for connections on HTTPS port 443 by default.  If different
-values are used, the eapi_protocol and eapi_port variables need to be updated
-in your playbook.
+eAPI to listen for connections on HTTPS port 443 by default.  
 
 **Step 3.** Create a local user
 The user created in this step is different than the shell account to be
@@ -85,9 +83,8 @@ Understanding the Security Model for more details.
   switch(config)# username eapi secret icanttellyou
 
 
-The username (eapi) and password (icanttellyou) can be anything you like.
-This user is used to authenticate to eAPI and should be used for the
-eapi_username and eapi_password variables in your playbooks.
+The username (eapi) and password (icanttellyou) can be any valid string
+value.
 
 
 .. _A-eos-user-label:
@@ -400,10 +397,6 @@ to be enabled on the switch. The modules use eAPI to communicate with EOS.
 Since eAPI is not enabled by default, it must be initially enabled before the
 EOS modules can be used.
 
-.. Note:: The EOS role provides a module for enabling and configuring command
-          API using a task; however, the local user still needs to be created
-
-
 The steps below provide the basic steps to enable eAPI.  For more advanced
 configurations, please consult the EOS User Guide.
 
@@ -425,9 +418,7 @@ configurations, please consult the EOS User Guide.
 
 
 The configuration above enables eAPI with the default settings.  This enables
-eAPI to listen for connections on HTTPS port 443 by default.  If different
-values are used, the eapi_protocol and eapi_port variables need to be updated
-in your playbook.
+eAPI to listen for connections on HTTPS port 443 by default.  
 
 **Step 3.** Create a local user
 The user created in this step is different than the shell account to be
@@ -439,9 +430,9 @@ Understanding the Security Model for more details.
   switch(config)# username eapi secret icanttellyou
 
 
-The username (eapi) and password (icanttellyou) can be anything you like.
-This user is used to authenticate to eAPI and should be used for the
-eapi_username and eapi_password variables in your playbooks.
+The username (eapi) and password (icanttellyou) can be any string value.  The
+values are then used in either eapi.conf or passed in through the module
+meta arguments to authenticate to eAPI.
 
 
 
