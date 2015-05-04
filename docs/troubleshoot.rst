@@ -259,7 +259,72 @@ results easier.
 Debugging EOS Connectivity Issues
 *********************************
 
+Sometimes it is difficult to quickly deduce what is causing a particular
+playbook or task not to run without error.  While Ansible provids some verbose
+details during the task execution, sometimes the problem relates to connecting
+from the Ansible control host to the EOS node.  
 
+This section provides some basic tips on troubleshooting connectvity issues
+with Arista EOS nodes.
+
+When starting to troubleshoot connectivity errors, the first place to start
+is with some simple `ping` tests to ensure there is reachabilty between the
+Ansible control host and the EOS node::
+
+    $ ping -c 5 192.168.1.16
+    PING 192.168.1.16 (192.168.1.16): 56 data bytes
+    64 bytes from 192.168.1.16: icmp_seq=0 ttl=64 time=1.202 ms
+    64 bytes from 192.168.1.16: icmp_seq=1 ttl=64 time=1.082 ms
+    64 bytes from 192.168.1.16: icmp_seq=2 ttl=64 time=0.829 ms
+    64 bytes from 192.168.1.16: icmp_seq=3 ttl=64 time=0.936 ms
+    64 bytes from 192.168.1.16: icmp_seq=4 ttl=64 time=1.021 ms
+
+    --- 192.168.1.16 ping statistics ---
+    5 packets transmitted, 5 packets received, 0.0% packet loss
+    round-trip min/avg/max/stddev = 0.829/1.014/1.202/0.127 ms
+
+The output above validates that the EOS node is reachable from the Ansible
+control host.  
+
+If the configured playbook or task is not using `connection: local`, then we
+can use SSH to validate that the SSH keyless login is working properly::
+
+    $ ssh ansible@192.168.1.16
+    Last login: Sun May  3 17:49:07 2015 from 192.168.1.130
+
+    Arista Networks EOS shell
+
+    [ansible@Arista ~]$
+
+If the user (ansible in the above example) is unable to login to the node,
+please review the quickstart guide.
+
+Lastly, check to make sure the dependency eAPI has been enabled on the target
+Arista EOS node.  To verify that eAPI is enabled and running, use the `show
+management apt http-commands` command in EOS::
+
+    Arista#show management api http-commands
+    Enabled:        Yes
+    HTTPS server:   shutdown, set to use port 443
+    HTTP server:    running, set to use port 80
+    VRF:            default
+    Hits:           4358
+    Last hit:       59729 seconds ago
+    Bytes in:       680505
+    Bytes out:      64473935
+    Requests:       4278
+    Commands:       10918
+    Duration:       833.907 seconds
+    User       Hits       Bytes in       Bytes out    Last hit
+    ---------- ---------- -------------- --------------- -----------------
+    eapi       4278       680505         64473935     59729 seconds ago
+
+    URLs
+    ------------------------------------
+    Management1 : http://192.168.1.16:80
+
+In the example command output above, check to be sure that `Enabled:` is `Yes`
+and either `HTTP server:` or `HTTPS server` is in a running state.
 
 
 .. _debug: http://docs.ansible.com/debug_module.html 
