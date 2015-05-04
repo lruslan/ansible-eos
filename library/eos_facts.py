@@ -60,7 +60,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   exclude:
     description:
       - Specifies the list of facts to exclude when the fact module runs.  The
@@ -71,7 +71,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """

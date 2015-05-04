@@ -61,7 +61,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   results:
     description:
       - The results argument is used to store the output from a previous
@@ -72,7 +72,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """

@@ -58,7 +58,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   local_interface:
     description:
       - Configures the VLAN interface (SVI) for use as the MLAG endpoint
@@ -68,7 +68,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   peer_address:
     description:
       - Configures the global MLAG peer-address of the MLAG peer.  This peer
@@ -78,7 +78,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   peer_link:
     description:
       - Configures the physical link that connects the local MLAG to its
@@ -88,7 +88,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   shutdown:
     description:
       - Configures the global MLAG administratively state.  If the value
@@ -97,9 +97,9 @@ options:
         EOS default value for shutdown is false.
     required: false
     default: false
-    choices: BOOLEANS
+    choices: ['True', 'False']
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """

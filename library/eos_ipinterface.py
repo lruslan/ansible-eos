@@ -58,7 +58,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   address:
     description:
       - Configures the IPv4 address for the interface.  The value must be
@@ -68,7 +68,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   mtu:
     description:
       - Sets the IP interface MTU value.  The MTU value defines the maximum
@@ -79,7 +79,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """

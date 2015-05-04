@@ -59,7 +59,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   mode:
     description:
       - Specifies the command mode to execute the commands in.  If this
@@ -70,7 +70,7 @@ options:
     default: 'enable'
     choices: ['enable', 'config']
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """

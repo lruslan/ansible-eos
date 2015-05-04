@@ -55,7 +55,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   name:
     description:
       - An ASCII string identifer for this VLAN.  The default value for the
@@ -64,7 +64,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   enable:
     description:
       - Configures the administrative state for the VLAN.  If enable is True
@@ -72,9 +72,9 @@ options:
         the VLAN is administratively disabled.
     default: true
     required: false
-    choices: BOOLEANS
+    choices: ['True', 'False']
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   trunk_groups:
     description:
       - Configures the list of trunk groups associated with the VLAN in the
@@ -85,7 +85,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """

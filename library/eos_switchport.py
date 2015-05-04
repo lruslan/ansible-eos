@@ -58,7 +58,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   mode:
     description:
       - Identifies the mode of operation for the interface.  Switchport
@@ -69,7 +69,7 @@ options:
     default: null
     choices: ['trunk', 'access']
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   access_vlan:
     description:
       - Configures the VLAN associated with a switchport that is
@@ -81,7 +81,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   trunk_native_vlan:
     description:
       - Configures the native VLAN on a trunk interface for untagged
@@ -93,7 +93,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   trunk_allowed_vlans:
     description:
       - Configures the set of VLANs that are allowed to traverse this
@@ -106,7 +106,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """

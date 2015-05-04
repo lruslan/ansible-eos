@@ -58,7 +58,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   vtep:
     description:
       - Specifes the remote endpoing IP address to add to the global VTEP
@@ -68,7 +68,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """

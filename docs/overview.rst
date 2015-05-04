@@ -56,15 +56,18 @@ retrieves the configuration data and proceeds to execute all of the activity
 locally on the node.
 
 
+.. _ansible-eos-role-label:
+
 ********************
 The Ansible EOS Role
 ********************
 
 Integration with the Python Client for eAPI
 ===========================================
-The Ansible Role for EOS does not rely on jsonrpclib to control
-the node's Command API interface, rather, the `Python Client for eAPI <https://github.com/arista-eosplus/pyeapi>`_
-is used.
+The Ansible Role for EOS builds on the `Python Client for eAPI <https://github.com/arista-eosplus/pyeapi>`_ to provide
+automation of the management plane.  Using eAPI as the underlying tranport,
+Ansible can be configured to interface with Arista EOS using either SSH based
+connections or HTTP based connections.
 
 
 Topologies
@@ -130,10 +133,47 @@ playbook. This changes how the playbook gets executed in the following way:
 **Assumption 1**
 Here, the connection between the Ansible Control Host and the Arista node is
 an eAPI connection. This implies that you have an ``eapi.conf`` file on your
-Ansible Control Host that contains the connection parameters for this node.
-The caveat here is that the password for the eAPI connection is stored as
-plaintext in ``eapi.conf``.
+Ansible Control Host that contains the connection parameters for this node, or
+you pass the connection parameters as arguments.
+The caveat when using ``eapi.conf`` is that the password for the eAPI
+connection is stored as plaintext.
 
+**Example** Include connection parameters in playbook
+
+.. code-block:: yaml
+
+  - name: eos nodes
+    hosts: eos_switches
+
+  (truncated)
+
+  tasks:
+  - name: Configure EOS VLAN resources
+    eos_vlan: vlanid=100
+              username=eapi
+              password=password
+              transport=https
+
+**Example** Consult ``eapi.conf`` for connection information
+
+.. code-block:: yaml
+
+  tasks:
+  - name: Configure EOS VLAN resources
+    eos_vlan: vlanid=100
+              connection=veos02
+
+Sample ``eapi.conf``
+
+.. code-block:: ini
+
+  [connection:veos02]
+  host: 192.0.2.2
+  username: eapi
+  password: password
+  enablepwd: itsasecret
+  port: 1234
+  transport: https
 
 *************
 Ansible Tower

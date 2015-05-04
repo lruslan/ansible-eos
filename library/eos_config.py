@@ -58,7 +58,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   section:
     description:
       - Restricts the configuration evaluation to a single configuration
@@ -68,7 +68,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   expression:
     description:
       - Specifies the expression to use to evaluate the current nodes running
@@ -78,7 +78,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
   function:
     description:
       - Specifies the function to use for evaluating the current node
@@ -90,7 +90,7 @@ options:
     default: 'exclude'
     choices: ['include', 'exclude', 'regex']
     aliases: []
-    version_added: 1.0
+    version_added: 1.0.0
 """
 
 EXAMPLES = """
