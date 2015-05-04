@@ -40,6 +40,26 @@ easy as passing the path to the ansible executable::
 Simply specifiy the module to be run (eos_vlan in the above example) and the
 arguments to pass to the module using the -a option.  
 
+****************
+Write Test Cases
+****************
+
+The EOS role includes a number of modules for configuring resources on
+destination EOS nodes.   All module test cases are defined in test/testcases.
+Test cases are defined as a simple YAML file that describes the module to run
+along with the arguments to be passed to the module.  The test suite will then
+build an ansible command run it against a switch (either a hardware based model
+or vEOS).
+
+In order to configure the test suite to run against switches in a given
+environment, modify the test/fixtures/eapi.conf and test/fixtures/hosts file to
+reflect the nodes to be tested.
+
+Once the eapi.conf file and hosts file have been updated, use the following
+command to execute the test suite::
+
+    $ make tests
+
 ************
 Contributing
 ************
