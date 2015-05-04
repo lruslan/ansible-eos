@@ -36,7 +36,10 @@ module: eos_interface
 short_description: Manage generic interfaces on EOS nodes
 description:
   - The eos_interface module manages the interface configuration for any
-    valid interface on EOS nodes.
+    valid interface on EOS nodes.  This module adds an additional state
+    target to the states meta argument called default.  Setting the
+    state value to default will configure the interface to all default
+    values using the default keyword argument.
 version_added: 1.0.0
 category: Interfaces
 author: Arista EOS+
