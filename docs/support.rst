@@ -1,15 +1,16 @@
-############
-Troubleshoot
-############
+#######
+Support
+#######
 
-************
-Introduction
-************
+*******
+Contact
+*******
 
 The Ansible EOS role is developed by Arista EOS+ CS and supported by the Arista
-EOS+ community.   Support for the modules as well as using Ansible with Arista
+EOS+ community. Support for the modules as well as using Ansible with Arista
 EOS nodes is provided on a best effort basis by the Arista EOS+ CS team and the
-community.  
+community. You can contact the team that develops these modules by sending
+an email to ansible-dev@arista.com.
 
 For customers that are looking for a premium level of support, please contact
 your local account team or email eosplus@arista.com for help.
@@ -23,7 +24,7 @@ bugs and enhancement request to the Ansible EOS role.  The issues tracker can
 be found at https://github.com/arista-eosplus/ansible-eos/issues.
 
 For defect issues, please provide as much relevant data as possible as to what
-is causing the issue, if and how it is reproducable, the version of EOS and
+is causing the issue, if and how it is reproducible, the version of EOS and
 Ansible running.
 
 For enhancement requests, please provide a brief description of the
@@ -62,7 +63,7 @@ example, the Ansible `debug`_ module can be used to display the output.::
     - debug: var=eos_vxlan_output
 
 When the debug module is added to the playbook, the eos_vxlan module will
-display the followig output::
+display the following output::
 
     TASK: [debug var=eos_vxlan_output] ********************************************
     ok: [veos02] => {
@@ -93,12 +94,12 @@ was executed and the arguments passed to to module which should match the task
 in the playbook.
 
 The changed key displays true if any changes are made to the system or false if
-no changes are required on the end system. 
+no changes are required on the end system.
 
-The Ansible EOS role addes the keys for changes and instance.  The instance key
+The Ansible EOS role adds the keys for changes and instance.  The instance key
 provides a view of the resource at the conclusion of the task execution.  When
 compared to the nodes running-configuration, the instance should be displaying
-configuration valus that are consistent with the nodes current configuration.
+configuration values that are consistent with the nodes current configuration.
 
 The changes key provides the set of key / value pairs that are changed during a
 module execution.  Since the changed key has a value of false, no changes where
@@ -132,13 +133,13 @@ made to the configuration.::
     }
 
 The above example show the output from the same module; however, this time
-changes are introducted as indicated by the changed key being set to true.  In
+changes are introduced as indicated by the changed key being set to true.  In
 addition, the changes key shows which arguments where changed and the value the
 keys were set to.  For all other arguments that are not included in the changes
 key, no configuration updates were executed.
 
-Thus far, the examples have shown the ouput for eos_* modules that is avaible
-for every run without any changes.  All modules also provide a `debug` argument
+Thus far, the examples have shown the ouput for eos_* modules that is available
+for every run without any changes.  All modules also provide a ``debug`` argument
 that, when enabled, provides additional information about the execution of the
 module.
 
@@ -209,33 +210,33 @@ enabled::
         }
     }
 
-With the `debug` key set to `yes` the the module output provides an additional
-keyword `debug` that provides additional information.  While the keys under
-`debug` could vary from module to module, the following keys are in common
+With the ``debug`` key set to ``yes`` the the module output provides an additional
+keyword ``debug`` that provides additional information.  While the keys under
+``debug`` could vary from module to module, the following keys are in common
 across all module implementations
 
     * current_state - shows the resource instance values at the beginning of
       the task run before any changes are attempted
     * desired_state - shows the desired state of the resource based on the
       input arguments from the task
-    * node - shows the eAPI connection information 
+    * node - shows the eAPI connection information
     * params - shows all parameters used to build the module including
       arguments and metaparameters
-    * pyeapi_version - shows the current version of pyeapi library used 
+    * pyeapi_version - shows the current version of pyeapi library used
     * statful - shows whether or not the module is stateful
 
-Using the `debug` argument provides a fair amount of detail about how the
+Using the ``debug`` argument provides a fair amount of detail about how the
 module executes on the node. There is also logging information that also
 provides some details about the changes the module is making to the end system.
-Logging is enabled by default and can be disabled by configurating the
-`logging` keyword argument to `false`.  
+Logging is enabled by default and can be disabled by configuring the
+`logging` keyword argument to ``false``.
 
 All logging information is sent to the local syslog on the device executing the
 module.  When using the SSH transport, all logging information will be found in
 the node's syslog and in the case of using the eAPI transport, the logging
-information wil be found on the Ansible control hosts syslog.
+information will be found on the Ansible control hosts syslog.
 
-From the same example as above, the `eos_vxlan` module provides logging
+From the same example as above, the ``eos_vxlan`` module provides logging
 information in syslog as shown below::
 
     Apr 16 00:36:34 veos02 ansible-eos_vxlan: Invoked with username=None enable=True logging=True name=Vxlan1 connection=veos02 udp_port=None multicast_group=239.10.10.10 state=present source_interface=Loopback0 debug=True password=NOT_LOGGING_PASSWORD config=None description=None
@@ -247,10 +248,10 @@ information in syslog as shown below::
     Apr 16 00:36:35 veos02 ansible-eos: called instance: {'multicast_group': '239.10.10.10', 'state': 'present', 'enable': True, 'description': '', 'source_interface': 'Loopback0', 'udp_port': 4789, 'name': 'Vxlan1'}
     Apr 16 00:36:35 veos02 ansible-eos: Module completed successfully
 
-The log output diplays the invocation of the module by Ansible and includes
-information about the execution process.  
+The log output displays the invocation of the module by Ansible and includes
+information about the execution process.
 
-Using both the `debug` and `logging` keywords provides a window into the
+Using both the ``debug`` and ``logging`` keywords provides a window into the
 execution of the Ansible EOS role and should make troubleshooting undesired
 results easier.
 
@@ -260,15 +261,15 @@ Debugging EOS Connectivity Issues
 *********************************
 
 Sometimes it is difficult to quickly deduce what is causing a particular
-playbook or task not to run without error.  While Ansible provids some verbose
+playbook or task not to run without error.  While Ansible provides some verbose
 details during the task execution, sometimes the problem relates to connecting
-from the Ansible control host to the EOS node.  
+from the Ansible control host to the EOS node.
 
-This section provides some basic tips on troubleshooting connectvity issues
+This section provides some basic tips on troubleshooting connectivity issues
 with Arista EOS nodes.
 
 When starting to troubleshoot connectivity errors, the first place to start
-is with some simple `ping` tests to ensure there is reachabilty between the
+is with some simple ``ping`` tests to ensure there is connectivity between the
 Ansible control host and the EOS node::
 
     $ ping -c 5 192.168.1.16
@@ -284,9 +285,9 @@ Ansible control host and the EOS node::
     round-trip min/avg/max/stddev = 0.829/1.014/1.202/0.127 ms
 
 The output above validates that the EOS node is reachable from the Ansible
-control host.  
+control host.
 
-If the configured playbook or task is not using `connection: local`, then we
+If the configured playbook or task is not using ``connection: local``, then we
 can use SSH to validate that the SSH keyless login is working properly::
 
     $ ssh ansible@192.168.1.16
@@ -297,11 +298,11 @@ can use SSH to validate that the SSH keyless login is working properly::
     [ansible@Arista ~]$
 
 If the user (ansible in the above example) is unable to login to the node,
-please review the quickstart guide.
+please review the :ref:`quickstart` guide.
 
 Lastly, check to make sure the dependency eAPI has been enabled on the target
-Arista EOS node.  To verify that eAPI is enabled and running, use the `show
-management apt http-commands` command in EOS::
+Arista EOS node.  To verify that eAPI is enabled and running, use the ``show
+management api http-commands`` command in EOS:
 
     Arista#show management api http-commands
     Enabled:        Yes
@@ -323,8 +324,8 @@ management apt http-commands` command in EOS::
     ------------------------------------
     Management1 : http://192.168.1.16:80
 
-In the example command output above, check to be sure that `Enabled:` is `Yes`
-and either `HTTP server:` or `HTTPS server` is in a running state.
+In the example command output above, check to be sure that ``Enabled:`` is ``Yes``
+and either ``HTTP server:`` or ``HTTPS server`` is in a running state.
 
 
-.. _debug: http://docs.ansible.com/debug_module.html 
+.. _debug: http://docs.ansible.com/debug_module.html

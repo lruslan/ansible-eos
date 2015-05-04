@@ -1,3 +1,5 @@
+.. _quickstart:
+
 ###########
 Quick Start
 ###########
@@ -524,7 +526,7 @@ So what really happened?
 5. Ansible executes eos_interface.py with the specified arguments (-a)
 6. eos.interface.py uses pyeapi to configure Ethernet2.
 7. pyeapi consults ``~/.eapi.conf`` to find connection named ``veos01``
-7. Ansible cleans up the temp folder and returns output to the control host.
+8. Ansible cleans up the temp folder and returns output to the control host.
 
 .. code-block:: console
 
