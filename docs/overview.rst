@@ -56,6 +56,8 @@ retrieves the configuration data and proceeds to execute all of the activity
 locally on the node.
 
 
+.. _ansible-eos-role-label:
+
 ********************
 The Ansible EOS Role
 ********************
