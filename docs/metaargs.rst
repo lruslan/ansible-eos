@@ -2,10 +2,10 @@
 Meta Arguments
 ##############
 
-Most EOS modules suport additional arguments (meta arguments) in additionl to
+Most EOS modules support additional arguments (meta arguments) in addition to
 the arguments available for configuring the resource.  The meta arguments
 provide additional connection and troubleshooting arguments for executing tasks
-in Ansible.  
+in Ansible.
 
 Not all modules support all meta arguments.  Please review the individual
 module documentation for applicability.
@@ -14,10 +14,10 @@ module documentation for applicability.
 Troubleshooting Arguments
 *************************
 
-This section provies an overview of the arguments available for trobleshooting
+This section provides an overview of the arguments available for troubleshooting
 tasks with EOS modules.
 
-    * debug (booleans) - Enables additional output from the module 
+    * debug (booleans) - Enables additional output from the module
     * logging (booleans) - Enables or disables logging details to syslog
 
 
@@ -35,7 +35,7 @@ from eapi.conf or eliminate the need for eapi.conf all together.
     * port (string or integer) - specifies the port to use when connecting
     * connection (string) - specifies the name of the connection profile to use
     * transport (string) - configures the transport to use.  Valid transport
-      options inlucde "http", "https", "socket", "http_local".
+      options include "http", "https", "socket", "http_local".
 
 
 ***************
@@ -47,6 +47,3 @@ as stateful.
 
     * state (string) - configures the resource state.  Valid values include
       "present", "absent".  Note that some modules can additional states
-
-
-
