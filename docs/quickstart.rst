@@ -71,12 +71,12 @@ configurations, please consult the EOS User Guide.
 
 
 The configuration above enables eAPI with the default settings.  This enables
-eAPI to listen for connections on HTTPS port 443 by default.  
+eAPI to listen for connections on HTTPS port 443 by default.
 
 **Step 3.** Create a local user
 The user created in this step is different than the shell account to be
-created in the Preparing EOS for Ansible section.  TODO Please see the section
-Understanding the Security Model for more details.
+created in the Preparing EOS for Ansible section. Please see the section
+:ref:`security-model-label` for more details.
 
 .. code-block:: console
 
@@ -418,12 +418,12 @@ configurations, please consult the EOS User Guide.
 
 
 The configuration above enables eAPI with the default settings.  This enables
-eAPI to listen for connections on HTTPS port 443 by default.  
+eAPI to listen for connections on HTTPS port 443 by default.
 
 **Step 3.** Create a local user
 The user created in this step is different than the shell account to be
-created in the Preparing EOS for Ansible section.  TODO Please see the section
-Understanding the Security Model for more details.
+created in the Preparing EOS for Ansible section. Please see the section
+:ref:`security-model-label` for more details.
 
 .. code-block:: console
 

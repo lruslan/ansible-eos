@@ -175,6 +175,7 @@ Sample ``eapi.conf``
   port: 1234
   transport: https
 
+.. _security-model-label:
 
 ********************************
 Understanding the Security Model
