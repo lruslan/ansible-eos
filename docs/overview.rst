@@ -175,6 +175,46 @@ Sample ``eapi.conf``
   port: 1234
   transport: https
 
+.. _security-model-label:
+
+********************************
+Understanding the Security Model
+********************************
+The Ansible EOS role provides a two stage authentication model to
+maximize the security and flexibility available for providing programatic
+access to EOS nodes.   The steps above walk through how to enable both eAPI
+and create a shell account for use with Ansible.   This section provides some
+additional details about how the two stage authentication model works.
+
+.. Note:: The two stage authentication model only applies to Option A.
+
+Implementing a two stage security model allows operators to secure the
+Ansible shell account and prevent it from configuring EOS.  Conversely, having
+a separate eAPI authentication mechanism allows operators to separately
+control the users that can run EOS modules without giving them root
+access to EOS.
+
+When Ansible connects to an EOS node, it must first authenticate to Linux
+as it would for any other Linux platform.  In order to create the shell
+account, the steps in :ref:`A-eos-user-label` should be followed.  The
+steps above will create a user called 'ansible'.  You are free to choose
+any username you like with the following exception: you cannot create a
+username the same as a local account in EOS (more on that in a moment).
+
+By default, the EOS role assumes the user account is called 'ansible'.  If
+the shell account is different, then the eos_username variable must be set
+in your playbook to the name of the shell account you intend to use.  This
+ensures that the EOS node is bootstrapped properly for use with Ansible.
+
+The second stage authentication model uses eAPI.  eAPI provides its own
+authentication mechanism for securing what users can perform which actions
+in EOS. The eAPI user can be one that is authenticated by AAA; however,
+that is outside the scope of this discussion.  The section :ref:`A-enable-eapi-label`
+provides an example of how to create a local user to use when
+authenticating with eAPI.
+
+.. Note:: The shell account and eAPI user must be different.
+
 *************
 Ansible Tower
 *************

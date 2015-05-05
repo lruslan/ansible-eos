@@ -10,7 +10,6 @@ v1.0.0
 New Modules
 ***********
 
-* eos_acl_entry.py
 * eos_command.py
 * eos_config.py
 * eos_ethernet.py

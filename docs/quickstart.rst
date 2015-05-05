@@ -1,3 +1,5 @@
+.. _quickstart:
+
 ###########
 Quick Start
 ###########
@@ -71,12 +73,12 @@ configurations, please consult the EOS User Guide.
 
 
 The configuration above enables eAPI with the default settings.  This enables
-eAPI to listen for connections on HTTPS port 443 by default.  
+eAPI to listen for connections on HTTPS port 443 by default.
 
 **Step 3.** Create a local user
 The user created in this step is different than the shell account to be
-created in the Preparing EOS for Ansible section.  TODO Please see the section
-Understanding the Security Model for more details.
+created in the Preparing EOS for Ansible section. Please see the section
+:ref:`security-model-label` for more details.
 
 .. code-block:: console
 
@@ -418,12 +420,12 @@ configurations, please consult the EOS User Guide.
 
 
 The configuration above enables eAPI with the default settings.  This enables
-eAPI to listen for connections on HTTPS port 443 by default.  
+eAPI to listen for connections on HTTPS port 443 by default.
 
 **Step 3.** Create a local user
 The user created in this step is different than the shell account to be
-created in the Preparing EOS for Ansible section.  TODO Please see the section
-Understanding the Security Model for more details.
+created in the Preparing EOS for Ansible section. Please see the section
+:ref:`security-model-label` for more details.
 
 .. code-block:: console
 
@@ -524,7 +526,7 @@ So what really happened?
 5. Ansible executes eos_interface.py with the specified arguments (-a)
 6. eos.interface.py uses pyeapi to configure Ethernet2.
 7. pyeapi consults ``~/.eapi.conf`` to find connection named ``veos01``
-7. Ansible cleans up the temp folder and returns output to the control host.
+8. Ansible cleans up the temp folder and returns output to the control host.
 
 .. code-block:: console
 

@@ -13,10 +13,10 @@ This project is maintained by the `Arista Networks <http://arista.com/>`_ EOS+ C
    quickstart
    install
    _modules/modules_by_category
+   metaargs
    cookbook
-   troubleshoot
+   support
    development
-   testing-modules
    faq
    release-notes
    license
