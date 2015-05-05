@@ -1,5 +1,6 @@
+#!/usr/bin/python
 #
-# Copyright (c) 2014, Arista Networks, Inc.
+# Copyright (c) 2015, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,9 +30,43 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
----
+import glob
+import re
+import argparse
 
-- name: save running config
-  eos_command: commands='copy running-config startup-config'
+common = open('common/eos.py').read()
 
+start_re = re.compile(r'#<<EOS_COMMON_MODULE_START>>', re.M)
+stop_re = re.compile(r'#<<EOS_COMMON_MODULE_END>>', re.M)
 
+parser = argparse.ArgumentParser()
+
+def build_parser():
+    parser.add_argument('--module', '-m',
+                        help='Only update the specified module')
+
+def should_process(name, args=None):
+    if name.endswith('__init__.py'):
+        return False
+    if not args.module and name.endswith('.py'):
+        return True
+    return name.endswith('%s.py' % args.module)
+
+def main():
+    build_parser()
+    args = parser.parse_args()
+    for name in glob.glob('library/*.py'):
+        if should_process(name, args):
+            print 'processing', name
+            mod = open(name).read()
+
+            start = start_re.search(mod, re.M)
+            stop = stop_re.search(mod, re.M)
+
+            with open(name, 'w') as f:
+                f.write(mod[:start.start()].strip())
+                f.write('\n%s\n\n' % common.strip())
+                f.write(mod[stop.end():].strip())
+
+if __name__ == '__main__':
+    main()

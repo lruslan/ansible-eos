@@ -1,0 +1,89 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_interface
+
+testcases:
+
+  - name: create interface
+    arguments:
+      - { name: name, value: Loopback0 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no interface Loopback0
+
+  - name: delete interface
+    arguments:
+      - { name: name, value: Loopback0 }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - interface Loopback0
+
+  - name: set interface enable to true
+    arguments:
+      - { name: name, value: Loopback0 }
+      - { name: enable, value: true }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no interface Loopback0
+      - interface Loopback0
+      - shutdown
+
+  - name: set interface enable to yes
+    arguments:
+      - { name: name, value: Loopback0 }
+      - { name: enable, value: yes }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no interface Loopback0
+      - interface Loopback0
+      - shutdown
+
+  - name: set interface enable to false
+    arguments:
+      - { name: name, value: Loopback0 }
+      - { name: enable, value: false }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no interface Loopback0
+      - interface Loopback0
+
+  - name: set interface enable to no
+    arguments:
+      - { name: name, value: Loopback0 }
+      - { name: enable, value: no }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no interface Loopback0
+      - interface Loopback0
+
+  - name: set interface description
+    arguments:
+      - { name: name, value: Loopback0 }
+      - { name: description, value: "'test interface string'" }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no interface Loopback0
+      - interface Loopback0
+
+  - name: set interface description to empty string
+    arguments:
+      - { name: name, value: Loopback0 }
+      - { name: description, value: "''" }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no interface Loopback0
+      - interface Loopback0
+      - description test string
+

@@ -1,32 +1,36 @@
-README
-======
-The Arista eos role provides the foundation for working with Arista EOS nodes and Ansible.  The eos role includes the necessary libraries to bootstrap an Arista EOS node and prepare it for use.  In addition, the eos role provides low level functionality for use by all other eos_* roles.
+# Ansible EOS Role
 
-The Arista EOS roles for Ansible provide the ability to manage configuration resources in EOS.  The architecture of the roles makes inherent use of the Arista EOS command API.  This provides a secure two phase authentication that allows for clean separation between automation frameworks and node configuration.  The EOS roles allow an Ansible control host to connect to an Arista EOS node and perform tasks that traverse eAPI with a set of API credentials.
+#### Table of Contents
 
-This role provides the following modules available for using in playbooks and tasks:
+1. [Overview](#overview)
+    * [Requirements](#requirements)
+2. [Setup](#setup)
+    * [Enabling EOS Command API](#enablingeoscommandapi)
+    * [Preparing EOS for Ansible](#preparingeosforansible)
+3. [Examples](#examples)
+4. [License](#license)
 
-* eos_vlan
-* eos_switchport
-* eos_interface
-* eos_portchannel
-* eos_vxlan
-* eos_ipv4interfaces
-* eos_eapi
+## Overview
 
-All modules are fully documented, please see the module documentation for all available parameters.  See the CHANGELOG.md file for the most update to date changes.
+The Arista EOS role provides the foundation for working with Arista EOS nodes and Ansible.  The Arista EOS role for Ansible provides the ability to manage configuration resources in EOS.  The architecture of the roles makes inherent use of the Arista EOS command API using either a traditional Ansible SSH connection or by specifying connection: local and using eAPI to send and receive commands.  
 
-Requirements
-------------
-* Arista EOS 4.12 or later
+The Ansible EOS role is freely provided to the open source community for automating Arista EOS node configurations using Ansible.  Support for the modules is provided on a best effort basis by the Arista EOS+ community.  Please file any bugs, questions or enhancement requests using [Github Issues](http://github.com/arista-eosplus/ansible-eos/issues)
+
+### Requirements
+
+* Arista EOS 4.13.7M or later
 * EOS Command API enabled (see Enabling EOS Command API)
-* Linux shell account (see Preparing EOS for Ansible)
+* [Python Client for eAPI 0.1.1 or later] [pyeapi]
+* Linux shell account (optional) (see Preparing EOS for Ansible)
 
-Enabling EOS Command API
-------------------------
+## Setup
+
+The instruction below provider a walk through for preparing an Arista EOS node
+to be managinged by Ansible.  
+
+### Enabling EOS Command API
+
 The modules provided in the Arista EOS role require command API (aka eAPI) to be enabled on the switch.   The modules use eAPI to communicate with EOS.  Since eAPI is not enabled by default, it must be initially enabled before the EOS modules can be used.
-
-_Note: The EOS role provides a module for enabling and configuring command API using a task; however, the local user still needs to be created_
 
 The steps below provide the basic steps to enable eAPI.  For more advanced configurations, please consult the EOS User Guide.
 
@@ -44,21 +48,21 @@ __Step 2.__ Enable eAPI
 switch(config)# management api http-commands
 switch(config-mgmt-api-http-cmds)# no shutdown
 ```
-The configuration above enables eAPI with the default settings.  This enables eAPI to listen for connections on HTTPS port 443 by default.  If different values are used, the eapi_protocol and eapi_port variables need to be updated in your playbook.
 
-__Step 3.__ Create a local user
-The user created in this step is different than the shell account to be created in the Preparing EOS for Ansible section.  Please see the section Understanding the Security Model for more details.
+The configuration above enables eAPI with the default settings.  This enables eAPI to listen for connections on HTTPS port 443 by default.  
+
+__Step 3.__ Create user account for eAPI
+
+The user account is used to authenticate the API calls.  See the [Python Client
+for eAPI] [pyeapi] for more details.
 
 ```
 switch(config)# username eapi secret icanttellyou
 ```
 
-The username (eapi) and password (icanttellyou) can be anything you like.  This user is used to authenticate to eAPI and should be used for the eapi_username and eapi_password variables in your playbooks.
+### Preparing EOS for Ansible
 
-
-Preparing EOS for Ansible
--------------------------
-In order to successfully execute playbook tasks the EOS node must be configured to allow the Ansible control node to directly attach to the Linux shell.  The following steps provide a walk through for setting up password-less access to EOS nodes for use with Ansible
+In order to successfully execute playbook tasks using a SSH conneciton, the EOS node must be configured to allow the Ansible control node to directly attach to the Linux shell.  The following steps provide a walk through for setting up password-less access to EOS nodes for use with Ansible
 
 _Note: These steps will create a user that has root priviledges to your EOS node so please handle credentials accordingly_
 
@@ -123,123 +127,112 @@ __Step 5.__ Reboot the EOS node and start automating with Ansible
 [ansible@veos ~]$ sudo reboot
 ```
 
-Understanding the Security Model
---------------------------------
-The Arista EOS role for Ansible provides a two stage authentication model to maximize the security and flexibility available for providing programmatic access to EOS nodes.   The steps above walk through how to enable both eAPI and create a shell account for use with Ansible.   This section provides some additional details about how the two stage authentication model works.
+## Examples
 
-_Note:_ The two stage authentication model only applies to tasks that are not using connection: local.  If your playbooks are using local connections, the all of the authentication is based on eAPI.
-
-Implementing a two stage security model allows operators to secure the Ansible shell account and prevent it from configuring EOS.  Conversely, having a separate eAPI authentication mechanism allows operators to separately control the users that can run EOS modules without giving them root access to EOS.
-
-When Ansible connects to an EOS node, it must first authenticate to Linux as it would for any other Linux platform.  In order to create the shell account, the steps in Preparing EOS for Ansible should be followed.  The steps above will create a user called 'ansible'.  You are free to choose any username you like with the following exception. You cannot create a username the same as a local account in EOS (more on that in a moment).
-
-By default, the EOS role assumes the user account is called 'ansible'.  If the shell account is different, then the eos_username variable must be set in your playbook to the name of the shell account you intend to use.  The ensures that the EOS node is bootstrapped properly for use with Ansible.
-
-The second stage authentication model uses eAPI.  eAPI provides its own authentication mechanism for securing what users can perform which actions in EOS.   The eAPI user can be one that is authenticated by AAA; however, that is outside the scope of this discussion.  The section Enabling EOS Command API provides an example of how to create a local user to use when authenticating with eAPI.
-
-The username and password chosen when configuring the local user must be updated in the playbooks variables setting the values for eapi_username and eapi_password.
-
-_Note:_ The shell account and eAPI user must be different.
-
-
-Role Variables
---------------
-The eos role is highly configurable for connecting to the EOS configuration.
-
-_defaults/main.yml_
+The example command can be used to validate that Ansible can properly communicate with EOS nodes.
 
 ```
-# sets the default for eAPI connectivity.  More specific values should be
-# overwritten in the implmenting playbook
-eapi_hostname: localhost
-eapi_username: admin
-eapi_password:
-eapi_protocol: https
-eapi_port:
-
-# enables debug output from the eos_* roles
-eos_debug: []
-
-# enables purge of resources in eos_* roles
-eos_purge: []
-
-# configures the playbook to use the role supplied libraries instead
-# of downloading them from PyPi.  Using this eliminates the need to
-# allow the EOS switch to access the https://pypi.python.org/pypi
-eos_required_libs:
-    - eapilib-0.1.0.tar.gz
-
-# configures the save configuration handler to run on every configuration
-# change.  if this setting is false, then the running config is never
-# saved to non-volatile memory
-eos_save_on_change: true
-
-# configures the backup configuration handler to run on every configuration
-# change.  with this setting enable, the eos role will download the
-# startup-config to the Ansible control host and store it
-eos_backup_on_change: true
-eos_backup_dir: {{ ansible_hostname }}
+$ ansible -m ping eos_nodes
 ```
 
-_vars/eos.yml_
-```
-# configures the username to use with ansible.  this variable is used
-# to configure the working environment on the EOS node
-eos_username: ansible
-
-# overrides the default working directory and configures for working with
-# an EOS node
-eos_working_dir: "/persist/local/{{ eos_username }}"
-eos_source_dir: "{{ working_dir }}/src"
-
-# configures the PIP extension name for use with EOS.  this is required
-# for EOS nodes prior to 4.14 and should not be changed
-eos_python_pip: python-pip-1.4.1.swix
-```
-
-Dependencies
-------------
-* eapilib
-
-
-Example Playbook
-----------------
 The example playbook demostrates how to send a list of commands to the EOS node.  Note the commands send using eos_command are *not* idempotent.
 
 ```
 - name: eos nodes
   hosts: eos_switches
-  gather_facts: yes
-  sudo: true
+  gather_facts: no
 
   vars:
-    eapi_username: eapi
-    eapi_password: password
+    eos_vlans:
+      - vlanid: 1
+        name: default
+      - vlanid: 103
+        name: TEST_VLAN_103
+      - vlanid: 104
+        name: TEST_VLAN_104
+      - vlanid: 105
+        name: TEST_VLAN_105
 
-    commands:
-      - show version
-      - show lldp neighbors
+    eos_interfaces:
+      - name: Ethernet1
+        description: connection to leaf veos03
+        enable: true
+      - name: Ethernet2
+        description: connection to leaf veos04
+        enable: true
+      - name: Loopback0
+        description: managed by Ansible
+        enable: true
+
+    eos_ipinterfaces:
+      - name: Loopback0
+        address: 1.1.1.1/32
+      - name: Ethernet1
+        address: 172.16.11.1/24
 
   roles:
     - role: arista.eos
 
   tasks:
-    - name: run an arbitrary EOS command
-      action: eos_command
-      args: { commands: "{{ commands }}",
-              eapi_username: "{{ eapi_username }}",
-              eapi_password: "{{ eapi_password }}"}
-      register: eos_command_output
+    - name: Configure EOS VLAN resources
+      eos_vlan: vlanid={{ item.vlanid }}
+                name={{ item.name }}
+                enable={{ item.enable|default('true') }}
+                connection={{ inventory_hostname }}
+      with_items: eos_vlans
+      when: eos_vlans is defined
+      register: eos_vlan_output
 
-    - debug: var=eos_command_output
+    - name: Configure EOS physical interfaces
+      eos_interface: name={{ item.name }}
+                     description="{{ item.description|default('managed by Ansible') }}"
+                     enable={{ item.enable|default('false') }}
+                     connection={{ inventory_hostname }}
+      with_items: eos_interfaces
+      when: eos_interfaces is defined
+      register: eos_interface_output
+
+    - name: Configure EOS IPv4 interfaces
+      eos_ipinterface: name={{ item.name }}
+                         address={{ item.address }}
+                         connection={{ inventory_hostname }}
+      with_items: eos_ipinterfaces
+      when: eos_ipinterfaces is defined
+      register: eos_ipinterfaces_output
 
 ```
 
+## License
 
-License
--------
-BSD-3 (see LICENSE)
+Copyright (c) 2015, Arista Networks, Inc.
+All rights reserved.
 
-Author Information
-------------------
-Arista EOS+ (eosplus-dev@arista.com)
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+  Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+
+  Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+
+  Neither the name of Arista Networks nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ARISTA NETWORKS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+[pyeapi]: https://github.com/arista-eosplus/pyeapi
+

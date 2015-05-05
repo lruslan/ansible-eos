@@ -1,0 +1,16 @@
+To use the test harness in a local environment, simply update the eapi.conf
+file found in test/fixtures with credentials for your local system.  You can
+add more than one entry to test multiple EOS nodes at the same time.
+
+The test harness will load the test/fixtures/eapi.conf file and execute the
+series of tests as defined in the test cases.  This test harness requires
+that the ansible executable is in the current path and that eAPI is enabled 
+with an HTTP transport using --connection local
+
+To use the system test harness you need to have nose tests installed on 
+your local system
+
+$ pip install nose
+
+Then from the root folder execute nosetests -v 
+

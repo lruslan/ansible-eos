@@ -1,0 +1,81 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_mlag_config
+
+testcases:
+
+  - name: set the domain_id value
+    arguments:
+      - { name: domain_id, value: test }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+
+  - name: set the local_interface
+    arguments:
+      - { name: local_interface, value: Vlan1234 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+      - interface Vlan1234
+
+  - name: set the peer_address
+    arguments:
+      - { name: peer_address, value: 172.16.10.2 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+      - interface Vlan1234
+      - ip address 172.16.10.1/24
+    teardown:
+      - no interface Vlan1234
+
+  - name: set the peer_link
+    arguments:
+      - { name: peer_link, value: Ethernet1 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+      - default interface Ethernet1
+
+  - name: set mlag shutdown to true
+    arguments:
+      - { name: shutdown, value: true }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+
+  - name: set mlag shutdown to yes
+    arguments:
+      - { name: shutdown, value: yes }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+
+  - name: set mlag shutdown to false
+    arguments:
+      - { name: shutdown, value: false }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+      - mlag configuration
+      - shutdown
+
+  - name: set mlag shutdown to no
+    arguments:
+      - { name: shutdown, value: no }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+      - mlag configuration
+      - shutdown

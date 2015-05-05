@@ -1,0 +1,16 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_system
+
+testcases:
+
+  - name: configure the system hostname to teststring
+    arguments:
+      - { name: hostname, value: teststring }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no hostname
+

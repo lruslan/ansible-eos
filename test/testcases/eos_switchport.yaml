@@ -1,0 +1,91 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_switchport
+
+testcases:
+
+  - name: create switchport
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - no switchport
+      - ip address 99.99.99.99/8
+
+  - name: delete interface
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+
+  - name: set mode to access
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: mode, value: access }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - switchport mode trunk
+
+  - name: set mode to trunk
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: mode, value: trunk }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+
+  - name: set access vlan to 100
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: access_vlan, value: 100 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - vlan 100
+
+  - name: set trunk native vlan to 100
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: trunk_native_vlan, value: 100 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - vlan 100
+
+  - name: set trunk allowed vlans to 1
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: trunk_allowed_vlans, value: 1 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - switchport mode trunk
+
+  - name: set trunk allowed vlans to multple values
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: trunk_allowed_vlans, value: 1,10,100,1000 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - switchport mode trunk
+
