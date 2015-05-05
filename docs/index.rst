@@ -14,7 +14,6 @@ This project is maintained by the `Arista Networks <http://arista.com/>`_ EOS+ C
    install
    _modules/modules_by_category
    metaargs
-   cookbook
    support
    development
    faq
