@@ -2,6 +2,13 @@
 FAQ
 ###
 
+************
+Introduction
+************
+
+The below list provides some answers to commonly asked questions about the
+Ansible EOS role.
+
 
 Is pyeapi required on both the Ansible control host and the EOS node?
 =====================================================================
