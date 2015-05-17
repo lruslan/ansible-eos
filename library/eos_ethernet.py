@@ -336,7 +336,7 @@ class EosAnsibleModule(AnsibleModule):
             self.fail('Connection must define a transport')
 
         connection = pyeapi.client.make_connection(**config)
-        node = pyeapi.client.Node(connection)
+        node = pyeapi.client.Node(connection, **config)
 
         try:
             node.enable('show version')
