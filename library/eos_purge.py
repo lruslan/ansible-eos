@@ -372,24 +372,22 @@ class EosAnsibleModule(AnsibleModule):
 #<<EOS_COMMON_MODULE_END>>
 
 def eos_vxlan_vlan(module):
+    api = module.api('interfaces')
+    current = api.get('Vxlan1')['vlans'].keys()
 
-    resp = module.api('interfaces').get('Vxlan1')
-    if not resp:
-        return dict(purged=[])
-
+    results = module.from_json(module.attributes['results'])
     expected = list()
-    for item in results:
+    for item in results['results']:
         if 'instance' in item:
             expected.append(item['instance']['vlan'])
 
-    purged = list()
-    for vlan in resp['vlans']:
-        if vlan not in expected:
-            node.api('interfaces').remove_vlan('Vxlan1', vlan)
-            purged.append(vlan)
+    purgeset = set(current).difference(expected)
+    for item in purgeset:
+        if not module.check_mode:
+            api.remove_vlan('Vxlan1', item)
 
+    purged = [{'name': 'Vxlan1', 'state': 'absent', 'vlan': vid } for vid in purgeset]
     return dict(purged=purged)
-
 
 def eos_vlan(module):
     current = module.api('vlans').getall()
