@@ -406,13 +406,14 @@ def main():
 
     module = EosAnsibleModule(argument_spec=argument_spec, stateful=False)
 
-    command = module.attributes['expression']
-    if not command:
-        command = r'^%s$' % module.attributes['command']
+    expression = module.attributes['expression']
+    command = module.attributes['command']
     function = module.attributes['function']
 
     if function == 'regex':
-        if not re.match(command, section(module), re.M):
+        if not expression:
+            expression = r'^{}$'.format(command)
+        if not re.match(expression, section(module), re.M):
             config(module)
     elif function == 'exclude':
         if command not in section(module):
