@@ -413,7 +413,7 @@ def main():
     if function == 'regex':
         if not expression:
             expression = r'^{}$'.format(command)
-        if not re.match(expression, section(module), re.M):
+        if not re.search(expression, section(module), re.M):
             config(module)
     elif function == 'exclude':
         if command not in section(module):
