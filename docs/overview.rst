@@ -46,8 +46,9 @@ Accelerated mode
 Ansible supported (since v0.8) a mode of operation known as Fireball mode.
 Fireball mode has since been depreciated in favor of accelerated mode (as of v1.3).
 Accelerated mode connects to the destination node and starts a daemon that is
-used for the remainder of the transaction. More details about accelerated
-mode can be found at this link.
+used for the remainder of the transaction.
+
+.. tip:: More details about `Accelerated Mode <https://docs.ansible.com/playbooks_acceleration.html>`_ from Ansible's documentation.
 
 In addition to the connection types discussed above, Ansible also supports
 a pull model. The pull model works in conjunction with SCM systems to perform
@@ -74,7 +75,7 @@ Topologies
 ==========
 Above, we discussed how Ansible is typically used to control a node. These
 principles remain true for Arista EOS nodes, however, there are some nuances
-that are important to understand. Next, we will discuss the two main
+that are important to understand when using the Ansible EOS role. Next, we will discuss the two main
 methods used to control an Arista EOS node using Ansible.
 
 .. image:: _img/ansible-deploy.jpg
@@ -111,7 +112,7 @@ key in the nodes ``authorized_keys`` file, or you are providing a password
 when the playbook executes.
 
 **Assumption 2**
-Pyeapi is being used by the module to make configuration changes on the
+Pyeapi is used by the Ansible EOS role modules to make configuration changes on the
 node. This implies that ``pyeapi`` is already installed on the node. The pyeapi
 module is NOT installed on Arista EOS nodes by default, so installation would
 be required by the user.
@@ -128,7 +129,7 @@ playbook. This changes how the playbook gets executed in the following way:
 4. Collect Fact information from the node
 5. Execute the module on the Ansible Control Host
 6. Read stdout and parse it into JSON
-7. Return the result to the Ansible Control Host
+7. Present the result on the Ansible Control Host
 
 **Assumption 1**
 Here, the connection between the Ansible Control Host and the Arista node is

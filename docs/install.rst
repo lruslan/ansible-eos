@@ -28,7 +28,7 @@ Ansible is provided via standard RPM installations from EPEL 6 and Fedora reposi
 
 .. code-block:: console
 
-  $ sudo pip install ansible
+  $ sudo yum install ansible
 
 
 Installing via Apt (Ubuntu)
@@ -57,6 +57,24 @@ simply enter the following command from a shell prompt.
 ****************************
 Install the Ansible EOS Role
 ****************************
+There are two methods that can be used to install the ansible-eos modules on
+your system; (1) Ansible Galaxy, (2) Github - from source.  The first method
+is the easiest and makes using the modules a little easier, but the drawback
+is that you are dependent upon releases being posted to Ansible Galaxy. The second
+method is good if you plan on working with the actual module code from source
+or wish to closely follow all changes in development.
+
+Install Using Ansible Galaxy
+============================
+From your Ansible Control Host, type:
+
+.. code-block:: console
+
+  ansible-galaxy install arista.eos
+
+
+Installing from GitHub (for active development)
+===============================================
 Arista EOS+ Consulting Services maintains a set of modules that provide
 native integration with Ansible. All of the modules are available via
 `Github <http://github.com/aristanetworks/ansible-eos>`_.  This section will

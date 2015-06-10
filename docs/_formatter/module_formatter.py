@@ -211,7 +211,7 @@ def process_module(module, options, env, template, outputname, module_map, alias
     if isinstance(fname, dict):
         return "SKIPPED"
 
-    basename = os.path.basename(fname)
+    # basename = os.path.basename(fname)
 
     deprecated = False
 
@@ -226,8 +226,12 @@ def process_module(module, options, env, template, outputname, module_map, alias
 
     print "rendering: %s" % module
 
-    # use ansible core library to parse out doc metadata YAML and plaintext examples
-    doc, examples, returndocs = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
+    # use ansible core library to parse out doc metadata YAML
+    doc, examples = ansible.utils.module_docs.get_docstring(fname)
+
+    returndocs = None
+
+    #(doc, examples, returndocs
 
     # crash if module is missing documentation and not explicitly hidden from docs index
     if doc is None:
@@ -242,7 +246,6 @@ def process_module(module, options, env, template, outputname, module_map, alias
     if doc is None:
         sys.stderr.write("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
         sys.exit(1)
-
 
     if deprecated and 'deprecated' not in doc:
         sys.stderr.write("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
