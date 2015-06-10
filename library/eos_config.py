@@ -390,6 +390,7 @@ def config(module):
     if module.attributes['section']:
         commands.append(module.attributes['section'])
     commands.append(module.attributes['command'])
+    module.debug('commands', commands)
     module.config(commands)
 
 def main():
@@ -406,8 +407,8 @@ def main():
 
     module = EosAnsibleModule(argument_spec=argument_spec, stateful=False)
 
+    command = module.attributes['command'].strip()
     expression = module.attributes['expression']
-    command = module.attributes['command']
     function = module.attributes['function']
 
     if function == 'regex':
@@ -416,10 +417,10 @@ def main():
         if not re.search(expression, section(module), re.M):
             config(module)
     elif function == 'exclude':
-        if command not in section(module):
+        if (expression or command) not in section(module):
             config(module)
     elif function == 'include':
-        if command in section(module):
+        if (expression or command) in section(module):
             config(module)
 
     module.exit()
