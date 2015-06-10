@@ -1,6 +1,11 @@
 Arista EOS Role for Ansible
 ===========================
 
+## IN PROGRESS
+
+- adds additional parameters to eos_config
+- fixes issue with honoring enablepwd if specified
+
 ## 1.0.0, 5/4/2015
 
 - adds support for pyeapi
