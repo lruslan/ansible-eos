@@ -369,7 +369,7 @@ class EosAnsibleModule(AnsibleModule):
 
 def do_interfaces(module):
     resp = module.node.enable('show interfaces')
-    return resp[0]['result']
+    return resp[0]['result']['interfaces']
 
 def do_version(module):
     resp = module.node.enable('show version')
