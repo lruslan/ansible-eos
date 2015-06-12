@@ -223,6 +223,8 @@ class EosAnsibleModule(AnsibleModule):
         keys = set(self.params).difference(self.meta_args)
         attrs = dict()
         attrs = dict([(k, self.params[k]) for k in self.params if k in keys])
+        if 'CHECKMODE' in attrs:
+            del attrs['CHECKMODE']
         return attrs
 
     def create(self):
