@@ -381,11 +381,11 @@ def instance(module):
     result = module.node.api('interfaces').get(name)
     _instance = dict(name=name, vtep=vtep, vlan=vlan, state='absent')
 
-    if vtep in result['flood_list']:
-        _instance['state'] = 'present'
-
-    elif vlan in result['vlans']:
+    if vlan in result['vlans']:
         if vtep in result['vlans'][vlan]['flood_list']:
+            _instance['state'] = 'present'
+    elif not vlan:
+        if vtep in result['flood_list']:
             _instance['state'] = 'present'
 
     return _instance
