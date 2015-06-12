@@ -13,7 +13,9 @@ Introduction
 This quick-start guide provides the fastest method to get up and running with
 the Ansible EOS role.  It assumes that you already have an Ansible
 environment running. If not, see :ref:`install-ansible-label` before following
-this guide.
+this guide. This guide assumes very little working experience with Ansible, therefore,
+if the steps seem to leave you with questions and uncertainties please let us know
+so that we can improve it.
 
 
 ***************
@@ -41,8 +43,8 @@ Option A: Connect to Arista Node over SSH
 
 .. _A-enable-eapi-label:
 
-Enabling EOS Command API
-========================
+1. Enabling EOS Command API
+===========================
 The modules provided in the Arista EOS role require command API (aka eAPI)
 to be enabled on the switch. The modules use eAPI to communicate with EOS.
 Since eAPI is not enabled by default, it must be initially enabled before the
@@ -55,7 +57,7 @@ EOS modules can be used.
 The steps below provide the basic steps to enable eAPI.  For more advanced
 configurations, please consult the EOS User Guide.
 
-**Step 1.** Login to the destination node and enter configuration mode
+**Step 1.1.** Login to the destination node and enter configuration mode
 
 .. code-block:: console
 
@@ -64,7 +66,7 @@ configurations, please consult the EOS User Guide.
   switch(config)#
 
 
-**Step 2.** Enable eAPI
+**Step 1.2.** Enable eAPI
 
 .. code-block:: console
 
@@ -91,8 +93,8 @@ value.
 
 .. _A-eos-user-label:
 
-Preparing EOS for Ansible
-=========================
+2. Preparing EOS for Ansible
+============================
 In order to successfully execute playbook tasks the EOS node must be
 configured to allow the Ansible control node to directly attach to the
 Linux shell.  The following steps provide a walk through for setting up
@@ -101,7 +103,7 @@ password-less access to EOS nodes for use with Ansible.
 .. Note:: These steps will create a user that has root privileges to your EOS
           node, so please handle credentials accordingly
 
-**Step 1.** Login to the destination node and enter the Linux shell
+**Step 2.1.** Login to the destination node and enter the Linux shell
 
 .. code-block:: console
 
@@ -111,7 +113,7 @@ password-less access to EOS nodes for use with Ansible.
   Arista Networks EOS shell
 
 
-**Step 2.** Create the user to use with Ansible, create the home directory
+**Step 2.2.** Create the user to use with Ansible, create the home directory
 and prepare for uploading your SSH key. In the below example we will create
 a user called ansible. The second command will create a temporary password
 for the user but we will be switching to using SSH keys and the password
@@ -137,7 +139,7 @@ will be removed
   Connection to veos01 closed.
 
 
-**Step 3.** Upload the SSH key to use from your Ansible control host and
+**Step 2.3.** Upload the SSH key to use from your Ansible control host and
 verify access from remote host
 
 .. code-block:: console
@@ -152,7 +154,7 @@ verify access from remote host
   [ansible@veos ~]$
 
 
-**Step 4.** Configure EOS to create user on reboot with no password assigned.
+**Step 2.4.** Configure EOS to create user on reboot with no password assigned.
 This will only allow the Ansible user to login with keys.
 
 .. code-block:: console
@@ -163,7 +165,7 @@ This will only allow the Ansible user to login with keys.
   useradd -d /persist/local/ansible -G eosadmin ansible
 
 
-**Step 5.** Reboot the EOS node and start automating with Ansible
+**Step 2.5.** Reboot the EOS node and start automating with Ansible
 
 .. code-block:: console
 
@@ -173,8 +175,8 @@ This will only allow the Ansible user to login with keys.
 
 .. _A-install-pyeapi-label:
 
-Install pyeapi
-==============
+3. Install pyeapi
+=================
 As mentioned earlier, the Ansible EOS role uses `pyeapi <https://github.com/arista-eosplus/pyeapi>`_
 on the Arista node that will be configured. Let's install it.
 
@@ -186,11 +188,11 @@ If the Arista node has internet access:
 
 If there's no internet access:
 
-**Step 1:** Download Pypi Package
+**Step 3.1:** Download Pypi Package
 
 `Download <https://pypi.python.org/pypi/pyeapi>`_ the latest version of pyeapi on your local machine.
 
-**Step 2:** SCP the file to the Arista node and install
+**Step 3.2:** SCP the file to the Arista node and install
 
 .. code-block:: console
 
@@ -202,7 +204,7 @@ Then SSH into your node and install it:
 
   [ansible@veos ~]$ sudo pip install /tmp/pyeapi-<VERSION>.tar.gz
 
-**Step 3:** Create local pyeapi.conf file
+**Step 3.3:** Create local pyeapi.conf file
 
 .. code-block:: console
 
@@ -221,8 +223,8 @@ with credentials you created earlier:
 
 .. _A-run-adhoc-label:
 
-Running Adhoc Commands
-======================
+4. Running Adhoc Commands
+=========================
 If you are new to Ansible then it's easier to dip your toes in using
 `Adhoc <http://docs.ansible.com/intro_adhoc.html>`_ commands versus writing a
 full `Playbook <http://docs.ansible.com/playbooks.html>`_. The section below
@@ -230,7 +232,7 @@ will help guide you through running some Adhoc commands to configure basic
 settings on your node.
 
 
-**Step 1.** Create an Ansible Inventory File
+**Step 4.1.** Create an Ansible Inventory File
 
 Let's add the details of our test node to an Ansible Inventory file.
 
@@ -248,7 +250,7 @@ node as well as the name of the user created in Step 2 above:
   <node> ansible_ssh_user=<user>
 
 
-**Step 2. Run Commands**
+**Step 4.2. Run Commands**
 
 Let's set the IP address on Ethernet2 using the :ref:`eos_ipinterface` module:
 

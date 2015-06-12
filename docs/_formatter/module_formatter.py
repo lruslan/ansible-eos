@@ -227,9 +227,9 @@ def process_module(module, options, env, template, outputname, module_map, alias
     print "rendering: %s" % module
 
     # use ansible core library to parse out doc metadata YAML
-    doc, examples = ansible.utils.module_docs.get_docstring(fname)
+    doc, examples, returndocs = ansible.utils.module_docs.get_docstring(fname)
 
-    returndocs = None
+    # returndocs = None
 
     #(doc, examples, returndocs
 

@@ -8,13 +8,13 @@ Introduction
 Ansible is a configuration management framework that provides an automated
 infrastructure for managing systems devices and applications. Ansible provides
 this functionality using an agent-less approach that focuses on management of
-the destination device and/or application over SSH. Ansible achieves it vision
+the destination device and/or application over SSH. Ansible achieves its vision
 through the implementation of playbooks and modules. Playbooks, which are in
 turn comprised of a series of tasks to be executed on a host or group of
 hosts, provide the fundamental workflow in Ansible. Modules are host and/or
 application specific that perform the operations based on the directives of
-the tasks and playbooks. Complete details about Ansible can be found at
-their `website <http://docs.ansible.com/index.html>`_.
+the tasks and playbooks. Complete details about Ansible can be found in
+their `documentation <http://docs.ansible.com/index.html>`_.
 
 ****************
 Connection Types
@@ -32,7 +32,7 @@ either the hosts native SSH binary or using the
 `Paramiko <http://docs.ansible.com/intro_getting_started.html#remote-connection-information>`_
 library. Since it uses SSH as the transport, the Ansible connection needs to
 be able to authenticate to the remote system and expects to operate in a
-Linux shell environment
+Linux shell environment.
 
 Local connections
 =================
@@ -71,6 +71,8 @@ Ansible can be configured to interface with Arista EOS using either SSH based
 connections or HTTP based connections.
 
 
+.. _deployment-topologies-label:
+
 Topologies
 ==========
 Above, we discussed how Ansible is typically used to control a node. These
@@ -85,14 +87,19 @@ methods used to control an Arista EOS node using Ansible.
 The illustration above demonstrates a typical scenario. You, as the user, want
 to execute an Ansible Playbook on one (or many) of your Arista nodes. From the
 user's perspective the interaction with the Ansible Control Host is the same,
-from your shell you would type
+from your shell you would type:
 
 .. code-block:: console
 
   ansible-playbook eos.yaml
 
-but the way in which the playbook is executed will differ between Option A and
-Option B. Let's discuss those differences below.
+Notice in the diagram a few things remain constant:
+
+* pyeapi is always required (whether on the control host or EOS node), and
+* pyeapi is ultimately responsible for making the eAPI calls to modify the node's configuration
+
+While the overall flow is similar, the way in which the playbook is executed
+will differ between Option A and Option B. Let's discuss those differences below.
 
 Option A
 ========
@@ -102,8 +109,10 @@ This method follows the traditional Ansible control procedure, namely:
 2. Collect Fact information from the node
 3. Download the module to the node
 4. Execute the module on the node
-5. Read stdout and parse it into JSON
-6. Return the result to the Ansible Control Host
+5. pyeapi consults /mnt/flash/eapi.conf to determine credentials for using eAPI
+6. pyeapi commands run locally to modify configuration
+7. Read stdout and parse it into JSON
+8. Return the result to the Ansible Control Host
 
 **Assumption 1**
 You'll notice that this method uses SSH to communicate with the node. This
@@ -117,70 +126,11 @@ node. This implies that ``pyeapi`` is already installed on the node. The pyeapi
 module is NOT installed on Arista EOS nodes by default, so installation would
 be required by the user.
 
-
-Option B
-========
-This method uses the ``connection: local`` feature within the ``eos.yaml``
-playbook. This changes how the playbook gets executed in the following way:
-
-1. Include ``connection: local`` in ``eos.yaml``
-2. Execute ``ansible-playbook eos.yaml`` from the Ansible Control Host
-3. pyeapi consults the local eapi.conf file which provide node connection information
-4. Collect Fact information from the node
-5. Execute the module on the Ansible Control Host
-6. Read stdout and parse it into JSON
-7. Present the result on the Ansible Control Host
-
-**Assumption 1**
-Here, the connection between the Ansible Control Host and the Arista node is
-an eAPI connection. This implies that you have an ``eapi.conf`` file on your
-Ansible Control Host that contains the connection parameters for this node, or
-you pass the connection parameters as arguments.
-The caveat when using ``eapi.conf`` is that the password for the eAPI
-connection is stored as plaintext.
-
-**Example** Include connection parameters in playbook
-
-.. code-block:: yaml
-
-  - name: eos nodes
-    hosts: eos_switches
-
-  (truncated)
-
-  tasks:
-  - name: Configure EOS VLAN resources
-    eos_vlan: vlanid=100
-              username=eapi
-              password=password
-              transport=https
-
-**Example** Consult ``eapi.conf`` for connection information
-
-.. code-block:: yaml
-
-  tasks:
-  - name: Configure EOS VLAN resources
-    eos_vlan: vlanid=100
-              connection=veos02
-
-Sample ``eapi.conf``
-
-.. code-block:: ini
-
-  [connection:veos02]
-  host: 192.0.2.2
-  username: eapi
-  password: password
-  enablepwd: itsasecret
-  port: 1234
-  transport: https
-
 .. _security-model-label:
 
-********************************
 Understanding the Security Model
-********************************
+--------------------------------
+
 The Ansible EOS role provides a two stage authentication model to
 maximize the security and flexibility available for providing programatic
 access to EOS nodes.   The steps above walk through how to enable both eAPI
@@ -215,6 +165,172 @@ provides an example of how to create a local user to use when
 authenticating with eAPI.
 
 .. Note:: The shell account and eAPI user must be different.
+
+
+Option B
+========
+This method uses the ``connection: local`` feature within the ``eos.yaml``
+playbook. This causes the transport method to be an eAPI connection (HTTP[S])
+versus SSH. This changes how the playbook gets executed in the following way:
+
+1. Include ``connection: local`` in ``eos.yaml``
+2. Execute ``ansible-playbook eos.yaml`` from the Ansible Control Host
+3. pyeapi consults the local ~/.eapi.conf file which provides node connection information
+4. Collect Fact information from the node
+5. Execute the module on the Ansible Control Host
+6. pyeapi commands run over the network to modify configuration
+7. Read stdout and parse it into JSON
+8. Present the result on the Ansible Control Host
+
+**Assumption 1**
+Here, the connection between the Ansible Control Host and the Arista node is
+an eAPI connection. This implies that you have an ``eapi.conf`` file on your
+Ansible Control Host that contains the connection parameters for this node, or
+you pass the connection parameters as meta arguments.
+The caveat when using ``eapi.conf`` is that the password for the eAPI
+connection is stored as plaintext. See :ref:`faq-security-label` for more information.
+
+
+Ansible Host file and eapi.conf
+===============================
+
+Regardless of the method you use to communicate with your node, one thing is constant:
+pyeapi is ultimately responsible for sending the configuration commands to your node.
+This means that at some point your adhoc command or playbook
+needs to indicate the credentials to create an eAPI connection. There are a few
+different ways to do this as explained below.
+
+Method 1: Using Meta Arguments
+------------------------------
+
+Meta arguments are used to pass the exact eAPI connection parameters during adhoc
+command or play. If you provide all of the required eAPI connection information
+you will not even need to use eapi.conf. This is the most verbose and least flexible.
+
+.. tip:: Read all about :ref:`meta-args-label`
+
+**Example** In a playbook
+
+**eos-playbook.yml**
+
+.. code-block:: yaml
+
+  - name: eos nodes
+    hosts: eos_switches
+    connection: local
+
+  tasks:
+  - name: Configure EOS VLAN resources
+    eos_vlan: vlanid=100
+              name=mynewamazingvlan100
+              host={{ inventory_hostname }}
+              username={{ username }}
+              password={{ password }}
+              transport={{ transport }}
+
+**/etc/ansible/hosts**
+
+.. code-block:: console
+
+    [eos_switches]
+    192.168.0.50
+    192.168.0.51
+    192.168.0.52
+    192.168.0.53
+
+    [eos_switches:vars]
+    username=eapi
+    password=password
+    transport=https
+
+**~/.eapi.conf**
+
+.. code-block:: console
+
+    # empty file
+
+**Explanation**
+
+This method utilizes the Ansible hosts file to feed information into the playbook.
+The key to success here is grouping our nodes under the ``eos_switches`` group name.
+We then use ``[eos_switches:vars]`` to create a set of variables that apply to all
+switches in the group. These variables are available in the playbook.
+We indicate in the play to execute our task against all nodes in this group. Then
+we use ``{{ inventory_hostname }}``, ``{{ username }}``, etc. to substitute the
+host name (ip address in this case) and other connection parameters into the play.
+Since all of the necessary eAPI information is present, the module does not
+need to consult an eapi.conf file for connection parameters.
+
+
+Method 2: Using eapi.conf
+-------------------------
+
+In this method we will put all of the eAPI connection info into eapi.conf. When
+we execute a play or adhoc command, pyeapi will not be passed connection information
+from Ansible, therefore it will consult eapi.conf to learn connection information.
+
+**Example**
+
+**eos-playbook.yml**
+
+.. code-block:: yaml
+
+  - name: eos nodes
+    hosts: eos_switches
+    connection: local
+
+  tasks:
+  - name: Configure EOS VLAN resources
+    eos_vlan: vlanid=100
+              name=mynewamazingvlan100
+              connection={{ inventory_hostname }}
+
+**/etc/ansible/hosts**
+
+.. code-block:: console
+
+    [eos_switches]
+    spine-1
+    spine-2
+    tor-1
+    tor-2
+
+**~/.eapi.conf**
+
+.. code-block:: console
+
+    [connection:spine-1]
+    host: 192.168.0.50
+    username: admin
+    password: password
+    transport: https
+
+    [connection:spine-2]
+    host: 192.168.0.51
+    username: admin
+    password: password
+    transport: https
+
+    [connection:tor-1]
+    host: 192.168.0.52
+    username: admin
+    password: password
+    transport: https
+
+    [connection:tor-2]
+    host: 192.168.0.53
+    username: admin
+    password: password
+    transport: https
+
+**Explanation**
+
+Here we use a new meta argument ``connection``. This directly relates the
+connection name in eapi.conf. As you can see there is no eAPI connection information
+in /etc/ansible/hosts, rather we just have names of nodes. When the particular
+ansible-eos module executes it will reference ``~/.eapi.conf`` to determine
+how to connect to the EOS node over eAPI.
+
 
 *************
 Ansible Tower

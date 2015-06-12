@@ -111,6 +111,71 @@ For instance, to use the v1.0.0 release, enter the command
 
   git checkout tags/v1.0.0
 
-
 At any point in time switching to a different release is as easy as changing
 to the ansible-eos directory and re-issuing the “git checkout” command.
+
+You will need to make Ansible aware of this new role if you want to use the
+included modules in your plays. You have a few options:
+
+
+**Option 1:** Create Symlink (preferred)
+
+We will create a symlink in ``/etc/ansible/roles/`` to make Ansible aware of the
+``ansible-eos`` role.  Notice that the symlink name is ``arista.eos``. This is
+because the Ansible Galaxy role is named ``arista.eos``:
+
+.. code-block:: console
+
+  # create soft symlink
+  cd /etc/ansible/roles
+  sudo ln -s /path/to/where/your/git/clone/is/ansible-eos arista.eos
+
+Then you can use the role in your play as:
+
+.. code-block:: yaml
+
+  #my-playbook.yml
+  ---
+  - hosts: eos_switches
+    gather_facts: no
+
+    roles:
+      - arista.eos
+
+    tasks:
+      - name: configures the hostname on tor1
+        eos_vlan:
+          vlanid=150
+
+
+**Option 2:** Edit ansible.cfg roles_path
+
+Here, you can edit ``/etc/ansible/ansible.cfg`` to make Ansible look for the
+``ansible-eos`` directory:
+
+.. code-block:: console
+
+  # open the config file in an editor
+  sudo vi /etc/ansible/ansible.cfg
+
+  # if roles_path exists add a colon and the new path
+  # if the variable doesn't exist, create it under [defaults] section
+  [defaults]
+  roles_path=/path/to/where/your/git/clone/is/ansible-eos
+
+Then you can use the role in your play as:
+
+.. code-block:: yaml
+
+  #my-playbook.yml
+  ---
+  - hosts: eos_switches
+    gather_facts: no
+
+    roles:
+      - ansible-eos
+
+    tasks:
+      - name: configures the hostname on tor1
+        eos_vlan:
+          vlanid=150

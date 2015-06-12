@@ -45,48 +45,52 @@ provide two arguments for debugging: logging (default=on) and debug
 
 When a module executes, the module output can be registered as a variable and
 then used to display the output.  Below is an example task that configures a
-logical Vxlan interface::
+logical Vxlan interface:
 
-    - name: Configure Vxlan logical interface
-      eos_vxlan: name={{ vxlan.name }}
-             description={{ vxlan.description|default(omit) }}
-             source_interface={{ vxlan.source_interface }}
-             multicast_group={{ vxlan.multicast_group }}
-             debug=no
-             connection={{ inventory_hostname }}
-      when: vxlan is defined
-      register: eos_vxlan_output
+.. code-block:: yaml
+
+  - name: Configure Vxlan logical interface
+    eos_vxlan: name={{ vxlan.name }}
+           description={{ vxlan.description|default(omit) }}
+           source_interface={{ vxlan.source_interface }}
+           multicast_group={{ vxlan.multicast_group }}
+           debug=no
+           connection={{ inventory_hostname }}
+    when: vxlan is defined
+    register: eos_vxlan_output
 
 Once the variable is registered, for instance eos_vxlan_output in the above
 example, the Ansible `debug`_ module can be used to display the output.::
 
-    - debug: var=eos_vxlan_output
+  - debug: var=eos_vxlan_output
+
 
 When the debug module is added to the playbook, the eos_vxlan module will
-display the following output::
+display the following output.::
 
-    TASK: [debug var=eos_vxlan_output] ********************************************
-    ok: [veos02] => {
-        "var": {
-            "eos_vxlan_output": {
-                "changed": false,
-                "changes": {},
-                "instance": {
-                    "description": null,
-                    "enable": true,
-                    "multicast_group": "239.10.10.10",
-                    "name": "Vxlan1",
-                    "source_interface": "Loopback0",
-                    "state": "present",
-                    "udp_port": 4789
-                },
-                "invocation": {
-                    "module_args": "name=Vxlan1 source_interface=Loopback0 multicast_group=239.10.10.10 debug=no connection=veos02",
-                    "module_name": "eos_vxlan"
-                }
-            }
-        }
-    }
+  TASK: [debug var=eos_vxlan_output] ********************************************
+  ok: [veos02] => {
+      "var": {
+          "eos_vxlan_output": {
+              "changed": false,
+              "changes": {},
+              "instance": {
+                  "description": null,
+                  "enable": true,
+                  "multicast_group": "239.10.10.10",
+                  "name": "Vxlan1",
+                  "source_interface": "Loopback0",
+                  "state": "present",
+                  "udp_port": 4789
+              },
+              "invocation": {
+                  "module_args": "name=Vxlan1 source_interface=Loopback0 multicast_group=239.10.10.10 debug=no connection=veos02",
+                  "module_name": "eos_vxlan"
+              }
+          }
+      }
+  }
+
 
 In the module output are the standard responses from Ansible task runs
 including invocation and changed.  Invocation shows the name of the module that
@@ -106,31 +110,32 @@ module execution.  Since the changed key has a value of false, no changes where
 made in this instance.  The example below shows the output when changes are
 made to the configuration.::
 
-    TASK: [debug var=eos_vxlan_output] ********************************************
-    ok: [veos02] => {
-        "var": {
-            "eos_vxlan_output": {
-                "changed": true,
-                "changes": {
-                    "multicast_group": "239.10.10.10",
-                    "source_interface": "Loopback0"
-                },
-                "instance": {
-                    "description": null,
-                    "enable": true,
-                    "multicast_group": "239.10.10.10",
-                    "name": "Vxlan1",
-                    "source_interface": "Loopback0",
-                    "state": "present",
-                    "udp_port": 4789
-                },
-                "invocation": {
-                    "module_args": "name=Vxlan1 source_interface=Loopback0 multicast_group=239.10.10.10 debug=no connection=veos02",
-                    "module_name": "eos_vxlan"
-                }
-            }
-        }
-    }
+  TASK: [debug var=eos_vxlan_output] ********************************************
+  ok: [veos02] => {
+      "var": {
+          "eos_vxlan_output": {
+              "changed": true,
+              "changes": {
+                  "multicast_group": "239.10.10.10",
+                  "source_interface": "Loopback0"
+              },
+              "instance": {
+                  "description": null,
+                  "enable": true,
+                  "multicast_group": "239.10.10.10",
+                  "name": "Vxlan1",
+                  "source_interface": "Loopback0",
+                  "state": "present",
+                  "udp_port": 4789
+              },
+              "invocation": {
+                  "module_args": "name=Vxlan1 source_interface=Loopback0 multicast_group=239.10.10.10 debug=no connection=veos02",
+                  "module_name": "eos_vxlan"
+              }
+          }
+      }
+  }
+
 
 The above example show the output from the same module; however, this time
 changes are introduced as indicated by the changed key being set to true.  In
@@ -146,69 +151,70 @@ module.
 Below is an example of the same module execution, only this time with debug
 enabled::
 
-    TASK: [debug var=eos_vxlan_output] ********************************************
-    ok: [veos02] => {
-        "var": {
-            "eos_vxlan_output": {
-                "changed": true,
-                "changes": {
-                    "multicast_group": "239.10.10.10",
-                    "source_interface": "Loopback0"
-                },
-                "debug": {
-                    "current_state": {
-                        "description": null,
-                        "enable": true,
-                        "multicast_group": "",
-                        "name": "Vxlan1",
-                        "source_interface": "",
-                        "state": "present",
-                        "udp_port": 4789
-                    },
-                    "desired_state": {
-                        "description": null,
-                        "enable": true,
-                        "multicast_group": "239.10.10.10",
-                        "name": "Vxlan1",
-                        "source_interface": "Loopback0",
-                        "state": "present",
-                        "udp_port": null
-                    },
-                    "node": "Node(connection=EapiConnection(transport=https://192.168.1.17:443//command-api))",
-                    "params": {
-                        "config": null,
-                        "connection": "veos02",
-                        "debug": true,
-                        "description": null,
-                        "enable": true,
-                        "logging": true,
-                        "multicast_group": "239.10.10.10",
-                        "name": "Vxlan1",
-                        "password": null,
-                        "source_interface": "Loopback0",
-                        "state": "present",
-                        "udp_port": null,
-                        "username": null
-                    },
-                    "pyeapi_version": "0.2.2",
-                    "stateful": true
-                },
-                "instance": {
-                    "description": null,
-                    "enable": true,
-                    "multicast_group": "239.10.10.10",
-                    "name": "Vxlan1",
-                    "source_interface": "Loopback0",
-                    "state": "present",
-                    "udp_port": 4789
-                },
-                "invocation": {
-                    "module_args": "name=Vxlan1 source_interface=Loopback0 multicast_group=239.10.10.10 debug=yes connection=veos02",
-                    "module_name": "eos_vxlan"
-                }
-            }
-        }
-    }
+  TASK: [debug var=eos_vxlan_output] ********************************************
+  ok: [veos02] => {
+      "var": {
+          "eos_vxlan_output": {
+              "changed": true,
+              "changes": {
+                  "multicast_group": "239.10.10.10",
+                  "source_interface": "Loopback0"
+              },
+              "debug": {
+                  "current_state": {
+                      "description": null,
+                      "enable": true,
+                      "multicast_group": "",
+                      "name": "Vxlan1",
+                      "source_interface": "",
+                      "state": "present",
+                      "udp_port": 4789
+                  },
+                  "desired_state": {
+                      "description": null,
+                      "enable": true,
+                      "multicast_group": "239.10.10.10",
+                      "name": "Vxlan1",
+                      "source_interface": "Loopback0",
+                      "state": "present",
+                      "udp_port": null
+                  },
+                  "node": "Node(connection=EapiConnection(transport=https://192.168.1.17:443//command-api))",
+                  "params": {
+                      "config": null,
+                      "connection": "veos02",
+                      "debug": true,
+                      "description": null,
+                      "enable": true,
+                      "logging": true,
+                      "multicast_group": "239.10.10.10",
+                      "name": "Vxlan1",
+                      "password": null,
+                      "source_interface": "Loopback0",
+                      "state": "present",
+                      "udp_port": null,
+                      "username": null
+                  },
+                  "pyeapi_version": "0.2.2",
+                  "stateful": true
+              },
+              "instance": {
+                  "description": null,
+                  "enable": true,
+                  "multicast_group": "239.10.10.10",
+                  "name": "Vxlan1",
+                  "source_interface": "Loopback0",
+                  "state": "present",
+                  "udp_port": 4789
+              },
+              "invocation": {
+                  "module_args": "name=Vxlan1 source_interface=Loopback0 multicast_group=239.10.10.10 debug=yes connection=veos02",
+                  "module_name": "eos_vxlan"
+              }
+          }
+      }
+  }
+
 
 With the ``debug`` key set to ``yes`` the the module output provides an additional
 keyword ``debug`` that provides additional information.  While the keys under
@@ -270,19 +276,18 @@ with Arista EOS nodes.
 
 When starting to troubleshoot connectivity errors, the first place to start
 is with some simple ``ping`` tests to ensure there is connectivity between the
-Ansible control host and the EOS node::
+Ansible control host and the EOS node.::
 
-    $ ping -c 5 192.168.1.16
-    PING 192.168.1.16 (192.168.1.16): 56 data bytes
-    64 bytes from 192.168.1.16: icmp_seq=0 ttl=64 time=1.202 ms
-    64 bytes from 192.168.1.16: icmp_seq=1 ttl=64 time=1.082 ms
-    64 bytes from 192.168.1.16: icmp_seq=2 ttl=64 time=0.829 ms
-    64 bytes from 192.168.1.16: icmp_seq=3 ttl=64 time=0.936 ms
-    64 bytes from 192.168.1.16: icmp_seq=4 ttl=64 time=1.021 ms
-
-    --- 192.168.1.16 ping statistics ---
-    5 packets transmitted, 5 packets received, 0.0% packet loss
-    round-trip min/avg/max/stddev = 0.829/1.014/1.202/0.127 ms
+  $ ping -c 5 192.168.1.16
+  PING 192.168.1.16 (192.168.1.16): 56 data bytes
+  64 bytes from 192.168.1.16: icmp_seq=0 ttl=64 time=1.202 ms
+  64 bytes from 192.168.1.16: icmp_seq=1 ttl=64 time=1.082 ms
+  64 bytes from 192.168.1.16: icmp_seq=2 ttl=64 time=0.829 ms
+  64 bytes from 192.168.1.16: icmp_seq=3 ttl=64 time=0.936 ms
+  64 bytes from 192.168.1.16: icmp_seq=4 ttl=64 time=1.021 ms
+  --- 192.168.1.16 ping statistics ---
+  5 packets transmitted, 5 packets received, 0.0% packet loss
+  round-trip min/avg/max/stddev = 0.829/1.014/1.202/0.127 ms
 
 The output above validates that the EOS node is reachable from the Ansible
 control host.
@@ -302,27 +307,28 @@ please review the :ref:`quickstart` guide.
 
 Lastly, check to make sure the dependency eAPI has been enabled on the target
 Arista EOS node.  To verify that eAPI is enabled and running, use the ``show
-management api http-commands`` command in EOS:
+management api http-commands`` command in EOS::
 
-    Arista#show management api http-commands
-    Enabled:        Yes
-    HTTPS server:   shutdown, set to use port 443
-    HTTP server:    running, set to use port 80
-    VRF:            default
-    Hits:           4358
-    Last hit:       59729 seconds ago
-    Bytes in:       680505
-    Bytes out:      64473935
-    Requests:       4278
-    Commands:       10918
-    Duration:       833.907 seconds
-    User       Hits       Bytes in       Bytes out    Last hit
-    ---------- ---------- -------------- --------------- -----------------
-    eapi       4278       680505         64473935     59729 seconds ago
+  Arista#show management api http-commands
+  Enabled:        Yes
+  HTTPS server:   shutdown, set to use port 443
+  HTTP server:    running, set to use port 80
+  VRF:            default
+  Hits:           4358
+  Last hit:       59729 seconds ago
+  Bytes in:       680505
+  Bytes out:      64473935
+  Requests:       4278
+  Commands:       10918
+  Duration:       833.907 seconds
+  User       Hits       Bytes in       Bytes out    Last hit
+  ---------- ---------- -------------- --------------- -----------------
+  eapi       4278       680505         64473935     59729 seconds ago
 
-    URLs
-    ------------------------------------
-    Management1 : http://192.168.1.16:80
+  URLs
+  ------------------------------------
+  Management1 : http://192.168.1.16:80
+
 
 In the example command output above, check to be sure that ``Enabled:`` is ``Yes``
 and either ``HTTP server:`` or ``HTTPS server`` is in a running state.
