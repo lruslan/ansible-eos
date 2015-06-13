@@ -75,14 +75,26 @@ From your Ansible Control Host, type:
 
   ansible-galaxy install arista.eos
 
+Then you can use the role in your play as:
+
+.. code-block:: yaml
+
+  #my-playbook.yml
+  ---
+  - hosts: eos_switches
+    gather_facts: no
+
+    roles:
+      - arista.eos
+
+    tasks:
+      - name: configure Vlan150
+        eos_vlan:
+          vlanid=150
+
 
 Installing from GitHub (for active development)
 ===============================================
-Arista EOS+ Consulting Services maintains a set of modules that provide
-native integration with Ansible. All of the modules are available via
-`Github <http://github.com/aristanetworks/ansible-eos>`_.  This section will
-provide an overview of the available EOS modules.
-
 To get started, download the latest Arista EOS modules from Github using the
 clone command. From a terminal on the Ansible control system issue the
 following command:
@@ -91,7 +103,7 @@ following command:
 
   git clone https://github.com/aristanetworks/ansible-eos.git
 
-The command above will create a new directory call ‘ansible-eos’ and clone the
+The command above will create a new directory called ‘ansible-eos’ and clone the
 entire repository. Currently, the ansible-eos folder contains the “develop”
 branch which provides the latest code. Since the “develop” branch is still
 a work in progress, it might be necessary to switch to a released version of
@@ -146,7 +158,7 @@ Then you can use the role in your play as:
       - arista.eos
 
     tasks:
-      - name: configures the hostname on tor1
+      - name: configure Vlan150
         eos_vlan:
           vlanid=150
 
