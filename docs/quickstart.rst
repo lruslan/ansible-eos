@@ -273,7 +273,7 @@ Example
 
 **Step 4.2. Create playbook**
 
-Let's set the IP address on Ethernet2 using the :ref:`eos_ipinterface` module:
+Let's create Vlan150 using the :ref:`eos_vlan` module:
 
 .. code-block:: console
 
@@ -317,9 +317,9 @@ Option B: Connect to Arista Node over eAPI
 
 **Tasklist**
 
-1. :ref:`B-enable-eapi-label`
-2. :ref:`B-install-pyeapi-label`
-3. :ref:`B-run-adhoc-label`
+- :ref:`B-enable-eapi-label`
+- :ref:`B-install-pyeapi-label`
+- :ref:`B-run-adhoc-label`
 
 
 
@@ -445,7 +445,7 @@ Example
 
 **Step 4.2. Create playbook**
 
-Let's set the IP address on Ethernet2 using the :ref:`eos_ipinterface` module:
+Let's create Vlan150 using the :ref:`eos_vlan` module:
 
 .. code-block:: console
 
