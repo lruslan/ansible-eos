@@ -79,7 +79,7 @@ EXAMPLES = """
   eos_command: commands='show version, show hostname'
 
 - name: configure an interface
-  eos_command: commands='interface Etherent1, no shutdown' mode=config
+  eos_command: commands='interface Ethernet1, no shutdown' mode=config
 
 """
 #<<EOS_COMMON_MODULE_START>>

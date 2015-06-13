@@ -28,7 +28,7 @@ Ansible is provided via standard RPM installations from EPEL 6 and Fedora reposi
 
 .. code-block:: console
 
-  $ sudo pip install ansible
+  $ sudo yum install ansible
 
 
 Installing via Apt (Ubuntu)
@@ -54,14 +54,47 @@ simply enter the following command from a shell prompt.
 
   sudo pip install ansible
 
+
+.. _install-role-label:
+
 ****************************
 Install the Ansible EOS Role
 ****************************
-Arista EOS+ Consulting Services maintains a set of modules that provide
-native integration with Ansible. All of the modules are available via
-`Github <http://github.com/aristanetworks/ansible-eos>`_.  This section will
-provide an overview of the available EOS modules.
+There are two methods that can be used to install the ansible-eos modules on
+your system; (1) Ansible Galaxy, (2) Github - from source.  The first method
+is the easiest and makes using the modules a little easier, but the drawback
+is that you are dependent upon releases being posted to Ansible Galaxy. The second
+method is good if you plan on working with the actual module code from source
+or wish to closely follow all changes in development.
 
+Install Using Ansible Galaxy
+============================
+From your Ansible Control Host, type:
+
+.. code-block:: console
+
+  ansible-galaxy install arista.eos
+
+Then you can use the role in your play as:
+
+.. code-block:: yaml
+
+  #my-playbook.yml
+  ---
+  - hosts: eos_switches
+    gather_facts: no
+
+    roles:
+      - arista.eos
+
+    tasks:
+      - name: configure Vlan150
+        eos_vlan:
+          vlanid=150
+
+
+Installing from GitHub (for active development)
+===============================================
 To get started, download the latest Arista EOS modules from Github using the
 clone command. From a terminal on the Ansible control system issue the
 following command:
@@ -70,7 +103,7 @@ following command:
 
   git clone https://github.com/aristanetworks/ansible-eos.git
 
-The command above will create a new directory call ‘ansible-eos’ and clone the
+The command above will create a new directory called ‘ansible-eos’ and clone the
 entire repository. Currently, the ansible-eos folder contains the “develop”
 branch which provides the latest code. Since the “develop” branch is still
 a work in progress, it might be necessary to switch to a released version of
@@ -93,6 +126,71 @@ For instance, to use the v1.0.0 release, enter the command
 
   git checkout tags/v1.0.0
 
-
 At any point in time switching to a different release is as easy as changing
 to the ansible-eos directory and re-issuing the “git checkout” command.
+
+You will need to make Ansible aware of this new role if you want to use the
+included modules in your plays. You have a few options:
+
+
+**Option 1:** Create Symlink (preferred)
+
+We will create a symlink in ``/etc/ansible/roles/`` to make Ansible aware of the
+``ansible-eos`` role.  Notice that the symlink name is ``arista.eos``. This is
+because the Ansible Galaxy role is named ``arista.eos``:
+
+.. code-block:: console
+
+  # create soft symlink
+  cd /etc/ansible/roles
+  sudo ln -s /path/to/where/your/git/clone/is/ansible-eos arista.eos
+
+Then you can use the role in your play as:
+
+.. code-block:: yaml
+
+  #my-playbook.yml
+  ---
+  - hosts: eos_switches
+    gather_facts: no
+
+    roles:
+      - arista.eos
+
+    tasks:
+      - name: configure Vlan150
+        eos_vlan:
+          vlanid=150
+
+
+**Option 2:** Edit ansible.cfg roles_path
+
+Here, you can edit ``/etc/ansible/ansible.cfg`` to make Ansible look for the
+``ansible-eos`` directory:
+
+.. code-block:: console
+
+  # open the config file in an editor
+  sudo vi /etc/ansible/ansible.cfg
+
+  # if roles_path exists add a colon and the new path
+  # if the variable doesn't exist, create it under [defaults] section
+  [defaults]
+  roles_path=/path/to/where/your/git/clone/is/ansible-eos
+
+Then you can use the role in your play as:
+
+.. code-block:: yaml
+
+  #my-playbook.yml
+  ---
+  - hosts: eos_switches
+    gather_facts: no
+
+    roles:
+      - ansible-eos
+
+    tasks:
+      - name: configures the hostname on tor1
+        eos_vlan:
+          vlanid=150

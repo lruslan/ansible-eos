@@ -12,8 +12,11 @@ Introduction
 ************
 This quick-start guide provides the fastest method to get up and running with
 the Ansible EOS role.  It assumes that you already have an Ansible
-environment running. If not, see :ref:`install-ansible-label` before following
-this guide.
+environment running with the Ansible EOS role. If not, see :ref:`install-ansible-label`
+and :ref:`install-role-label` before following this guide.
+This guide assumes very little experience with Ansible, therefore,
+if the steps seem to leave you with questions and uncertainties please let us know
+so that we can improve it.
 
 
 ***************
@@ -32,17 +35,17 @@ Option A: Connect to Arista Node over SSH
 
 **Tasklist**
 
-1. :ref:`A-enable-eapi-label`
-2. :ref:`A-eos-user-label`
-3. :ref:`A-install-pyeapi-label`
-4. :ref:`A-run-adhoc-label`
+- :ref:`A-enable-eapi-label`
+- :ref:`A-eos-user-label`
+- :ref:`A-install-pyeapi-label`
+- :ref:`A-run-adhoc-label`
 
 
 
 .. _A-enable-eapi-label:
 
-Enabling EOS Command API
-========================
+1. Enabling EOS Command API
+===========================
 The modules provided in the Arista EOS role require command API (aka eAPI)
 to be enabled on the switch. The modules use eAPI to communicate with EOS.
 Since eAPI is not enabled by default, it must be initially enabled before the
@@ -55,7 +58,7 @@ EOS modules can be used.
 The steps below provide the basic steps to enable eAPI.  For more advanced
 configurations, please consult the EOS User Guide.
 
-**Step 1.** Login to the destination node and enter configuration mode
+**Step 1.1.** Login to the destination node and enter configuration mode
 
 .. code-block:: console
 
@@ -64,7 +67,7 @@ configurations, please consult the EOS User Guide.
   switch(config)#
 
 
-**Step 2.** Enable eAPI
+**Step 1.2.** Enable eAPI
 
 .. code-block:: console
 
@@ -75,7 +78,7 @@ configurations, please consult the EOS User Guide.
 The configuration above enables eAPI with the default settings.  This enables
 eAPI to listen for connections on HTTPS port 443 by default.
 
-**Step 3.** Create a local user
+**Step 1.3.** Create a local user
 The user created in this step is different than the shell account to be
 created in the Preparing EOS for Ansible section. Please see the section
 :ref:`security-model-label` for more details.
@@ -91,8 +94,8 @@ value.
 
 .. _A-eos-user-label:
 
-Preparing EOS for Ansible
-=========================
+2. Preparing EOS for Ansible
+============================
 In order to successfully execute playbook tasks the EOS node must be
 configured to allow the Ansible control node to directly attach to the
 Linux shell.  The following steps provide a walk through for setting up
@@ -101,7 +104,7 @@ password-less access to EOS nodes for use with Ansible.
 .. Note:: These steps will create a user that has root privileges to your EOS
           node, so please handle credentials accordingly
 
-**Step 1.** Login to the destination node and enter the Linux shell
+**Step 2.1.** Login to the destination node and enter the Linux shell
 
 .. code-block:: console
 
@@ -111,7 +114,7 @@ password-less access to EOS nodes for use with Ansible.
   Arista Networks EOS shell
 
 
-**Step 2.** Create the user to use with Ansible, create the home directory
+**Step 2.2.** Create the user to use with Ansible, create the home directory
 and prepare for uploading your SSH key. In the below example we will create
 a user called ansible. The second command will create a temporary password
 for the user but we will be switching to using SSH keys and the password
@@ -137,7 +140,7 @@ will be removed
   Connection to veos01 closed.
 
 
-**Step 3.** Upload the SSH key to use from your Ansible control host and
+**Step 2.3.** Upload the SSH key to use from your Ansible control host and
 verify access from remote host
 
 .. code-block:: console
@@ -152,7 +155,7 @@ verify access from remote host
   [ansible@veos ~]$
 
 
-**Step 4.** Configure EOS to create user on reboot with no password assigned.
+**Step 2.4.** Configure EOS to create user on reboot with no password assigned.
 This will only allow the Ansible user to login with keys.
 
 .. code-block:: console
@@ -163,7 +166,7 @@ This will only allow the Ansible user to login with keys.
   useradd -d /persist/local/ansible -G eosadmin ansible
 
 
-**Step 5.** Reboot the EOS node and start automating with Ansible
+**Step 2.5.** Reboot the EOS node and start automating with Ansible
 
 .. code-block:: console
 
@@ -173,8 +176,8 @@ This will only allow the Ansible user to login with keys.
 
 .. _A-install-pyeapi-label:
 
-Install pyeapi
-==============
+3. Install pyeapi
+=================
 As mentioned earlier, the Ansible EOS role uses `pyeapi <https://github.com/arista-eosplus/pyeapi>`_
 on the Arista node that will be configured. Let's install it.
 
@@ -186,29 +189,49 @@ If the Arista node has internet access:
 
 If there's no internet access:
 
-**Step 1:** Download Pypi Package
+**Step 3.1:** Download Pypi Package
 
-`Download <https://pypi.python.org/pypi/pyeapi>`_ the latest version of pyeapi on your local machine.
+- `Download <https://pypi.python.org/pypi/pyeapi>`_ the latest version of **pyeapi** on your local machine.
+- You will also need a dependency package `netaddr <https://pypi.python.org/pypi/netaddr>`_.
 
-**Step 2:** SCP the file to the Arista node and install
-
-.. code-block:: console
-
-  ansible@hub:~$ scp path/to/pyeapi-<VERSION>.tar.gz ansible@veos01:/tmp
-
-Then SSH into your node and install it:
+**Step 3.2:** SCP both files to the Arista node and install
 
 .. code-block:: console
 
-  [ansible@veos ~]$ sudo pip install /tmp/pyeapi-<VERSION>.tar.gz
+  ansible@hub:~$ scp path/to/pyeapi-<VERSION>.tar.gz ansible@veos01:/mnt/flash/
+  ansible@hub:~$ scp path/to/netaddr-<VERSION>.tar.gz ansible@veos01:/mnt/flash/
 
-**Step 3:** Create local pyeapi.conf file
+Then SSH into your node and install it. Be sure to replace ``<VERSION>`` with the
+actual filename:
+
+.. code-block:: console
+
+  [ansible@veos ~]$ sudo pip install /mnt/flash/netaddr-<VERSION>.tar.gz
+  [ansible@veos ~]$ sudo pip install /mnt/flash/pyeapi-<VERSION>.tar.gz
+
+In order to keep the installation persistent across reboot modify ``/mnt/flash/rc.eos``:
+
+.. code-block:: console
+
+  [ansible@veos ~]$ vi /mnt/flash/rc.eos
+
+Paste in the following:
+
+.. code-block:: console
+
+  #!/bin/sh
+
+  sudo pip install /mnt/flash/netaddr-<VERSION>.tar.gz
+  sudo pip install /mnt/flash/pyeapi-<VERSION>.tar.gz
+
+
+**Step 3.3:** Create local pyeapi.conf file
 
 .. code-block:: console
 
   [ansible@veos ~]$ vi /mnt/flash/eapi.conf
 
-with credentials you created earlier:
+with credentials and settings you configured in steps 1.2 and 1.3:
 
 .. code-block:: console
 
@@ -221,18 +244,19 @@ with credentials you created earlier:
 
 .. _A-run-adhoc-label:
 
-Running Adhoc Commands
-======================
-If you are new to Ansible then it's easier to dip your toes in using
-`Adhoc <http://docs.ansible.com/intro_adhoc.html>`_ commands versus writing a
-full `Playbook <http://docs.ansible.com/playbooks.html>`_. The section below
-will help guide you through running some Adhoc commands to configure basic
-settings on your node.
+4. A Simple Playbook
+====================
+If you are new to Ansible it might seem like a lot is going on, but this step will
+show you how easy it is to manage your Arista device. The power of Ansible lies in
+the `Playbook <http://docs.ansible.com/playbooks.html>`_. We will just skim the
+surface of what's possible in a playbook, but this should serve as a good launching
+point.
 
 
-**Step 1.** Create an Ansible Inventory File
+**Step 4.1.** Create an Ansible Inventory File
 
-Let's add the details of our test node to an Ansible Inventory file.
+Each Ansible play references one or more nodes. You define these nodes in an
+Ansible ``hosts`` file.
 
 .. hint:: Learn more about `Ansible Inventory <http://docs.ansible.com/intro_inventory.html>`_.
 
@@ -241,138 +265,68 @@ Let's add the details of our test node to an Ansible Inventory file.
   ansible@hub:~$ sudo vi /etc/ansible/hosts
 
 and add the connection info for your node substituting the IP or FQDN of your
-node as well as the name of the user created in Step 2 above:
+node as well as the name of the user created in Step 2.2 above:
 
 .. code-block:: console
 
-  <node> ansible_ssh_user=<user>
+  [eos_switches]
+  <node>
+  # Add more entries here for additional devices you want to
+  # keep in the eos_switches group
 
+  [eos_switches:vars]
+  ansible_ssh_user=<user>
 
-**Step 2. Run Commands**
-
-Let's set the IP address on Ethernet2 using the :ref:`eos_ipinterface` module:
+Example
 
 .. code-block:: console
 
-  ansible@hub:~$ ansible <node-from-inventory> -M path/to/ansible-eos/library/ -m eos_ipinterface.py -a "name=Ethernet2 address=192.0.2.150/24 debug=yes"
+  [eos_switches]
+  veos01
+  veos02
+  veos03
+  veos04
 
-**Result** (debug output):
+  [eos_switches:vars]
+  ansible_ssh_user=ansible
+
+
+**Step 4.2. Create playbook**
+
+Let's create Vlan150 using the :ref:`eos_vlan` module:
+
+.. code-block:: console
+
+  ansible@hub:~$ vi my-test-eos-playbook.yml
+
+Then paste in the following
+
+.. code-block:: yaml
+
+  ---
+  - hosts: eos_switches
+    gather_facts: no
+
+    roles:
+      - arista.eos
+
+    tasks:
+      - name: Add Vlan 150 to my switches
+        eos_vlan:
+          vlanid=150
+          name=newVlan150
+
+**Result**:
+
 So what really happened?
 
-1. We execute the command and Ansible goes to our inventory to find the specified node. As you can see from the output we're connecting to host ``172.16.130.20``
+1. We execute the command and Ansible goes to our inventory to find the specified nodes in group ``eos_switches``.
 2. Ansible is told to connect via SSH with user ``ansible`` from ``ansible_ssh_user=ansible``.
 3. Ansible creates a temp directory in the ``ansible`` user's home directory
-4. Ansible copies eos_interface.py to the temp directory created above.
-5. Ansible executes eos_interface.py with the specified arguments (-a)
-6. eos.interface.py uses pyeapi to configure Ethernet2.
+4. Ansible copies eos_vlan.py to the temp directory created above.
+5. Ansible executes eos_vlan.py with the specified arguments
+6. eos.interface.py uses pyeapi to configure the new Vlan.
 7. Ansible cleans up the temp folder and returns output to the control host.
-
-.. code-block:: console
-
-  172.16.130.20 | success >> {
-      "changed": true,
-      "changes": {
-          "address": "192.0.2.150/24"
-      },
-      "debug": {
-          "current_state": {
-              "address": "192.0.2.50/24",
-              "mtu": "1500",
-              "name": "Ethernet2",
-              "state": "present"
-          },
-          "desired_state": {
-              "address": "192.0.2.150/24",
-              "mtu": null,
-              "name": "Ethernet2",
-              "state": "present"
-          },
-          "node": "Node(connection=EapiConnection(transport=http://localhost:80//command-api))",
-          "params": {
-              "address": "192.0.2.150/24",
-              "config": null,
-              "connection": "localhost",
-              "debug": true,
-              "host": null,
-              "logging": true,
-              "mtu": null,
-              "name": "Ethernet2",
-              "password": null,
-              "port": null,
-              "state": "present",
-              "transport": null,
-              "username": null
-          },
-          "pyeapi_version": "0.2.4",
-          "stateful": true
-      },
-      "instance": {
-          "address": "192.0.2.150/24",
-          "mtu": "1500",
-          "name": "Ethernet2",
-          "state": "present"
-      }
-  }
-
-
-Next, let's create Vlan 1000 using the :ref:`eos_vlan` module:
-
-.. code-block:: console
-
-  ansible@hub:~$ ansible <node-from-inventory> -M path/to/ansible-eos/library/ -m eos_vlan.py -a "vlanid=1000 state=present debug=yes"
-
-**Result** (debug output):
-
-.. code-block:: console
-
-  172.16.130.20 | success >> {
-    "changed": true,
-    "changes": {},
-    "debug": {
-        "current_state": {
-            "enable": true,
-            "name": "VLAN1000",
-            "state": "present",
-            "trunk_groups": "",
-            "vlanid": "1000"
-        },
-        "desired_state": {
-            "enable": true,
-            "name": null,
-            "state": "present",
-            "trunk_groups": null,
-            "vlanid": "1000"
-        },
-        "node": "Node(connection=EapiConnection(transport=http://localhost:80//command-api))",
-        "params": {
-            "config": null,
-            "connection": "localhost",
-            "debug": true,
-            "enable": true,
-            "host": null,
-            "logging": true,
-            "name": null,
-            "password": null,
-            "port": null,
-            "state": "present",
-            "transport": null,
-            "trunk_groups": null,
-            "username": null,
-            "vlanid": "1000"
-        },
-        "pyeapi_version": "0.2.4",
-        "stateful": true
-    },
-    "instance": {
-        "enable": true,
-        "name": "VLAN1000",
-        "state": "present",
-        "trunk_groups": "",
-        "vlanid": "1000"
-    }
-  }
-
-
 
 
 
@@ -383,17 +337,17 @@ Option B: Connect to Arista Node over eAPI
 
 **Tasklist**
 
-1. :ref:`B-enable-eapi-label`
-2. :ref:`B-install-pyeapi-label`
-3. :ref:`B-run-adhoc-label`
+- :ref:`B-enable-eapi-label`
+- :ref:`B-install-pyeapi-label`
+- :ref:`B-run-adhoc-label`
 
 
 
 
 .. _B-enable-eapi-label:
 
-Enabling EOS Command API
-========================
+1. Enabling EOS Command API
+===========================
 The modules provided in the Arista EOS role require command API (aka eAPI)
 to be enabled on the switch. The modules use eAPI to communicate with EOS.
 Since eAPI is not enabled by default, it must be initially enabled before the
@@ -402,7 +356,7 @@ EOS modules can be used.
 The steps below provide the basic steps to enable eAPI.  For more advanced
 configurations, please consult the EOS User Guide.
 
-**Step 1.** Login to the destination node and enter configuration mode
+**Step 1.1.** Login to the destination node and enter configuration mode
 
 .. code-block:: console
 
@@ -411,7 +365,7 @@ configurations, please consult the EOS User Guide.
   switch(config)#
 
 
-**Step 2.** Enable eAPI
+**Step 1.2.** Enable eAPI
 
 .. code-block:: console
 
@@ -422,10 +376,8 @@ configurations, please consult the EOS User Guide.
 The configuration above enables eAPI with the default settings.  This enables
 eAPI to listen for connections on HTTPS port 443 by default.
 
-**Step 3.** Create a local user
-The user created in this step is different than the shell account to be
-created in the Preparing EOS for Ansible section. Please see the section
-:ref:`security-model-label` for more details.
+**Step 1.3.** Create a local user
+The user created in this step is used by pyeapi to run configuration commands.
 
 .. code-block:: console
 
@@ -438,31 +390,30 @@ meta arguments to authenticate to eAPI.
 
 
 
-
-
 .. _B-install-pyeapi-label:
 
-Install pyeapi
-==============
+2. Install pyeapi
+=================
 As mentioned earlier, the Ansible EOS role uses `pyeapi <https://github.com/arista-eosplus/pyeapi>`_
 to make configuration changes to your Arista node. This requires you to have
 pyeapi installed on your Ansible Contol Host (where you execute commands from).
 
 .. hint: See the `pyeapi <https://github.com/arista-eosplus/pyeapi>`_ docs for more information.
 
-**Step 1:** Pip install pyeapi
+**Step 2.1:** Pip install pyeapi
 
 .. code-block:: console
 
-  [ansible@veos ~]$ sudo pip install pyeapi
+  [ansible@hub ~]$ sudo pip install pyeapi
 
-**Step 2:** Create local pyeapi.conf file
+**Step 2.2:** Create local pyeapi.conf file
 
 .. code-block:: console
 
-  [ansible@veos ~]$ vi ~/.eapi.conf
+  [ansible@hub ~]$ vi ~/.eapi.conf
 
-with credentials you created earlier:
+with credentials you created in Step 1.3. The ``connection:<NAME>`` should match
+the entry in ``/etc/ansible/hosts``, Step 3.1 below:
 
 .. code-block:: console
 
@@ -474,21 +425,18 @@ with credentials you created earlier:
   port: <port-if-non-default>
 
 
-
-
-
 .. _B-run-adhoc-label:
 
-Running Adhoc Commands
-======================
-If you are new to Ansible then it's easier to dip your toes in using
-`Adhoc <http://docs.ansible.com/intro_adhoc.html>`_ commands versus writing a
-full `Playbook <http://docs.ansible.com/playbooks.html>`_. The section below
-will help guide you through running some Adhoc commands to configure basic
-settings on your node.
+3. A Simple Playbook
+====================
+If you are new to Ansible it might seem like a lot is going on, but this step will
+show you how easy it is to manage your Arista device. The power of Ansible lies in
+the `Playbook <http://docs.ansible.com/playbooks.html>`_. We will just skim the
+surface of what's possible in a playbook, but this should serve as a good launching
+point.
 
 
-**Step 1.** Create an Ansible Inventory File
+**Step 3.1.** Create an Ansible Inventory File
 
 Let's add the details of our test node to an Ansible Inventory file.
 
@@ -499,147 +447,71 @@ Let's add the details of our test node to an Ansible Inventory file.
   ansible@hub:~$ sudo vi /etc/ansible/hosts
 
 and add the connection info for your node substituting the IP or FQDN of your
-node. This should match the ``host`` parameter in your ``.eapi.conf``:
+node under our ``eos_switches`` group.
+This should match the ``connection`` parameter in your ``~/.eapi.conf``:
 
 .. code-block:: console
 
-  <node> ansible_connection=local
+  [eos_switches]
+  <node>
 
-**Step 2. Run Commands**
-
-Let's set the IP address on Ethernet2 using the :ref:`eos_ipinterface` module.
-Now that we are using a local connection we need to add an extra argument to
-our command. Notice ``connection=veos01`` in our argument list. This must match
-an entry in your ``~/.eapi.conf``:
+Example
 
 .. code-block:: console
 
-  ansible@hub:~$ ansible <node-from-inventory> -M path/to/ansible-eos/library/ -m eos_ipinterface.py -a "connection=veos01 name=Ethernet2 address=192.0.2.50/24 debug=yes"
+  [eos_switches]
+  veos01
 
-**Result** (debug output):
+
+**Step 4.2. Create playbook**
+
+Let's create Vlan150 using the :ref:`eos_vlan` module:
+
+.. code-block:: console
+
+  ansible@hub:~$ vi my-test-eos-playbook.yml
+
+Then paste in the following
+
+.. code-block:: yaml
+
+  ---
+  - hosts: eos_switches
+    gather_facts: no
+    connection: local
+
+    roles:
+      - arista.eos
+
+    tasks:
+      - name: Add Vlan 150 to my switches
+        eos_vlan:
+          vlanid=150
+          name=newVlan150
+          connection={{ inventory_hostname }}
+
+**Result**:
+
 So what really happened?
 
-1. We execute the command and Ansible goes to our inventory to find the specified node. Since we added ``ansible_connection=local`` to our inventory, Ansible will execute the module locally.
-2. Ansible is told to connect via SSH with user ``ansible`` from ``ansible_ssh_user=ansible``.
-3. Ansible creates a temp directory in the user's home directory, eg ``$HOME/.ansible/tmp/``.
-4. Ansible copies eos_interface.py to the temp directory created above.
-5. Ansible executes eos_interface.py with the specified arguments (-a)
-6. eos.interface.py uses pyeapi to configure Ethernet2.
-7. pyeapi consults ``~/.eapi.conf`` to find connection named ``veos01``
-8. Ansible cleans up the temp folder and returns output to the control host.
+1. We execute the command and Ansible goes to our inventory to find the specified nodes that match group ``eos_switches``.
+2. Ansible is told to use ``connection:local`` so no SSH connection will be established to the node.
+3. Ansible substitutes the host name from ``/etc/ansible/hosts`` into the ``{{ inventory_hostname }}`` parameter. This creates the link to the ``[connection:veos01]`` in ``~/.eapi.conf``.
+4. Ansible creates a temp directory in the user's home directory, eg ``$HOME/.ansible/tmp/``.
+5. Ansible copies eos_vlan.py to the temp directory created above.
+6. Ansible executes eos_vlan.py with the specified arguments
+7. eos_vlan.py uses pyeapi to configure the Vlan.
+8. pyeapi consults ``~/.eapi.conf`` to find connection named ``veos01``
+9. Ansible cleans up the temp folder and returns output to the control host.
 
-.. code-block:: console
-
-  172.16.130.20 | success >> {
-    "changed": true,
-    "changes": {
-        "address": "192.0.2.50/24"
-    },
-    "debug": {
-        "current_state": {
-            "address": "192.0.2.150/24",
-            "mtu": "1500",
-            "name": "Ethernet2",
-            "state": "present"
-        },
-        "desired_state": {
-            "address": "192.0.2.50/24",
-            "mtu": null,
-            "name": "Ethernet2",
-            "state": "present"
-        },
-        "node": "Node(connetion=EapiConnection(transport=http://172.16.130.20:80//command-api))",
-        "params": {
-            "address": "192.0.2.50/24",
-            "config": null,
-            "connection": "veos01",
-            "debug": true,
-            "host": null,
-            "logging": true,
-            "mtu": null,
-            "name": "Ethernet2",
-            "password": null,
-            "port": null,
-            "state": "present",
-            "transport": null,
-            "username": null
-        },
-        "pyeapi_version": "0.1.0",
-        "stateful": true
-    },
-    "instance": {
-        "address": "192.0.2.50/24",
-        "mtu": "1500",
-        "name": "Ethernet2",
-        "state": "present"
-    }
-  }
-
-
-Next, let's create Vlan 100 using the :ref:`eos_vlan` module:
-
-.. code-block:: console
-
-  ansible@hub:~$ ansible <node-from-inventory> -M path/to/ansible-eos/library/ -m eos_vlan.py -a "connection=veos01 vlanid=100 state=present debug=yes"
-
-**Result** (debug output):
-
-.. code-block:: console
-
-  172.16.130.20 | success >> {
-    "changed": true,
-    "changes": {},
-    "debug": {
-        "current_state": {
-            "enable": true,
-            "name": "VLAN0100",
-            "state": "present",
-            "trunk_groups": "",
-            "vlanid": "100"
-        },
-        "desired_state": {
-            "enable": true,
-            "name": null,
-            "state": "present",
-            "trunk_groups": null,
-            "vlanid": "100"
-        },
-        "node": "Node(connetion=EapiConnection(transport=http://172.16.130.20:80//command-api))",
-        "params": {
-            "config": null,
-            "connection": "veos01",
-            "debug": true,
-            "enable": true,
-            "host": null,
-            "logging": true,
-            "name": null,
-            "password": null,
-            "port": null,
-            "state": "present",
-            "transport": null,
-            "trunk_groups": null,
-            "username": null,
-            "vlanid": "100"
-        },
-        "pyeapi_version": "0.1.0",
-        "stateful": true
-    },
-    "instance": {
-        "enable": true,
-        "name": "VLAN0100",
-        "state": "present",
-        "trunk_groups": "",
-        "vlanid": "100"
-    }
-  }
 
 *********
 Now what?
 *********
 This guide should have helped you install and configure all necessary
 dependencies and given you a basic idea of how to use the Ansible EOS role.
-Next, you can create some Ansible playbooks using a combination of modules.
-You can also check out the list of modules provided to see how best to
-configure your nodes.
+Next, you can add to your Ansible playbooks using a combination of modules.
+You can also check out the list of modules provided within the Ansible EOS Role
+to see all of the ways to make configuration changes.
 
 .. tip:: Please send us some `feedback <eosplus-dev@arista.com>`_ on ways to improve this guide.

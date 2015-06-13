@@ -1,3 +1,5 @@
+.. _meta-args-label:
+
 ##############
 Meta Arguments
 ##############
