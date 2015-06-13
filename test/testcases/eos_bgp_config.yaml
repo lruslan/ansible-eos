@@ -1,0 +1,78 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_bgp_config
+
+testcases:
+
+  - name: create bgp instance
+    arguments:
+      - { name: bgp_as, value: 65000 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+
+  - name: remove bgp instance
+    arguments:
+      - { name: bgp_as, value: 65000 }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - router bgp 65000
+
+  - name: set bgp enable to true
+    arguments:
+      - { name: bgp_as, value: 65000 }
+      - { name: enable, value: true }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+      - shutdown
+
+  - name: set bgp enable to yes
+    arguments:
+      - { name: bgp_as, value: 65000 }
+      - { name: enable, value: yes }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+      - shutdown
+
+  - name: set bgp enable to false
+    arguments:
+      - { name: bgp_as, value: 65000 }
+      - { name: enable, value: false }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: set bgp enable to no
+    arguments:
+      - { name: bgp_as, value: 65000 }
+      - { name: enable, value: no }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: set bgp router-id to 1.1.1.1
+    arguments:
+      - { name: bgp_as, value: 65000 }
+      - { name: router_id, value: 1.1.1.1 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
