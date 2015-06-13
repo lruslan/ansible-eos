@@ -54,6 +54,9 @@ simply enter the following command from a shell prompt.
 
   sudo pip install ansible
 
+
+.. _install-role-label:
+
 ****************************
 Install the Ansible EOS Role
 ****************************
