@@ -32,11 +32,11 @@
 #
 DOCUMENTATION = """
 ---
-module: eos_bgp_network
-short_description: Manage BGP network statements in EOS
+module: eos_bgp_neighbor
+short_description: Manage BGP neighbor statements in EOS
 description:
-  - This eos_bgp_network module provides stateful management of the
-    network statements for the BGP routing process for Arista EOS nodes
+  - This eos_bgp_neighbor module provides stateful management of the
+    neighbor statements for the BGP routing process for Arista EOS nodes
 version_added: 1.1.0
 category: BGP
 author: Arista EOS+
@@ -48,42 +48,101 @@ notes:
   - Supports eos metaparameters for using the eAPI transport
   - Supports tateful resource configuration
 options:
-  prefix:
+  name:
     description:
-      - The IPv4 prefix to configure as part of the network statement.  The
-        value must be a valid IPv4 prefix
+      - The name of the BGP neighbor to manage.  This value can be either
+        an IPv4 address or string (in the case of managing a peer group)
     required: true
     default: null
     choices: []
     aliases: []
     version_added: 1.1.0
-  masklen:
+  peer_group:
     description:
-      - The IPv4 subnet mask length in bits.  The value for the masklen
-        must be in the valid range of 1 to 32.
+      - The name of the peer-group value to associate with the neighbor.  This
+        argument is only valid if the neighbor is an IPv4 address
     default: null
-    required: true
+    required: false
     choices: []
     aliases: []
     version_added: 1.1.0
-  route_map:
+  remote_as:
     description:
-      - Configures the BGP route-map name to apply to the network statement
-        when configured.  Note this module does not create the route-map
+      - Configures the BGP neighbors remote-as value.  Valid AS values are
+        in the range of 1 to 65535.
+    default: null
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  send_community:
+    description:
+      - Configures the BGP neighbors send-community value.  If enabled then
+        the BGP send-community value  is enable.  If disabled, then the
+        BGP send-community value is disabled.
     default: false
     required: false
     choices: []
+    aliases: []
+    version_added: 1.1.0
+  next_hop_self:
+    description:
+      - Configures the BGP neighbors next-hop-self value.  If enabled then
+        the BGP next-hop-self value is enabled.  If disabled, then the BGP
+        next-hop-self community value is disabled.
+    default: false
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  route_map_in:
+    description:
+      - Configures the BGP neigbhors route-map in value.  The value specifies
+        the name of the route-map.
+    default: null
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  route_map_out:
+    description:
+      - Configures the BGP neigbhors route-map out value.  The value specifies
+        the name of the route-map.
+    default: null
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  description:
+    description:
+      - Configures the BGP neighbors description value.  The value specifies
+        an arbitrary description to add to the neighbor statement in the
+        nodes running-configuration.
+    default: null
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  enable:
+    description:
+      - Configures the administrative state for the BGP neighbor
+        process. If enable is True then the BGP neighbor process is
+        administartively enabled and if enable is False then
+        the BGP neighbor process is administratively disabled.
+    default: true
+    required: false
+    choices: ['True', 'False']
     aliases: []
     version_added: 1.1.0
 """
 
 EXAMPLES = """
 
-- name: add network 172.16.10.0/26 with route-map test
-  eos_bgp_network: prefix=172.16.10.0 masklen=26 route_map=test
+- name: add neighbor 172.16.10.1 to BGP
+  eos_bgp_neighbor: name=172.16.10.1 enable=yes remote_as=65000
 
-- name: remove network 172.16.0.0/8
-  eos_bgp_network: prefix=172.16.0.0 masklen=8 state=absent
+- name: remove neighbor 172.16.10.1 to BGP
+  eos_bgp_neighbor name=172.16.10.1 enable=yes remote_as=65000 state=absent
 """
 
 #<<EOS_COMMON_MODULE_START>>
