@@ -191,19 +191,39 @@ If there's no internet access:
 
 **Step 3.1:** Download Pypi Package
 
-`Download <https://pypi.python.org/pypi/pyeapi>`_ the latest version of pyeapi on your local machine.
+- `Download <https://pypi.python.org/pypi/pyeapi>`_ the latest version of **pyeapi** on your local machine.
+- You will also need a dependency package `netaddr <https://pypi.python.org/pypi/netaddr>`_.
 
-**Step 3.2:** SCP the file to the Arista node and install
-
-.. code-block:: console
-
-  ansible@hub:~$ scp path/to/pyeapi-<VERSION>.tar.gz ansible@veos01:/tmp
-
-Then SSH into your node and install it:
+**Step 3.2:** SCP both files to the Arista node and install
 
 .. code-block:: console
 
-  [ansible@veos ~]$ sudo pip install /tmp/pyeapi-<VERSION>.tar.gz
+  ansible@hub:~$ scp path/to/pyeapi-<VERSION>.tar.gz ansible@veos01:/mnt/flash/
+  ansible@hub:~$ scp path/to/netaddr-<VERSION>.tar.gz ansible@veos01:/mnt/flash/
+
+Then SSH into your node and install it. Be sure to replace ``<VERSION>`` with the
+actual filename:
+
+.. code-block:: console
+
+  [ansible@veos ~]$ sudo pip install /mnt/flash/netaddr-<VERSION>.tar.gz
+  [ansible@veos ~]$ sudo pip install /mnt/flash/pyeapi-<VERSION>.tar.gz
+
+In order to keep the installation persistent across reboot modify ``/mnt/flash/rc.eos``:
+
+.. code-block:: console
+
+  [ansible@veos ~]$ vi /mnt/flash/rc.eos
+
+Paste in the following:
+
+.. code-block:: console
+
+  #!/bin/sh
+
+  sudo pip install /mnt/flash/netaddr-<VERSION>.tar.gz
+  sudo pip install /mnt/flash/pyeapi-<VERSION>.tar.gz
+
 
 **Step 3.3:** Create local pyeapi.conf file
 
