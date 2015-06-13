@@ -1,7 +1,7 @@
 Arista EOS Role for Ansible
 ===========================
 
-## IN PROGRESS
+## 1.0.1, 6/13/2015
 
 - adds additional parameters to eos_config
 - adds vlan argument to eos_vxlan_vtep
