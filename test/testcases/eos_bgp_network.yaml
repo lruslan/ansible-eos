@@ -1,0 +1,55 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_bgp_network
+
+testcases:
+
+  - name: create bgp network
+    arguments:
+      - { name: prefix, value: 172.16.10.0 }
+      - { name: masklen, value: 24 }
+      - { name: route_map, value: test }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: create bgp network w/o route-map
+    arguments:
+      - { name: prefix, value: 172.16.10.0 }
+      - { name: masklen, value: 24 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+      - network 172.16.10.0/24 route-map test
+
+  - name: remove bgp network
+    arguments:
+      - { name: prefix, value: 172.16.10.0 }
+      - { name: masklen, value: 24 }
+      - { name: route_map, value: test }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+      - network 172.16.10.0/24 route-map test
+
+  - name: remove bgp network w/o route-map
+    arguments:
+      - { name: prefix, value: 172.16.10.0 }
+      - { name: masklen, value: 24 }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+      - network 172.16.10.0/24
