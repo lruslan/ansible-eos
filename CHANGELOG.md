@@ -1,6 +1,13 @@
 Arista EOS Role for Ansible
 ===========================
 
+## 1.0.1, 6/13/2015
+
+- adds additional parameters to eos_config
+- adds vlan argument to eos_vxlan_vtep
+- fixes issue with honoring enablepwd if specified
+- fixes #37
+
 ## 1.0.0, 5/4/2015
 
 - adds support for pyeapi

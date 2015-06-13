@@ -62,7 +62,8 @@ class TestCase(object):
         if self.inventory:
             command.extend(['-i', self.inventory])
 
-        command.extend(['-M', self.module_path])
+        modpath = '{}/library'.format(self.module_path)
+        command.extend(['-M', modpath])
         command.extend(['-m', self.module])
         command.extend(['--connection', 'local'])
 

@@ -69,6 +69,16 @@ options:
     choices: []
     aliases: []
     version_added: 1.0.0
+  vlan:
+    description:
+      - Specifies the VLAN ID to associate the VTEP with.  If the VLAN
+        argument is not used, the the VTEP is confgured on the global
+        flood list.
+    required: false
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.0.1
 """
 
 EXAMPLES = """
@@ -192,6 +202,8 @@ class EosAnsibleModule(AnsibleModule):
         keys = set(self.params).difference(self.meta_args)
         attrs = dict()
         attrs = dict([(k, self.params[k]) for k in self.params if k in keys])
+        if 'CHECKMODE' in attrs:
+            del attrs['CHECKMODE']
         return attrs
 
     def create(self):
@@ -294,7 +306,7 @@ class EosAnsibleModule(AnsibleModule):
             self.fail('Connection must define a transport')
 
         connection = pyeapi.client.make_connection(**config)
-        node = pyeapi.client.Node(connection)
+        node = pyeapi.client.Node(connection, **config)
 
         try:
             node.enable('show version')
@@ -364,11 +376,18 @@ def instance(module):
     """
     name = module.attributes['name']
     vtep = module.attributes['vtep']
+    vlan = module.attributes['vlan']
 
     result = module.node.api('interfaces').get(name)
-    _instance = dict(name=name, vtep=vtep, state='absent')
-    if vtep in result['flood_list']:
-        _instance['state'] = 'present'
+    _instance = dict(name=name, vtep=vtep, vlan=vlan, state='absent')
+
+    if vlan in result['vlans']:
+        if vtep in result['vlans'][vlan]['flood_list']:
+            _instance['state'] = 'present'
+    elif not vlan:
+        if vtep in result['flood_list']:
+            _instance['state'] = 'present'
+
     return _instance
 
 def create(module):
@@ -376,16 +395,18 @@ def create(module):
     """
     name = module.attributes['name']
     vtep = module.attributes['vtep']
+    vlan = module.attributes['vlan']
     module.log('Invoked create for eos_vxlan_vtep[%s]' % vtep)
-    module.node.api('interfaces').add_vtep(name, vtep)
+    module.node.api('interfaces').add_vtep(name, vtep, vlan=vlan)
 
 def remove(module):
     """ Removes an existing vtep from the global flood list
     """
     name = module.attributes['name']
     vtep = module.attributes['vtep']
+    vlan = module.attributes['vlan']
     module.log('Invoked remove for eos_vxlan_vtep[%s]' % vtep)
-    module.node.api('interfaces').remove_vtep(name, vtep)
+    module.node.api('interfaces').remove_vtep(name, vtep, vlan=vlan)
 
 
 def main():
@@ -394,7 +415,8 @@ def main():
 
     argument_spec = dict(
         name=dict(required=True),
-        vtep=dict(required=True)
+        vtep=dict(required=True),
+        vlan=dict()
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,

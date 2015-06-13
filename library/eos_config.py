@@ -212,6 +212,8 @@ class EosAnsibleModule(AnsibleModule):
         keys = set(self.params).difference(self.meta_args)
         attrs = dict()
         attrs = dict([(k, self.params[k]) for k in self.params if k in keys])
+        if 'CHECKMODE' in attrs:
+            del attrs['CHECKMODE']
         return attrs
 
     def create(self):
@@ -314,7 +316,7 @@ class EosAnsibleModule(AnsibleModule):
             self.fail('Connection must define a transport')
 
         connection = pyeapi.client.make_connection(**config)
-        node = pyeapi.client.Node(connection)
+        node = pyeapi.client.Node(connection, **config)
 
         try:
             node.enable('show version')
@@ -390,6 +392,7 @@ def config(module):
     if module.attributes['section']:
         commands.append(module.attributes['section'])
     commands.append(module.attributes['command'])
+    module.debug('commands', commands)
     module.config(commands)
 
 def main():
@@ -406,19 +409,20 @@ def main():
 
     module = EosAnsibleModule(argument_spec=argument_spec, stateful=False)
 
-    command = module.attributes['expression']
-    if not command:
-        command = r'^%s$' % module.attributes['command']
+    command = module.attributes['command'].strip()
+    expression = module.attributes['expression']
     function = module.attributes['function']
 
     if function == 'regex':
-        if not re.match(command, section(module), re.M):
+        if not expression:
+            expression = r'^{}$'.format(command)
+        if not re.search(expression, section(module), re.M):
             config(module)
     elif function == 'exclude':
-        if command not in section(module):
+        if (expression or command) not in section(module):
             config(module)
     elif function == 'include':
-        if command in section(module):
+        if (expression or command) in section(module):
             config(module)
 
     module.exit()
