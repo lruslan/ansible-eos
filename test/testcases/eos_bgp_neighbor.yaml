@@ -1,0 +1,122 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_bgp_neighbor
+
+testcases:
+
+  - name: create bgp neighbor with name
+    arguments:
+      - { name: name, value: test }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: create bgp neighbor with address
+    arguments:
+      - { name: name, value: 172.16.10.0 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: remove bgp neighbor with name
+    arguments:
+      - { name: name, value: test }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+      - neighbor test shutdown
+
+  - name: remove bgp neighbor with address
+    arguments:
+      - { name: name, value: 172.16.10.0 }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+      - neighbor 172.16.10.0 shutdown
+
+  - name: set bgp neighbor remote-as
+    arguments:
+      - { name: name, value: test }
+      - { name: remote_as, value: 65000 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: set bgp neighbor send-community
+    arguments:
+      - { name: name, value: 172.16.10.0 }
+      - { name: send_community, value: yes }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: set bgp neighbor next-hop-self
+    arguments:
+      - { name: name, value: 172.16.10.0 }
+      - { name: next_hop_self, value: yes }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: set bgp neighbor route-map in
+    arguments:
+      - { name: name, value: 172.16.10.0 }
+      - { name: route_map_in, value: test }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: set bgp neighbor route-map out
+    arguments:
+      - { name: name, value: 172.16.10.0 }
+      - { name: route_map_out, value: test }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: set bgp neighbor description
+    arguments:
+      - { name: name, value: 172.16.10.0 }
+      - { name: description, value: "'this is a test string'" }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: set bgp neighbor enable
+    arguments:
+      - { name: name, value: 172.16.10.0 }
+      - { name: enable, value: yes }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+      - neighbor 172.16.10.0 description configured by ansible
+      - neighbor 172.16.10.0 shutdown
+
