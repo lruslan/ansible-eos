@@ -48,6 +48,16 @@ testcases:
       - router bgp 65000
       - neighbor 172.16.10.0 shutdown
 
+  - name: set bgp neighbor peer-group
+    arguments:
+      - { name: peer_group, value: test }
+      - { name: name, value: 172.16.10.1 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
   - name: set bgp neighbor remote-as
     arguments:
       - { name: name, value: test }

@@ -462,6 +462,15 @@ def remove(module):
     module.log('Invoked delete for eos_bgp_neighbor[{}]'.format(name))
     module.node.api('bgp').neighbors.delete(name)
 
+def set_peer_group(module):
+    """configures the BGP peer-group value for this neighbor
+    """
+    name = module.attributes['name']
+    value = module.attributes['peer_group']
+    module.log('Invoked set_peer_gorup for eos_bgp_neighbor[{}] '
+               'with value {}'.format(name, value))
+    module.node.api('bgp').neighbors.set_peer_group(name, value)
+
 def set_remote_as(module):
     """Configures the BGP remote-as value for this neighbor
     """
