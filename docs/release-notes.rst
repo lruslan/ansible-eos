@@ -7,3 +7,4 @@ Release Notes
     :titlesonly:
 
     release-notes-1.0.0.rst
+    release-notes-1.0.1.rst
