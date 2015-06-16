@@ -38,8 +38,8 @@ Debugging Module Output
 ***********************
 
 All Ansible EOS role modules provide a consistent output and options for
-troubleshooting the module operations.  Each module provides logging and debug
-information tho help debugging the change the module is introducing.  Modules
+troubleshooting the module operations. Each module provides logging and debug
+information to help debugging the change the module is introducing.  Modules
 provide two arguments for debugging: logging (default=on) and debug
 (default=off).
 
@@ -61,6 +61,16 @@ logical Vxlan interface:
 
 Once the variable is registered, for instance eos_vxlan_output in the above
 example, the Ansible `debug`_ module can be used to display the output.::
+
+  - name: Configure Vxlan logical interface
+    eos_vxlan: name={{ vxlan.name }}
+           description={{ vxlan.description|default(omit) }}
+           source_interface={{ vxlan.source_interface }}
+           multicast_group={{ vxlan.multicast_group }}
+           debug=no
+           connection={{ inventory_hostname }}
+    when: vxlan is defined
+    register: eos_vxlan_output
 
   - debug: var=eos_vxlan_output
 
@@ -229,7 +239,7 @@ across all module implementations
     * params - shows all parameters used to build the module including
       arguments and metaparameters
     * pyeapi_version - shows the current version of pyeapi library used
-    * statful - shows whether or not the module is stateful
+    * stateful - shows whether or not the module is stateful
 
 Using the ``debug`` argument provides a fair amount of detail about how the
 module executes on the node. There is also logging information that also
@@ -303,7 +313,7 @@ can use SSH to validate that the SSH keyless login is working properly::
     [ansible@Arista ~]$
 
 If the user (ansible in the above example) is unable to login to the node,
-please review the :ref:`quickstart` guide.
+please review the :ref:`quickstart` guide to ensure you have SSH configured correctly.
 
 Lastly, check to make sure the dependency eAPI has been enabled on the target
 Arista EOS node.  To verify that eAPI is enabled and running, use the ``show

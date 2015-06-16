@@ -315,20 +315,33 @@ Then paste in the following
         eos_vlan:
           vlanid=150
           name=newVlan150
+          debug=yes
+        register: vlan_cfg_output
+
+      - debug: var=vlan_cfg_output
+
+**Step 4.3. Run playbook**
+
+Simply execute from your Ansible Host and revi:
+
+.. code-block:: console
+
+  ansible@hub:~$ ansible-playbook my-test-eos-playbook.yml
 
 **Result**:
 
-So what really happened?
+You should see JSON output containing any changes, along with the current and desired state. So what really happened?
 
 1. We execute the command and Ansible goes to our inventory to find the specified nodes in group ``eos_switches``.
 2. Ansible is told to connect via SSH with user ``ansible`` from ``ansible_ssh_user=ansible``.
 3. Ansible creates a temp directory in the ``ansible`` user's home directory
 4. Ansible copies eos_vlan.py to the temp directory created above.
 5. Ansible executes eos_vlan.py with the specified arguments
-6. eos.interface.py uses pyeapi to configure the new Vlan.
+6. eos_vlan.py uses pyeapi to configure the new Vlan.
 7. Ansible cleans up the temp folder and returns output to the control host.
 
-
+You should notice that Ansible reports configuration has ``changed``. If you ran
+this command again it should report no changes due to idempotency.
 
 
 ******************************************
@@ -489,10 +502,22 @@ Then paste in the following
           vlanid=150
           name=newVlan150
           connection={{ inventory_hostname }}
+          debug=yes
+        register: vlan_cfg_output
+
+      - debug: var=vlan_cfg_output
+
+**Step 4.3. Run playbook**
+
+Simply execute from your Ansible Host:
+
+.. code-block:: console
+
+  ansible@hub:~$ ansible-playbook my-test-eos-playbook.yml
 
 **Result**:
 
-So what really happened?
+You should see JSON output containing any changes, along with the current and desired state. So what really happened?
 
 1. We execute the command and Ansible goes to our inventory to find the specified nodes that match group ``eos_switches``.
 2. Ansible is told to use ``connection:local`` so no SSH connection will be established to the node.
@@ -504,6 +529,8 @@ So what really happened?
 8. pyeapi consults ``~/.eapi.conf`` to find connection named ``veos01``
 9. Ansible cleans up the temp folder and returns output to the control host.
 
+You should notice that Ansible reports configuration has ``changed``. If you ran
+this command again it should report no changes due to idempotency.
 
 *********
 Now what?
