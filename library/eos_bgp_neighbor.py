@@ -437,6 +437,7 @@ def instance(module):
 
     if config:
         _instance['state'] = 'present'
+        _instance['peer_group'] = config['peer_group']
         _instance['description'] = config['description']
         _instance['next_hop_self'] = config['next_hop_self']
         _instance['remote_as'] = config['remote_as']
@@ -467,7 +468,7 @@ def set_peer_group(module):
     """
     name = module.attributes['name']
     value = module.attributes['peer_group']
-    module.log('Invoked set_peer_gorup for eos_bgp_neighbor[{}] '
+    module.log('Invoked set_peer_group for eos_bgp_neighbor[{}] '
                'with value {}'.format(name, value))
     module.node.api('bgp').neighbors.set_peer_group(name, value)
 

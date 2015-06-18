@@ -65,6 +65,7 @@ class TestCase(object):
         modpath = '{}/library'.format(self.module_path)
         command.extend(['-M', modpath])
         command.extend(['-m', self.module])
+        command.extend(['-e', 'ansible_python_interpreter=python'])
         command.extend(['--connection', 'local'])
 
         arguments = ''
