@@ -407,6 +407,48 @@ def eos_vlan(module):
     purged = [{'vlanid': vid, 'state': 'absent'} for vid in purgeset]
     return dict(purged=purged)
 
+def eos_bgp_network(module):
+
+    network = lambda x: collections.namedtuple('Network', x.keys())(**x)
+
+    current = module.api('bgp').get()['networks']
+    current = [network(item) for item in current]
+
+    results = module.from_json(module.attributes['results'])
+    expected = list()
+    for item in results['results']:
+        inst = item['instance']
+        del inst['state']
+        expected.append(network(inst))
+
+    purgeset = set(current).difference(expected)
+    for item in purgeset:
+        if not module.check_mode:
+            module.api('bgp').remove_network(**vars(item))
+
+    purged = list()
+    for item in purgeset:
+        data = dict(vars(item))
+        data['state'] = 'absent'
+        purged.append(data)
+
+    return dict(purged=purged)
+
+def eos_bgp_neighbor(module):
+    current = module.api('bgp').neighbors.getall()
+
+    results = module.from_json(module.attributes['results'])
+    expected = list()
+    for item in results['results']:
+        expected.append(item['instance']['name'])
+
+    purgeset = set(current.keys()).difference(expected)
+    for item in purgeset:
+        if not module.check_mode:
+            module.api('bgp').neighbors.delete(item)
+
+    purged = [{'name': name, 'state': 'absent'} for name in purgeset]
+    return dict(purged=purged)
 
 def main():
     """ The main module routine called when the module is run by Ansible
