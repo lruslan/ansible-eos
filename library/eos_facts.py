@@ -373,12 +373,15 @@ def do_interfaces(module):
 
 def do_version(module):
     resp = module.node.enable('show version')
-    return dict(version=resp[0]['result'])
+    return resp[0]['result']
 
 def do_vlans(module):
     resp = module.node.enable('show vlan')
-    return dict(vlans=resp[0]['result'])
+    return resp[0]['result']
 
+def do_lldp_neighbors(module):
+    resp = module.node.enable('show lldp neighbors')
+    return resp[0]['result']['lldpNeighbors']
 
 def collect_facts(module):
     functions = frozenset([f for f in globals().keys() if f.startswith('do_')])
