@@ -75,7 +75,9 @@ From your Ansible Control Host, type:
 
 .. code-block:: console
 
-  ansible-galaxy install arista.eos
+  sudo ansible-galaxy install arista.eos
+
+.. tip:: To upgrade the role via Galaxy use ``sudo ansible-galaxy install --force arista.eos``
 
 Then you can use the role in your play as:
 
