@@ -103,7 +103,7 @@ following command:
 
 .. code-block:: console
 
-  git clone https://github.com/aristanetworks/ansible-eos.git
+  git clone https://github.com/arista-eosplus/ansible-eos.git
 
 The command above will create a new directory called ‘ansible-eos’ and clone the
 entire repository. Currently, the ansible-eos folder contains the “develop”
