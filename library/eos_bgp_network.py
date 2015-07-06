@@ -85,7 +85,6 @@ EXAMPLES = """
 - name: remove network 172.16.0.0/8
   eos_bgp_network: prefix=172.16.0.0 masklen=8 state=absent
 """
-
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
@@ -305,7 +304,9 @@ class EosAnsibleModule(AnsibleModule):
         node = pyeapi.client.Node(connection, **config)
 
         try:
-            node.enable('show version')
+            resp = node.enable('show version')
+            self.debug('eos_version', resp[0]['result']['version'])
+            self.debug('eos_model', resp[0]['result']['modelName'])
         except (pyeapi.eapilib.ConnectionError, pyeapi.eapilib.CommandError):
             self.fail('unable to connect to %s' % node)
         else:

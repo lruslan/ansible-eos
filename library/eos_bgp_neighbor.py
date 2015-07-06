@@ -144,7 +144,6 @@ EXAMPLES = """
 - name: remove neighbor 172.16.10.1 to BGP
   eos_bgp_neighbor name=172.16.10.1 enable=yes remote_as=65000 state=absent
 """
-
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
@@ -364,7 +363,9 @@ class EosAnsibleModule(AnsibleModule):
         node = pyeapi.client.Node(connection, **config)
 
         try:
-            node.enable('show version')
+            resp = node.enable('show version')
+            self.debug('eos_version', resp[0]['result']['version'])
+            self.debug('eos_model', resp[0]['result']['modelName'])
         except (pyeapi.eapilib.ConnectionError, pyeapi.eapilib.CommandError):
             self.fail('unable to connect to %s' % node)
         else:

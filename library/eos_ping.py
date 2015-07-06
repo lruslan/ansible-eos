@@ -86,7 +86,6 @@ EXAMPLES = """
 
 """
 import re
-
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
