@@ -6,6 +6,8 @@ The installation of Ansible is straightforward and simple. This section
 provides an overview of the installation of Ansible on a host system as well
 as how to configure an Arista EOS node to work with the Ansible framework.
 
+.. important:: Ansible 1.9 or later is required.
+
 
 .. _install-ansible-label:
 
