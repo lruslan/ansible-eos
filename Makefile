@@ -33,7 +33,7 @@ clean:
 tests: clean
 	nosetests -v 
 
-build: copy
+build: 
 	$(PYTHON) $(BUILDER)
 
 copy:
