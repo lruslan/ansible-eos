@@ -89,3 +89,25 @@ testcases:
       - interface Ethernet1
       - switchport mode trunk
 
+  - name: add trunk groups to an interface
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: trunk_groups, value: foo,bar
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+
+  - name: remove trunk groups baz to an interface
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: trunk_groups, value: foo,bar
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - switchport trunk group foo
+      - switchport trunk group bar
+      - switchport trunk group baz
+

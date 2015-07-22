@@ -1,6 +1,10 @@
 Arista EOS Role for Ansible
 ===========================
 
+## IN PROGRESS
+
+- adds trunk_groups argument to eos_switchport
+
 ## 1.0.1, 6/13/2015
 
 - adds additional parameters to eos_config
