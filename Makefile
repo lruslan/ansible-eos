@@ -14,7 +14,8 @@
 NAME = "ansible-eos"
 
 PYTHON=python
-BUILDER=build_modules.py
+BUILDER=scripts/build_modules.py
+COPYCMD=scripts/copy_modules.py
 
 VERSION := $(shell cat VERSION)
 
@@ -32,7 +33,10 @@ clean:
 tests: clean
 	nosetests -v 
 
-build:
+build: copy
 	$(PYTHON) $(BUILDER)
+
+copy:
+	$(PYTHON) $(COPYCMD)
 
 
