@@ -134,6 +134,9 @@ EXAMPLES = """
   eos_switchport: name=Ethernet5 trunk_groups=foo,bar,baz
 
 """
+
+from pyeapi.utils import expand_range
+
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
@@ -255,7 +258,7 @@ class EosAnsibleModule(AnsibleModule):
     def validate(self):
         for key, value in self.attributes.iteritems():
             func = self.func('validate_%s' % key)
-            if func:
+            if func and value:
                 self.attributes[key] = func(value)
 
     def create(self):
@@ -436,7 +439,8 @@ def instance(module):
         _instance['mode'] = result['mode']
         _instance['access_vlan'] = result['access_vlan']
         _instance['trunk_native_vlan'] = result['trunk_native_vlan']
-        _instance['trunk_allowed_vlans'] = result['trunk_allowed_vlans']
+        vlans = ','.join(expand_range(result['trunk_allowed_vlans']))
+        _instance['trunk_allowed_vlans'] = vlans
         _instance['trunk_groups'] = ','.join(result['trunk_groups'])
     return _instance
 
@@ -504,6 +508,11 @@ def validate_trunk_groups(value):
     """
     values = sorted(value.split(','))
     return ','.join(values)
+
+def validate_trunk_allowed_vlans(value):
+    """Validates the trunk_allowed_vlans argument
+    """
+    return ','.join(expand_range(value))
 
 def main():
     """ The main module routine called when the module is run by Ansible
