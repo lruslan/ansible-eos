@@ -429,7 +429,7 @@ def main():
         state=dict(default='present', choices=['present', 'absent'])
     )
 
-    module = EosAnsibleModule(argument_spec=argument_spec, stateful=False)
+    module = EosAnsibleModule(argument_spec=argument_spec)
 
     command = module.attributes['command'].strip()
     regexp = module.attributes['regexp']

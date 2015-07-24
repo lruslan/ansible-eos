@@ -1,0 +1,58 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_config
+
+testcases:
+
+  - name: configure a global feature with state=present
+    arguments:
+      - { name: command, value: "'snmp-server location test'" }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no snmp-server location
+
+  - name: configure global feature with state=absent
+    arguments:
+      - { name: command, value: "'no snmp-server location test'" }
+      - { name: regexp, value: "'snmp-server location test'" }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - snmp-server location test
+
+  - name: configure section feature with state=present
+    arguments:
+      - { name: command, value: "'description foo'" }
+      - { name: section, value: "'interface Ethernet1'" }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+
+  - name: configure section feature with state=absent
+    arguments:
+      - { name: command, value: "'no description'" }
+      - { name: regexp, value: "'description foo'" }
+      - { name: section, value: "'interface Ethernet1'" }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - description foo
+
+  - name: configure global feature with regexp seach
+    arguments:
+      - { name: command, value: "'snmp-server location test'" }
+      - { name: regexp, value: "'snmp-server location [a-z]'" }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - snmp-server location 1234
