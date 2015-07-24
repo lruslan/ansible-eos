@@ -56,3 +56,21 @@ testcases:
       - { name: debug, value: true }
     setup:
       - snmp-server location 1234
+
+  - name: configure new section
+    arguments:
+      - { name: command, value: "'interface Loopback0'" }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no interface Loopback0
+
+  - name: missing section
+    arguments:
+      - { name: command, value: "'description foo'" }
+      - { name: section, value: "'interface Loopback0'" }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no interface Loopback0
+
