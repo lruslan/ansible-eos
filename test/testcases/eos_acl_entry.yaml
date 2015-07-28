@@ -32,5 +32,5 @@ testcases:
       - no ip access-list standard test
       - ip access-list standard test
       - 10 permit any
-      - 20 deny any
+      - 20 deny any log
       - exit

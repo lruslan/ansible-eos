@@ -493,10 +493,6 @@ def set_udp_port(module):
                'with value %s' % (name, value))
     module.node.api('interfaces').set_udp_port(name, value)
 
-def validate_udp_port(value):
-    if value < 1024 or value > 65536:
-        raise AttributeError('udp_port must be between 1024 and 65535')
-
 def main():
     """ The main module routine called when the module is run by Ansible
     """

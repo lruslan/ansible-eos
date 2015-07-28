@@ -92,7 +92,7 @@ testcases:
   - name: add trunk groups to an interface
     arguments:
       - { name: name, value: Ethernet1 }
-      - { name: trunk_groups, value: foo,bar
+      - { name: trunk_groups, value: foo,bar }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:
@@ -101,7 +101,7 @@ testcases:
   - name: remove trunk groups baz to an interface
     arguments:
       - { name: name, value: Ethernet1 }
-      - { name: trunk_groups, value: foo,bar
+      - { name: trunk_groups, value: foo,bar }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:

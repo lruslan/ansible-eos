@@ -504,12 +504,16 @@ def set_trunk_groups(module):
 def validate_trunk_groups(value):
     """Validates the trunk_groups argument
     """
+    if not value:
+        return None
     values = sorted(value.split(','))
     return ','.join(values)
 
 def validate_trunk_allowed_vlans(value):
     """Validates the trunk_allowed_vlans argument
     """
+    if not value:
+        return None
     return ','.join(expand_range(value))
 
 def main():

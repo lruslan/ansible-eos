@@ -340,12 +340,12 @@ def instance(module):
 
 
 def create(module):
-    value = module.attribtes['name']
+    value = module.attributes['name']
     module.log('Invoked create for eos_acl_entry[%s]' % value)
     module.api('acl').create(value)
 
 def remove(module):
-    value = module.attributes['value']
+    value = module.attributes['name']
     seqno = module.attributes['seqno']
     module.log('Invoked remove for eos_acl_entry[%s]' % value)
     module.api('acl').remove_entry(value, seqno)
@@ -355,7 +355,7 @@ def flush(module):
     args.append(module.attributes['name'])
     args.append(module.attributes['seqno'])
     args.append(module.attributes['action'])
-    args.append(module.attribures['srcaddr'])
+    args.append(module.attributes['srcaddr'])
     args.append(module.attributes['srcprefixlen'])
     args.append(module.attributes['log'])
     module.api('acl').update_entry(*args)
