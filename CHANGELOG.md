@@ -4,6 +4,15 @@ Arista EOS Role for Ansible
 ## IN PROGRESS
 
 - adds trunk_groups argument to eos_switchport
+- changes trunk_allowed_vlans to allow a range of vlans
+- changes arguments used by eos_config (see documentation)
+
+### New Modules
+
+* eos_acl_entry
+* eos_bgp_config
+* eos_bgp_neighbor
+* eos_bgp_network
 
 ## 1.0.1, 6/13/2015
 
