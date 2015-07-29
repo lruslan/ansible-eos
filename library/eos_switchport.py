@@ -426,6 +426,13 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
+def sort_vlans(arg):
+    """Converts the arg to a list and sorts the values
+    """
+    value = sorted([int(x) for x in arg.split(',')])
+    value = [str(x) for x in value]
+    return ','.join(value)
+
 def instance(module):
     """ Returns switchport instance object properties
     """
@@ -438,7 +445,7 @@ def instance(module):
         _instance['access_vlan'] = result['access_vlan']
         _instance['trunk_native_vlan'] = result['trunk_native_vlan']
         vlans = ','.join(expand_range(result['trunk_allowed_vlans']))
-        _instance['trunk_allowed_vlans'] = vlans
+        _instance['trunk_allowed_vlans'] = sort_vlans(vlans)
         _instance['trunk_groups'] = ','.join(result['trunk_groups'])
     return _instance
 
@@ -514,7 +521,8 @@ def validate_trunk_allowed_vlans(value):
     """
     if not value:
         return None
-    return ','.join(expand_range(value))
+    value = ','.join(expand_range(value))
+    return sort_vlans(value)
 
 def main():
     """ The main module routine called when the module is run by Ansible

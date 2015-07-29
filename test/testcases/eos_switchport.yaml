@@ -111,3 +111,15 @@ testcases:
       - switchport trunk group bar
       - switchport trunk group baz
 
+  - name: test with out of order vlans
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: trunk_allowed_vlans, value: 1,9,5,7,3,6,2 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - switchport mode trunk
+
+
