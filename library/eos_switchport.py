@@ -107,6 +107,16 @@ options:
     choices: []
     aliases: []
     version_added: 1.0.0
+  trunk_groups:
+    description:
+      - Configures the list of trunk groups on the switchport.  The parameter
+        accepts a comma separated list of values to be provisioned on the
+        interface.
+    required: false
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
 """
 
 EXAMPLES = """
@@ -120,7 +130,12 @@ EXAMPLES = """
 - name: Add the set of allowed vlans to Ethernet2/1
   eos_switchport: name=Ethernet2/1 mode=trunk trunk_allowed_vlans=1,10,100
 
+- name: Add trunk group values to an interface
+  eos_switchport: name=Ethernet5 trunk_groups=foo,bar,baz
+
 """
+
+from pyeapi.utils import expand_range
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
@@ -178,8 +193,9 @@ class EosAnsibleModule(AnsibleModule):
         self.debug('params', self.params)
 
         self._attributes = self.map_argument_spec()
-        self._node = self.connect()
+        self.validate()
 
+        self._node = self.connect()
         self._instance = None
 
         self.desired_state = self.params['state'] if self._stateful else None
@@ -236,6 +252,12 @@ class EosAnsibleModule(AnsibleModule):
         if 'CHECKMODE' in attrs:
             del attrs['CHECKMODE']
         return attrs
+
+    def validate(self):
+        for key, value in self.attributes.iteritems():
+            func = self.func('validate_%s' % key)
+            if func:
+                self.attributes[key] = func(value)
 
     def create(self):
         if not self.check_mode:
@@ -340,7 +362,9 @@ class EosAnsibleModule(AnsibleModule):
         node = pyeapi.client.Node(connection, **config)
 
         try:
-            node.enable('show version')
+            resp = node.enable('show version')
+            self.debug('eos_version', resp[0]['result']['version'])
+            self.debug('eos_model', resp[0]['result']['modelName'])
         except (pyeapi.eapilib.ConnectionError, pyeapi.eapilib.CommandError):
             self.fail('unable to connect to %s' % node)
         else:
@@ -402,6 +426,13 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
+def sort_vlans(arg):
+    """Converts the arg to a list and sorts the values
+    """
+    value = sorted([int(x) for x in arg.split(',')])
+    value = [str(x) for x in value]
+    return ','.join(value)
+
 def instance(module):
     """ Returns switchport instance object properties
     """
@@ -413,7 +444,9 @@ def instance(module):
         _instance['mode'] = result['mode']
         _instance['access_vlan'] = result['access_vlan']
         _instance['trunk_native_vlan'] = result['trunk_native_vlan']
-        _instance['trunk_allowed_vlans'] = result['trunk_allowed_vlans']
+        vlans = ','.join(expand_range(result['trunk_allowed_vlans']))
+        _instance['trunk_allowed_vlans'] = sort_vlans(vlans)
+        _instance['trunk_groups'] = ','.join(result['trunk_groups'])
     return _instance
 
 def create(module):
@@ -466,6 +499,31 @@ def set_trunk_allowed_vlans(module):
                'with value %s' % (name, value))
     module.node.api('switchports').set_trunk_allowed_vlans(name, value)
 
+def set_trunk_groups(module):
+    """Configures the set of trunk groups on the interface
+    """
+    name = module.attributes['name']
+    value = module.attributes['trunk_groups'].split(',')
+    module.log('Invoked set_trunk_groups for eos_switchport[%s] '
+               'with value %s' % (name, value))
+    module.node.api('switchports').set_trunk_groups(name, value)
+
+def validate_trunk_groups(value):
+    """Validates the trunk_groups argument
+    """
+    if not value:
+        return None
+    values = sorted(value.split(','))
+    return ','.join(values)
+
+def validate_trunk_allowed_vlans(value):
+    """Validates the trunk_allowed_vlans argument
+    """
+    if not value:
+        return None
+    value = ','.join(expand_range(value))
+    return sort_vlans(value)
+
 def main():
     """ The main module routine called when the module is run by Ansible
     """
@@ -475,7 +533,8 @@ def main():
         mode=dict(choices=['access', 'trunk']),
         access_vlan=dict(),
         trunk_native_vlan=dict(),
-        trunk_allowed_vlans=dict()
+        trunk_allowed_vlans=dict(),
+        trunk_groups=dict()
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,

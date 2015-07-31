@@ -32,94 +32,117 @@
 #
 DOCUMENTATION = """
 ---
-module: eos_portchannel
-short_description: Manage Port-Channel interfaces in EOS
+module: eos_bgp_neighbor
+short_description: Manage BGP neighbor statements in EOS
 description:
-  - The eos_portchannel module manages the interface configuration for
-    logical Port-Channel interfaces on EOS nodes.
-version_added: 1.0.0
-category: Interfaces
+  - This eos_bgp_neighbor module provides stateful management of the
+    neighbor statements for the BGP routing process for Arista EOS nodes
+version_added: 1.1.0
+category: BGP
 author: Arista EOS+
 requirements:
-  - Arista EOS 4.13.7M or later with command API enabled
-  - Python Client for eAPI 0.3.0 or later
+  - Arista EOS 4.13.7M or later with command API enable
+  - Python Client for eAPI 0.3.1 or later
 notes:
-  - All configuration is idempotent unless otherwise specified
+  - All configuraiton is idempontent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
-  - Supports stateful resource configuration.
+  - Supports tateful resource configuration
 options:
   name:
     description:
-      - The unique interface identifier name.  The interface name must use
-        the full interface name (no abbreviated names).  For example,
-        interfaces should be specified as Ethernet1 not Et1
+      - The name of the BGP neighbor to manage.  This value can be either
+        an IPv4 address or string (in the case of managing a peer group)
     required: true
     default: null
     choices: []
     aliases: []
-    version_added: 1.0.0
-  enable:
+    version_added: 1.1.0
+  peer_group:
     description:
-      - Configures the administrative state for the interface.  Setting
-        the value to true will adminstrative enable the interface and
-        setting the value to false will administratively disable the
-        interface.  The EOS default value for enable is true
+      - The name of the peer-group value to associate with the neighbor.  This
+        argument is only valid if the neighbor is an IPv4 address
+    default: null
     required: false
-    default: true
-    choices: ['True', 'False']
+    choices: []
     aliases: []
-    version_added: 1.0.0
+    version_added: 1.1.0
+  remote_as:
+    description:
+      - Configures the BGP neighbors remote-as value.  Valid AS values are
+        in the range of 1 to 65535.
+    default: null
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  send_community:
+    description:
+      - Configures the BGP neighbors send-community value.  If enabled then
+        the BGP send-community value  is enable.  If disabled, then the
+        BGP send-community value is disabled.
+    default: false
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  next_hop_self:
+    description:
+      - Configures the BGP neighbors next-hop-self value.  If enabled then
+        the BGP next-hop-self value is enabled.  If disabled, then the BGP
+        next-hop-self community value is disabled.
+    default: false
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  route_map_in:
+    description:
+      - Configures the BGP neigbhors route-map in value.  The value specifies
+        the name of the route-map.
+    default: null
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  route_map_out:
+    description:
+      - Configures the BGP neigbhors route-map out value.  The value specifies
+        the name of the route-map.
+    default: null
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.1.0
   description:
     description:
-      - Configures a one lne ASCII description for the interface.  The EOS
-        default value for description is None
-    required: false
+      - Configures the BGP neighbors description value.  The value specifies
+        an arbitrary description to add to the neighbor statement in the
+        nodes running-configuration.
     default: null
+    required: false
     choices: []
     aliases: []
-    version_added: 1.0.0
-  members:
+    version_added: 1.1.0
+  enable:
     description:
-      - Configures the set of physical Ethernet interfaces that are bundled
-        together to create the logical Port-Channel interface.  Member
-        interface names should be a comma separated list of physical Ethernet
-        interface names to be included in the named interface.
+      - Configures the administrative state for the BGP neighbor
+        process. If enable is True then the BGP neighbor process is
+        administartively enabled and if enable is False then
+        the BGP neighbor process is administratively disabled.
+    default: true
     required: false
-    default: null
-    choices: []
+    choices: ['True', 'False']
     aliases: []
-    version_added: 1.0.0
-  minimum_links:
-    description:
-      - Conifugres the minimum links value which specifies the miniumum
-        number of physical Ethernet interfaces that must be operationally
-        up for the entire Port-Channel interface to be considered
-        operationally up.  Valid values for minimum links are in the range
-        of 0 to 16.  The EOS default value for min-links is 0
-    required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.0.0
-  lacp_mode:
-    description:
-      - Configures the LACP mode configured on the named interface.  The
-        LACP mode identifies the negotiation protocol used between peers.
-    required: false
-    default: null
-    choices: ['active', 'passive', 'disabled']
-    aliases: []
-    version_added: 1.0.0
+    version_added: 1.1.0
 """
 
 EXAMPLES = """
 
-- name: Ensure Port-Channel1 has members Ethernet1 and 2
-  eos_portchannel: name=Port-Channel1 members=Ethernet1,Ethernet2
+- name: add neighbor 172.16.10.1 to BGP
+  eos_bgp_neighbor: name=172.16.10.1 enable=yes remote_as=65000
 
-- name: Ensure Port-Channel10 uses lacp mode active
-  eos_portchannel: name=Port-Channel10 members=Ethernet1,Ethernet3
-                   lacp_mode=active
+- name: remove neighbor 172.16.10.1 to BGP
+  eos_bgp_neighbor name=172.16.10.1 enable=yes remote_as=65000 state=absent
 """
 #<<EOS_COMMON_MODULE_START>>
 
@@ -412,94 +435,129 @@ class EosAnsibleModule(AnsibleModule):
 #<<EOS_COMMON_MODULE_END>>
 
 def instance(module):
-    """ Returns  the interface properties for the specified name
+    """Returns the BGP network instance
     """
     name = module.attributes['name']
-    result = module.node.api('interfaces').get(name)
+    result = module.node.api('bgp').get()
+
     _instance = dict(name=name, state='absent')
-    if result:
+    config = result['neighbors'].get(name)
+
+    if config:
         _instance['state'] = 'present'
-        _instance.update(result)
-        desc = '' if not result['description'] else result['description']
-        _instance['description'] = desc
-        _instance['enable'] = not result['shutdown']
-        _instance['members'] = ','.join(result['members'])
-        lacp_mode = result['lacp_mode']
-        _instance['lacp_mode'] = 'disabled' if lacp_mode == 'on' else lacp_mode
+        _instance['peer_group'] = config['peer_group']
+        _instance['description'] = config['description']
+        _instance['next_hop_self'] = config['next_hop_self']
+        _instance['remote_as'] = config['remote_as']
+        _instance['route_map_in'] = config['route_map_in']
+        _instance['route_map_out'] = config['route_map_out']
+        _instance['send_community'] = config['send_community']
+        _instance['enable'] = not config['shutdown']
+
     return _instance
 
+
 def create(module):
-    """Creates a new instance of interface on the node
+    """Create an instance of BGP neighbor on the node
     """
     name = module.attributes['name']
-    module.log('Invoked create for eos_portchannel[%s]' % name)
-    module.node.api('interfaces').create(name)
+    module.log('Invoked create for eos_bgp_neighbor[{}]'.format(name))
+    module.node.api('bgp').neighbors.create(name)
 
 def remove(module):
-    """Creates a new instance of interface on the node
+    """Removes an instance of BGP neighbor from the node
     """
     name = module.attributes['name']
-    module.log('Invoked remove for eos_portchannel[%s]' % name)
-    module.node.api('interfaces').delete(name)
+    module.log('Invoked delete for eos_bgp_neighbor[{}]'.format(name))
+    module.node.api('bgp').neighbors.delete(name)
+
+def set_peer_group(module):
+    """configures the BGP peer-group value for this neighbor
+    """
+    name = module.attributes['name']
+    value = module.attributes['peer_group']
+    module.log('Invoked set_peer_group for eos_bgp_neighbor[{}] '
+               'with value {}'.format(name, value))
+    module.node.api('bgp').neighbors.set_peer_group(name, value)
+
+def set_remote_as(module):
+    """Configures the BGP remote-as value for this neighbor
+    """
+    name = module.attributes['name']
+    value = module.attributes['remote_as']
+    module.log('Invoked set_remote_as for eos_bgp_neighbor[{}] '
+               'with value {}'.format(name, value))
+    module.node.api('bgp').neighbors.set_remote_as(name, value)
+
+def set_send_community(module):
+    """Configures the BGP send-community value for this neighbor
+    """
+    name = module.attributes['name']
+    value = module.attributes['send_community']
+    module.log('Invoked set_send_community for eos_bgp_neighbor[{}] '
+               'with value {}'.format(name, value))
+    module.node.api('bgp').neighbors.set_send_community(name, value)
+
+def set_next_hop_self(module):
+    """Configures the BGP next-hop-self value for this neighbor
+    """
+    name = module.attributes['name']
+    value = module.attributes['next_hop_self']
+    module.log('Invoked set_next_hop_self for eos_bgp_neighbor[{}] '
+               'with value {}'.format(name, value))
+    module.node.api('bgp').neighbors.set_next_hop_self(name, value)
+
+def set_route_map_in(module):
+    """Configures the BGP route-map in value for this neighbor
+    """
+    name = module.attributes['name']
+    value = module.attributes['route_map_in']
+    module.log('Invoked set_route_map_in for eos_bgp_neighbor[{}] '
+               'with value {}'.format(name, value))
+    module.node.api('bgp').neighbors.set_route_map_in(name, value)
+
+def set_route_map_out(module):
+    """Configures the BGP route-map out value for this neighbor
+    """
+    name = module.attributes['name']
+    value = module.attributes['route_map_out']
+    module.log('Invoked set_route_map_out for eos_bgp_neighbor[{}] '
+               'with value {}'.format(name, value))
+    module.node.api('bgp').neighbors.set_route_map_out(name, value)
 
 def set_description(module):
-    """ Configures the description attribute for the interface
+    """Configures the BGP description value for this neighbor
     """
-    value = module.attributes['description']
     name = module.attributes['name']
-    value = None if value == '' else value
-    module.log('Invoked set_description for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_description(name, value)
+    value = module.attributes['description']
+    module.log('Invoked set_description for eos_bgp_neighbor[{}] '
+               'with value {}'.format(name, value))
+    module.node.api('bgp').neighbors.set_description(name, value)
 
 def set_enable(module):
-    """ Configures the enable attribute for the interface
+    """Configures the BGP shutdown value for this neighbor
     """
+    name = module.attributes['name']
     value = not module.attributes['enable']
-    name = module.attributes['name']
-    module.log('Invoked set_enable for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_shutdown(name, value)
+    module.log('Invoked set_shutdown for eos_bgp_neighbor[{}] '
+               'with value {}'.format(name, value))
+    module.node.api('bgp').neighbors.set_shutdown(name, value)
 
-def set_members(module):
-    """ Configures the members attribute for the interface
-    """
-    value = module.attributes['members'].split(',')
-    name = module.attributes['name']
-    module.log('Invoked set_members for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_members(name, value)
-
-def set_minimum_links(module):
-    """ Configures the minimum links attribute for the interface
-    """
-    value = module.attributes['minimum_links']
-    name = module.attributes['name']
-    module.log('Invoked set_minimum_links for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_minimum_links(name, value)
-
-def set_lacp_mode(module):
-    """ Configures the lacp mode attribute for the interface
-    """
-    value = module.attributes['lacp_mode']
-    value = 'on' if value == 'disabled' else value
-    name = module.attributes['name']
-    module.log('Invoked set_lacp_mode for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_lacp_mode(name, value)
 
 def main():
-    """ The main module routine called when the module is run by Ansible
+    """The main module routine called when the module is run by Ansible
     """
 
     argument_spec = dict(
         name=dict(required=True),
-        enable=dict(type='bool', default=True),
+        peer_group=dict(),
+        remote_as=dict(),
+        send_community=dict(type='bool'),
+        next_hop_self=dict(type='bool'),
+        route_map_in=dict(),
+        route_map_out=dict(),
         description=dict(),
-        members=dict(),
-        minimum_links=dict(type='int'),
-        lacp_mode=dict(choices=['active', 'passive', 'disabled'])
+        enable=dict(type='bool', default=False)
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,

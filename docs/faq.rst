@@ -18,6 +18,7 @@ The two options are explained in :ref:`deployment-topologies-label`.
 
 Regardless of connection method you need the following:
 
+* Ansible 1.9 or later
 * Arista EOS 4.13.7M or later running on your node
 * EOS Command API enabled (see :ref:`A-enable-eapi-label` for more information)
 

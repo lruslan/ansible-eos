@@ -1,7 +1,7 @@
 # Ansible EOS Role
 
 [![Documentation Status](https://readthedocs.org/projects/ansible-eos/badge/?version=master)](https://readthedocs.org/projects/ansible-eos/?badge=master)
-
+[![Build Status](https://travis-ci.org/arista-eosplus/ansible-eos.svg)](https://travis-ci.org/arista-eosplus/ansible-eos)
 
 #### Table of Contents
 

@@ -179,9 +179,9 @@ This will only allow the Ansible user to login with keys.
 3. Install pyeapi
 =================
 As mentioned earlier, the Ansible EOS role uses `pyeapi <https://github.com/arista-eosplus/pyeapi>`_
-on the Arista node that will be configured. Let's install it.
+on the Arista node that will be configured. Let's install it on the EOS node.
 
-If the Arista node has internet access:
+If the Arista EOS node has internet access:
 
 .. code-block:: console
 
@@ -209,7 +209,7 @@ actual filename:
   [ansible@veos ~]$ sudo pip install /mnt/flash/netaddr-<VERSION>.tar.gz
   [ansible@veos ~]$ sudo pip install /mnt/flash/pyeapi-<VERSION>.tar.gz
 
-In order to keep the installation persistent across reboot modify ``/mnt/flash/rc.eos``:
+In order to keep the installation persistent across reboot, modify ``/mnt/flash/rc.eos``:
 
 .. code-block:: console
 
@@ -223,23 +223,6 @@ Paste in the following:
 
   sudo pip install /mnt/flash/netaddr-<VERSION>.tar.gz
   sudo pip install /mnt/flash/pyeapi-<VERSION>.tar.gz
-
-
-**Step 3.3:** Create local pyeapi.conf file
-
-.. code-block:: console
-
-  [ansible@veos ~]$ vi /mnt/flash/eapi.conf
-
-with credentials and settings you configured in steps 1.2 and 1.3:
-
-.. code-block:: console
-
-  [connection:localhost]
-  transport: https
-  username: eapi
-  password: icanttellyou
-  port: <port-if-non-default>
 
 
 .. _A-run-adhoc-label:
@@ -276,6 +259,11 @@ node as well as the name of the user created in Step 2.2 above:
 
   [eos_switches:vars]
   ansible_ssh_user=<user>
+  # Information from step 1.2. Used for eapi connection once Ansible SSHes in.
+  transport=https
+  username=eapi
+  password=icanttellyou
+  port=<port-if-non-default>
 
 Example
 
@@ -289,6 +277,9 @@ Example
 
   [eos_switches:vars]
   ansible_ssh_user=ansible
+  transport: https
+  username: eapi
+  password: icanttellyou
 
 
 **Step 4.2. Create playbook**
@@ -311,18 +302,25 @@ Then paste in the following
       - arista.eos
 
     tasks:
-      - name: Add Vlan 150 to my switches
+      - name: configures vlan 150
         eos_vlan:
           vlanid=150
           name=newVlan150
+          transport={{ transport }}
+          username={{ username }}
+          password={{ password }}
           debug=yes
         register: vlan_cfg_output
 
       - debug: var=vlan_cfg_output
 
+.. hint:: Don't be confused by the presence of ``transport``, ``username`` and ``password``. They aren't used until
+          after Ansible SSHes into the EOS node. By including these parameters here
+          we remove the need to have an ``eapi.conf`` file on each EOS node.
+
 **Step 4.3. Run playbook**
 
-Simply execute from your Ansible Host and revi:
+Simply execute from your Ansible Host and review output:
 
 .. code-block:: console
 

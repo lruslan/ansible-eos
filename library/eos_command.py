@@ -60,17 +60,6 @@ options:
     choices: []
     aliases: []
     version_added: 1.0.0
-  mode:
-    description:
-      - Specifies the command mode to execute the commands in.  If this
-        value is config then the command list is executed in config  mode.  If
-        the value is enable, then the command list is executed in
-        privileged (enable) mode.
-    required: false
-    default: 'enable'
-    choices: ['enable', 'config']
-    aliases: []
-    version_added: 1.0.0
 """
 
 EXAMPLES = """
@@ -78,8 +67,6 @@ EXAMPLES = """
 - name: execute show version and show hostname
   eos_command: commands='show version, show hostname'
 
-- name: configure an interface
-  eos_command: commands='interface Ethernet1, no shutdown' mode=config
 
 """
 #<<EOS_COMMON_MODULE_START>>
@@ -139,8 +126,9 @@ class EosAnsibleModule(AnsibleModule):
         self.debug('params', self.params)
 
         self._attributes = self.map_argument_spec()
-        self._node = self.connect()
+        self.validate()
 
+        self._node = self.connect()
         self._instance = None
 
         self.desired_state = self.params['state'] if self._stateful else None
@@ -197,6 +185,12 @@ class EosAnsibleModule(AnsibleModule):
         if 'CHECKMODE' in attrs:
             del attrs['CHECKMODE']
         return attrs
+
+    def validate(self):
+        for key, value in self.attributes.iteritems():
+            func = self.func('validate_%s' % key)
+            if func:
+                self.attributes[key] = func(value)
 
     def create(self):
         if not self.check_mode:
@@ -301,7 +295,9 @@ class EosAnsibleModule(AnsibleModule):
         node = pyeapi.client.Node(connection, **config)
 
         try:
-            node.enable('show version')
+            resp = node.enable('show version')
+            self.debug('eos_version', resp[0]['result']['version'])
+            self.debug('eos_model', resp[0]['result']['modelName'])
         except (pyeapi.eapilib.ConnectionError, pyeapi.eapilib.CommandError):
             self.fail('unable to connect to %s' % node)
         else:
@@ -365,9 +361,7 @@ class EosAnsibleModule(AnsibleModule):
 
 def run_commands(module):
     commands = module.attributes['commands'].split(',')
-    mode = module.attributes['mode']
-    func = getattr(module.node, mode)
-    return func(commands)
+    return module.node.enable(commands)
 
 def main():
     """ The main module routine called when the module is run by Ansible
@@ -375,16 +369,17 @@ def main():
 
     argument_spec = dict(
         commands=dict(required=True),
-        mode=dict(default='enable', choices=['enable', 'config'])
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,
                               stateful=False,
                               supports_check_mode=False)
 
-    response = run_commands(module)
-    result = dict(changed=True, output=response)
-
-    module.exit_json(**result)
+    try:
+        module.result['output'] = run_commands(module)
+    except Exception, exc:
+        module.fail(exc.message)
+    else:
+        module.exit()
 
 main()

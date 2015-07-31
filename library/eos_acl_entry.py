@@ -30,6 +30,93 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+DOCUMENTATION = """
+---
+module: eos_acl_entry
+short_description: Manage ACL entries (standard ACLs only)
+description:
+  - This module will manage standard ACL entries on EOS nodes
+version_added: 1.1.0
+category: Route Policy
+author: Arista EOS+
+requirements:
+  - Arista EOS 4.13.7M or later with command API enabled
+  - Python Client for eAPI 0.3.2 or later
+notes:
+  - All configuration is idempotent unless otherwise specified
+  - Supports eos metaparameters for using the eAPI transport
+  - Supports stateful resource configuration.
+options:
+  acltype:
+    description:
+      - The type of ACL to manage.  Currently the only supported value for
+        acltype is 'standard'
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  name:
+    description:
+      - The name of the ACL to manage.  This name must correspond to the ACL
+        name in the running-configuration of the node
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  seqno:
+    description:
+      - The sequence number of the rule that this entry corresponds to.
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  action:
+    descrpition:
+      - The ACL entry action.  Values include either 'permit' or 'deny'
+    required:  true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  srcaddr:
+    description:
+      - The source address corresponding to this rule
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  srcprefixlen:
+    description:
+      - The source address prefix mask length.  Valid valids are in the range
+        of 1 to 32
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  log:
+    description:
+      - Enables or disables the log keyword
+    required: false
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+"""
+
+EXAMPLES = """
+
+- eos_acl_entry: seqno=10 name=foo action=permit srcaddr=0.0.0.0
+  srcprefixlen=32
+
+- eos_acl_entry: seqno=20 name=foo action=deny srcaddr=172.16.10.0
+  srcprefixlen=16
+
+"""
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
@@ -87,8 +174,9 @@ class EosAnsibleModule(AnsibleModule):
         self.debug('params', self.params)
 
         self._attributes = self.map_argument_spec()
-        self._node = self.connect()
+        self.validate()
 
+        self._node = self.connect()
         self._instance = None
 
         self.desired_state = self.params['state'] if self._stateful else None
@@ -145,6 +233,12 @@ class EosAnsibleModule(AnsibleModule):
         if 'CHECKMODE' in attrs:
             del attrs['CHECKMODE']
         return attrs
+
+    def validate(self):
+        for key, value in self.attributes.iteritems():
+            func = self.func('validate_%s' % key)
+            if func:
+                self.attributes[key] = func(value)
 
     def create(self):
         if not self.check_mode:
@@ -249,7 +343,9 @@ class EosAnsibleModule(AnsibleModule):
         node = pyeapi.client.Node(connection, **config)
 
         try:
-            node.enable('show version')
+            resp = node.enable('show version')
+            self.debug('eos_version', resp[0]['result']['version'])
+            self.debug('eos_model', resp[0]['result']['modelName'])
         except (pyeapi.eapilib.ConnectionError, pyeapi.eapilib.CommandError):
             self.fail('unable to connect to %s' % node)
         else:
@@ -331,12 +427,12 @@ def instance(module):
 
 
 def create(module):
-    value = module.attribtes['name']
+    value = module.attributes['name']
     module.log('Invoked create for eos_acl_entry[%s]' % value)
     module.api('acl').create(value)
 
 def remove(module):
-    value = module.attributes['value']
+    value = module.attributes['name']
     seqno = module.attributes['seqno']
     module.log('Invoked remove for eos_acl_entry[%s]' % value)
     module.api('acl').remove_entry(value, seqno)
@@ -346,7 +442,7 @@ def flush(module):
     args.append(module.attributes['name'])
     args.append(module.attributes['seqno'])
     args.append(module.attributes['action'])
-    args.append(module.attribures['srcaddr'])
+    args.append(module.attributes['srcaddr'])
     args.append(module.attributes['srcprefixlen'])
     args.append(module.attributes['log'])
     module.api('acl').update_entry(*args)
@@ -367,6 +463,9 @@ def main():
 
     module = EosAnsibleModule(argument_spec=argument_spec,
                               supports_check_mode=True)
+
+    if module.attributes['acltype'] == 'extended':
+        module.fail('Currently only standard ACLs are supported')
 
     module.flush(True)
 

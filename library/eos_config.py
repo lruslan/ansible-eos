@@ -69,34 +69,44 @@ options:
     choices: []
     aliases: []
     version_added: 1.0.0
-  expression:
+  regexp:
     description:
-      - Specifies the expression to use to evaluate the current nodes running
-        configuration along with the function.  This optional argument will
-        default to use the command argument if none is provided.
+      - Specifies the expression to evalute the current node's running
+        configuration.  The value can be any valid regular expression.
+        This optional argument will default to use the command
+        argument if none is provided.
     required: false
     default: null
     choices: []
-    aliases: []
-    version_added: 1.0.0
-  function:
-    description:
-      - Specifies the function to use for evaluating the current node
-        running-config.  Include and exclude functions require a string value
-        and regex functions require any valid regular expression.  If the
-        function does not evalute to true, then the command is configured
-        on the node for the section.
-    required: false
-    default: 'exclude'
-    choices: ['include', 'exclude', 'regex']
-    aliases: []
-    version_added: 1.0.0
+    aliases: ['expression']
+    version_added: 1.1.0
 """
 
 EXAMPLES = """
 
-- name: configure interface to be shutdown
-  eos_config: command='shutdown' section='interface Ethernet1'
+- name: idempotent operation for removing a SVI
+  eos_config:
+    command='no interface Vlan100'
+    regexp='interface Vlan100'
+    state=absent
+
+- name: non-idempotent operation for removing a SVI
+  eos_config:
+    command='no interface Vlan100'
+
+- name: ensure default route is present
+  eos_config:
+    command='ip route 0.0.0.0/0 192.168.1.254'
+
+- name: configure interface range to be shutdown if it isn't already
+  eos_config:
+    command='shutdown'
+    regexp='(?<=[^no ] )shutdown'
+    section='interface {{ item }}'
+  with_items:
+    - Ethernet1
+    - Ethernet2
+    - Ethernet3
 
 """
 import re
@@ -157,8 +167,9 @@ class EosAnsibleModule(AnsibleModule):
         self.debug('params', self.params)
 
         self._attributes = self.map_argument_spec()
-        self._node = self.connect()
+        self.validate()
 
+        self._node = self.connect()
         self._instance = None
 
         self.desired_state = self.params['state'] if self._stateful else None
@@ -215,6 +226,12 @@ class EosAnsibleModule(AnsibleModule):
         if 'CHECKMODE' in attrs:
             del attrs['CHECKMODE']
         return attrs
+
+    def validate(self):
+        for key, value in self.attributes.iteritems():
+            func = self.func('validate_%s' % key)
+            if func:
+                self.attributes[key] = func(value)
 
     def create(self):
         if not self.check_mode:
@@ -319,7 +336,9 @@ class EosAnsibleModule(AnsibleModule):
         node = pyeapi.client.Node(connection, **config)
 
         try:
-            node.enable('show version')
+            resp = node.enable('show version')
+            self.debug('eos_version', resp[0]['result']['version'])
+            self.debug('eos_model', resp[0]['result']['modelName'])
         except (pyeapi.eapilib.ConnectionError, pyeapi.eapilib.CommandError):
             self.fail('unable to connect to %s' % node)
         else:
@@ -382,10 +401,14 @@ class EosAnsibleModule(AnsibleModule):
 #<<EOS_COMMON_MODULE_END>>
 
 def section(module):
-    if not module.attributes['section']:
-        return module.node.running_config
-    regex = r'^%s$' % module.attributes['section']
-    return module.node.section(regex)
+    try:
+        if module.attributes['section']:
+            regex = r'^%s$' % module.attributes['section']
+            return module.node.section(regex)
+        else:
+            return module.node.running_config
+    except TypeError:
+        return str()
 
 def config(module):
     commands = list()
@@ -402,27 +425,34 @@ def main():
     argument_spec = dict(
         command=dict(required=True),
         section=dict(),
-        expression=dict(),
-        function=dict(default='exclude',
-                      choices=['regex', 'include', 'exclude'])
+        regexp=dict(aliases=['expression']),
+        state=dict(default='present', choices=['present', 'absent'])
     )
 
-    module = EosAnsibleModule(argument_spec=argument_spec, stateful=False)
+    module = EosAnsibleModule(argument_spec=argument_spec)
 
     command = module.attributes['command'].strip()
-    expression = module.attributes['expression']
-    function = module.attributes['function']
+    regexp = module.attributes['regexp']
+    state = module.attributes['state']
 
-    if function == 'regex':
-        if not expression:
-            expression = r'^{}$'.format(command)
-        if not re.search(expression, section(module), re.M):
+    if regexp:
+        regexp = re.compile(r'{0}'.format(regexp), re.M)
+
+    cfg = section(module)
+    module.debug('running_config', cfg)
+
+    if state == 'absent':
+        if regexp:
+            if regexp.search(cfg, re.M):
+                config(module)
+        elif command in cfg:
             config(module)
-    elif function == 'exclude':
-        if (expression or command) not in section(module):
-            config(module)
-    elif function == 'include':
-        if (expression or command) in section(module):
+
+    elif state == 'present':
+        if regexp:
+            if not regexp.search(cfg, re.M):
+                config(module)
+        elif command not in cfg:
             config(module)
 
     module.exit()

@@ -32,94 +32,58 @@
 #
 DOCUMENTATION = """
 ---
-module: eos_portchannel
-short_description: Manage Port-Channel interfaces in EOS
+module: eos_bgp_network
+short_description: Manage BGP network statements in EOS
 description:
-  - The eos_portchannel module manages the interface configuration for
-    logical Port-Channel interfaces on EOS nodes.
-version_added: 1.0.0
-category: Interfaces
+  - This eos_bgp_network module provides stateful management of the
+    network statements for the BGP routing process for Arista EOS nodes
+version_added: 1.1.0
+category: BGP
 author: Arista EOS+
 requirements:
-  - Arista EOS 4.13.7M or later with command API enabled
-  - Python Client for eAPI 0.3.0 or later
+  - Arista EOS 4.13.7M or later with command API enable
+  - Python Client for eAPI 0.3.1 or later
 notes:
-  - All configuration is idempotent unless otherwise specified
+  - All configuraiton is idempontent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
-  - Supports stateful resource configuration.
+  - Supports tateful resource configuration
 options:
-  name:
+  prefix:
     description:
-      - The unique interface identifier name.  The interface name must use
-        the full interface name (no abbreviated names).  For example,
-        interfaces should be specified as Ethernet1 not Et1
+      - The IPv4 prefix to configure as part of the network statement.  The
+        value must be a valid IPv4 prefix
     required: true
     default: null
     choices: []
     aliases: []
-    version_added: 1.0.0
-  enable:
+    version_added: 1.1.0
+  masklen:
     description:
-      - Configures the administrative state for the interface.  Setting
-        the value to true will adminstrative enable the interface and
-        setting the value to false will administratively disable the
-        interface.  The EOS default value for enable is true
-    required: false
-    default: true
-    choices: ['True', 'False']
-    aliases: []
-    version_added: 1.0.0
-  description:
-    description:
-      - Configures a one lne ASCII description for the interface.  The EOS
-        default value for description is None
-    required: false
+      - The IPv4 subnet mask length in bits.  The value for the masklen
+        must be in the valid range of 1 to 32.
     default: null
+    required: true
     choices: []
     aliases: []
-    version_added: 1.0.0
-  members:
+    version_added: 1.1.0
+  route_map:
     description:
-      - Configures the set of physical Ethernet interfaces that are bundled
-        together to create the logical Port-Channel interface.  Member
-        interface names should be a comma separated list of physical Ethernet
-        interface names to be included in the named interface.
+      - Configures the BGP route-map name to apply to the network statement
+        when configured.  Note this module does not create the route-map
+    default: false
     required: false
-    default: null
     choices: []
     aliases: []
-    version_added: 1.0.0
-  minimum_links:
-    description:
-      - Conifugres the minimum links value which specifies the miniumum
-        number of physical Ethernet interfaces that must be operationally
-        up for the entire Port-Channel interface to be considered
-        operationally up.  Valid values for minimum links are in the range
-        of 0 to 16.  The EOS default value for min-links is 0
-    required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.0.0
-  lacp_mode:
-    description:
-      - Configures the LACP mode configured on the named interface.  The
-        LACP mode identifies the negotiation protocol used between peers.
-    required: false
-    default: null
-    choices: ['active', 'passive', 'disabled']
-    aliases: []
-    version_added: 1.0.0
+    version_added: 1.1.0
 """
 
 EXAMPLES = """
 
-- name: Ensure Port-Channel1 has members Ethernet1 and 2
-  eos_portchannel: name=Port-Channel1 members=Ethernet1,Ethernet2
+- name: add network 172.16.10.0/26 with route-map test
+  eos_bgp_network: prefix=172.16.10.0 masklen=26 route_map=test
 
-- name: Ensure Port-Channel10 uses lacp mode active
-  eos_portchannel: name=Port-Channel10 members=Ethernet1,Ethernet3
-                   lacp_mode=active
+- name: remove network 172.16.0.0/8
+  eos_bgp_network: prefix=172.16.0.0 masklen=8 state=absent
 """
 #<<EOS_COMMON_MODULE_START>>
 
@@ -412,94 +376,48 @@ class EosAnsibleModule(AnsibleModule):
 #<<EOS_COMMON_MODULE_END>>
 
 def instance(module):
-    """ Returns  the interface properties for the specified name
+    """Returns the BGP network instance
     """
-    name = module.attributes['name']
-    result = module.node.api('interfaces').get(name)
-    _instance = dict(name=name, state='absent')
-    if result:
-        _instance['state'] = 'present'
-        _instance.update(result)
-        desc = '' if not result['description'] else result['description']
-        _instance['description'] = desc
-        _instance['enable'] = not result['shutdown']
-        _instance['members'] = ','.join(result['members'])
-        lacp_mode = result['lacp_mode']
-        _instance['lacp_mode'] = 'disabled' if lacp_mode == 'on' else lacp_mode
+    prefix = module.attributes['prefix']
+    masklen = module.attributes['masklen']
+    route_map = module.attributes['route_map']
+
+    _instance = dict(prefix=prefix, masklen=masklen, route_map=route_map)
+    result = module.node.api('bgp').get()
+
+    state = 'present' if _instance in result['networks'] else 'absent'
+    _instance['state'] = state
+
     return _instance
 
 def create(module):
-    """Creates a new instance of interface on the node
+    """Creates a new instance of BGP network on the node
     """
-    name = module.attributes['name']
-    module.log('Invoked create for eos_portchannel[%s]' % name)
-    module.node.api('interfaces').create(name)
+    prefix = module.attributes['prefix']
+    masklen = module.attributes['masklen']
+    route_map = module.attributes['route_map']
+    module.log('Invoked add_network for eos_bgp_network[prefix={}, '
+               'masklen={}, route_map={}]'.format(prefix, masklen, route_map))
+    module.node.api('bgp').add_network(prefix, masklen, route_map)
 
 def remove(module):
-    """Creates a new instance of interface on the node
+    """Removes the instance of BGP network from the node
     """
-    name = module.attributes['name']
-    module.log('Invoked remove for eos_portchannel[%s]' % name)
-    module.node.api('interfaces').delete(name)
-
-def set_description(module):
-    """ Configures the description attribute for the interface
-    """
-    value = module.attributes['description']
-    name = module.attributes['name']
-    value = None if value == '' else value
-    module.log('Invoked set_description for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_description(name, value)
-
-def set_enable(module):
-    """ Configures the enable attribute for the interface
-    """
-    value = not module.attributes['enable']
-    name = module.attributes['name']
-    module.log('Invoked set_enable for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_shutdown(name, value)
-
-def set_members(module):
-    """ Configures the members attribute for the interface
-    """
-    value = module.attributes['members'].split(',')
-    name = module.attributes['name']
-    module.log('Invoked set_members for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_members(name, value)
-
-def set_minimum_links(module):
-    """ Configures the minimum links attribute for the interface
-    """
-    value = module.attributes['minimum_links']
-    name = module.attributes['name']
-    module.log('Invoked set_minimum_links for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_minimum_links(name, value)
-
-def set_lacp_mode(module):
-    """ Configures the lacp mode attribute for the interface
-    """
-    value = module.attributes['lacp_mode']
-    value = 'on' if value == 'disabled' else value
-    name = module.attributes['name']
-    module.log('Invoked set_lacp_mode for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_lacp_mode(name, value)
+    prefix = module.attributes['prefix']
+    masklen = module.attributes['masklen']
+    route_map = module.attributes['route_map']
+    module.log('Invoked remove_network for eos_bgp_network[prefix={}, '
+               'masklen={}, route_map={}]'.format(prefix, masklen, route_map))
+    module.node.api('bgp').remove_network(prefix, masklen, route_map)
 
 def main():
-    """ The main module routine called when the module is run by Ansible
+    """The main module routine called when the module is run by Ansible
     """
 
     argument_spec = dict(
-        name=dict(required=True),
-        enable=dict(type='bool', default=True),
-        description=dict(),
-        members=dict(),
-        minimum_links=dict(type='int'),
-        lacp_mode=dict(choices=['active', 'passive', 'disabled'])
+        prefix=dict(required=True),
+        masklen=dict(required=True),
+        route_map=dict()
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,

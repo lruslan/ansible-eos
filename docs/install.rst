@@ -6,6 +6,8 @@ The installation of Ansible is straightforward and simple. This section
 provides an overview of the installation of Ansible on a host system as well
 as how to configure an Arista EOS node to work with the Ansible framework.
 
+.. important:: Ansible 1.9 or later is required.
+
 
 .. _install-ansible-label:
 
@@ -73,7 +75,9 @@ From your Ansible Control Host, type:
 
 .. code-block:: console
 
-  ansible-galaxy install arista.eos
+  sudo ansible-galaxy install arista.eos
+
+.. tip:: To upgrade the role via Galaxy use ``sudo ansible-galaxy install --force arista.eos``
 
 Then you can use the role in your play as:
 
@@ -101,7 +105,7 @@ following command:
 
 .. code-block:: console
 
-  git clone https://github.com/aristanetworks/ansible-eos.git
+  git clone https://github.com/arista-eosplus/ansible-eos.git
 
 The command above will create a new directory called ‘ansible-eos’ and clone the
 entire repository. Currently, the ansible-eos folder contains the “develop”

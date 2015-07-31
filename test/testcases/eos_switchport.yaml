@@ -89,3 +89,37 @@ testcases:
       - interface Ethernet1
       - switchport mode trunk
 
+  - name: add trunk groups to an interface
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: trunk_groups, value: foo,bar }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+
+  - name: remove trunk groups baz to an interface
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: trunk_groups, value: foo,bar }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - switchport trunk group foo
+      - switchport trunk group bar
+      - switchport trunk group baz
+
+  - name: test with out of order vlans
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: trunk_allowed_vlans, value: 1,9,5,7,3,6,2 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - switchport mode trunk
+
+

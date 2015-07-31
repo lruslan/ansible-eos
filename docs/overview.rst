@@ -109,10 +109,9 @@ This method follows the traditional Ansible control procedure, namely:
 2. Collect Fact information from the node
 3. Download the module to the node
 4. Execute the module on the node
-5. pyeapi consults /mnt/flash/eapi.conf to determine credentials for using eAPI
-6. pyeapi commands run locally to modify configuration
-7. Read stdout and parse it into JSON
-8. Return the result to the Ansible Control Host
+5. pyeapi commands run locally to modify configuration
+6. Read stdout and parse it into JSON
+7. Return the result to the Ansible Control Host
 
 **Assumption 1**
 You'll notice that this method uses SSH to communicate with the node. This
@@ -166,6 +165,146 @@ authenticating with eAPI.
 
 .. Note:: The shell account and eAPI user must be different.
 
+Ansible Host file and eapi.conf for Option A
+--------------------------------------------
+
+It is important to understand that pyeapi is ultimately responsible for sending
+the configuration commands to your node. This means that at some point your
+adhoc command or playbook needs to indicate the credentials to create an eAPI
+connection. There are a few different ways to do this as explained below.
+
+Method 1: Using Meta Arguments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Meta arguments are used to pass the exact eAPI connection parameters during adhoc
+command or play. If you provide all of the required eAPI connection information
+you will not even need to use eapi.conf. This is the preferred method since you
+do not need to create/maintain an eapi.conf file on the EOS node.
+
+.. tip:: Read all about :ref:`meta-args-label`
+
+**Example:** In a playbook
+
+**eos-playbook.yml** on Control Host
+
+.. code-block:: yaml
+
+  - name: eos nodes
+    hosts: eos_switches
+
+    tasks:
+    - name: Configure EOS VLAN resources
+      eos_vlan: vlanid=100
+                name=mynewamazingvlan100
+                username={{ username }}
+                password={{ password }}
+                transport={{ transport }}
+
+**/etc/ansible/hosts** on Control Host
+
+.. code-block:: console
+
+    [eos_switches]
+    192.168.0.50
+    192.168.0.51
+    192.168.0.52
+    192.168.0.53
+
+    [eos_switches:vars]
+    ansible_ssh_user=ansible
+    # Used for eapi connection once SSH'd in
+    username=eapi
+    password=password
+    transport=https
+
+
+**/mnt/flash/eapi.conf** on EOS node
+
+.. code-block:: console
+
+    # empty file. This file is not needed on the EOS device.
+
+**Explanation**
+
+This method utilizes the Ansible hosts file to feed information into the playbook.
+We group our nodes under the ``eos_switches`` group name to avoid duplication of
+variables, and use ``[eos_switches:vars]`` to create a set of variables that apply to all
+switches in the group. These variables are available in the playbook.
+We indicate in the play to execute our task against all nodes in this group. Then
+We use ``{{ username }}``, ``{{ password }}`` etc. to substitute the
+eapi parameters into the play.
+Since all of the necessary eAPI information is present, the module does not
+need to consult an eapi.conf on the EOS node for connection parameters. In effect,
+the simplified connection flow looks like:
+
+1. SSH to node in ``[eos_switches]`` (IPs 192.168.0.50-53)
+2. Copy module(s) to EOS node.
+3. Create eapi connection to ``http://localhost:80/command-api``
+4. Modify node configuration.
+
+
+Method 2: Using eapi.conf
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In this method we will put all of the eAPI connection info into ``/mnt/flash/eapi.conf``
+on each EOS node that is being controlled. When we execute a play or adhoc
+command, pyeapi will not be passed connection information
+from Ansible, therefore it will consult eapi.conf on the EOS node to learn eapi
+connection information. As you can imagine this causes creates additional administrative
+overhead and is not the most efficient method (ie try to use Method 1).
+
+**Example**
+
+**eos-playbook.yml** on Control Host
+
+.. code-block:: yaml
+
+  - name: eos nodes
+    hosts: eos_switches
+
+    tasks:
+    - name: Configure EOS VLAN resources
+      eos_vlan: vlanid=100
+                name=mynewamazingvlan100
+                connection={{ connection }}
+
+**/etc/ansible/hosts** on Control Host
+
+.. code-block:: console
+
+    [eos_switches]
+    spine-1
+    spine-2
+    tor-1
+    tor-2
+
+    [eos_switches:vars]
+    connection=localhost
+    ansible_ssh_user=ansible
+
+**/mnt/flash/eapi.conf** on EOS node
+
+.. code-block:: console
+
+    [connection:localhost]
+    username: admin
+    password: password
+    transport: https
+
+
+**Explanation**
+
+Here we use the ``connection`` meta argument. This directly relates the
+connection name in eapi.conf. As you can see there is no eAPI connection information
+in /etc/ansible/hosts, rather we just have names of nodes. This changes the
+connection flow in the following way:
+
+1. Control Host SSH into node listed in hosts file. EG ssh into spine-1 with user ansible
+2. Copy modules to EOS node.
+3. Execute module. The module is told to use ``connection=localhost``.
+4. Module looks for ``localhost`` in ``/mnt/flash/eapi.conf``.
+5. Learns which transport, username and password to use. Sets up eapi connection.
+6. Executes commands to modify node configuration.
 
 Option B
 ========
@@ -191,8 +330,8 @@ The caveat when using ``eapi.conf`` is that the password for the eAPI
 connection is stored as plaintext. See :ref:`faq-security-label` for more information.
 
 
-Ansible Host file and eapi.conf
-===============================
+Ansible Host file and eapi.conf for Option B
+--------------------------------------------
 
 Regardless of the method you use to communicate with your node, one thing is constant:
 pyeapi is ultimately responsible for sending the configuration commands to your node.
@@ -201,7 +340,7 @@ needs to indicate the credentials to create an eAPI connection. There are a few
 different ways to do this as explained below.
 
 Method 1: Using Meta Arguments
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Meta arguments are used to pass the exact eAPI connection parameters during adhoc
 command or play. If you provide all of the required eAPI connection information
@@ -209,9 +348,9 @@ you will not even need to use eapi.conf. This is the most verbose and least flex
 
 .. tip:: Read all about :ref:`meta-args-label`
 
-**Example** In a playbook
+**Example:** In a playbook
 
-**eos-playbook.yml**
+**eos-playbook.yml** on Control Host
 
 .. code-block:: yaml
 
@@ -219,16 +358,16 @@ you will not even need to use eapi.conf. This is the most verbose and least flex
     hosts: eos_switches
     connection: local
 
-  tasks:
-  - name: Configure EOS VLAN resources
-    eos_vlan: vlanid=100
-              name=mynewamazingvlan100
-              host={{ inventory_hostname }}
-              username={{ username }}
-              password={{ password }}
-              transport={{ transport }}
+    tasks:
+    - name: Configure EOS VLAN resources
+      eos_vlan: vlanid=100
+                name=mynewamazingvlan100
+                host={{ inventory_hostname }}
+                username={{ username }}
+                password={{ password }}
+                transport={{ transport }}
 
-**/etc/ansible/hosts**
+**/etc/ansible/hosts** on Control Host
 
 .. code-block:: console
 
@@ -243,7 +382,7 @@ you will not even need to use eapi.conf. This is the most verbose and least flex
     password=password
     transport=https
 
-**~/.eapi.conf**
+**~/.eapi.conf** on Control Host
 
 .. code-block:: console
 
@@ -263,7 +402,7 @@ need to consult an eapi.conf file for connection parameters.
 
 
 Method 2: Using eapi.conf
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In this method we will put all of the eAPI connection info into eapi.conf. When
 we execute a play or adhoc command, pyeapi will not be passed connection information
@@ -271,7 +410,7 @@ from Ansible, therefore it will consult eapi.conf to learn connection informatio
 
 **Example**
 
-**eos-playbook.yml**
+**eos-playbook.yml** on Control Host
 
 .. code-block:: yaml
 
@@ -279,13 +418,13 @@ from Ansible, therefore it will consult eapi.conf to learn connection informatio
     hosts: eos_switches
     connection: local
 
-  tasks:
-  - name: Configure EOS VLAN resources
-    eos_vlan: vlanid=100
-              name=mynewamazingvlan100
-              connection={{ inventory_hostname }}
+    tasks:
+    - name: Configure EOS VLAN resources
+      eos_vlan: vlanid=100
+                name=mynewamazingvlan100
+                connection={{ inventory_hostname }}
 
-**/etc/ansible/hosts**
+**/etc/ansible/hosts** on Control Host
 
 .. code-block:: console
 
@@ -295,7 +434,7 @@ from Ansible, therefore it will consult eapi.conf to learn connection informatio
     tor-1
     tor-2
 
-**~/.eapi.conf**
+**~/.eapi.conf** on Control Host
 
 .. code-block:: console
 

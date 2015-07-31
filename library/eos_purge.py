@@ -149,8 +149,9 @@ class EosAnsibleModule(AnsibleModule):
         self.debug('params', self.params)
 
         self._attributes = self.map_argument_spec()
-        self._node = self.connect()
+        self.validate()
 
+        self._node = self.connect()
         self._instance = None
 
         self.desired_state = self.params['state'] if self._stateful else None
@@ -207,6 +208,12 @@ class EosAnsibleModule(AnsibleModule):
         if 'CHECKMODE' in attrs:
             del attrs['CHECKMODE']
         return attrs
+
+    def validate(self):
+        for key, value in self.attributes.iteritems():
+            func = self.func('validate_%s' % key)
+            if func:
+                self.attributes[key] = func(value)
 
     def create(self):
         if not self.check_mode:
@@ -311,7 +318,9 @@ class EosAnsibleModule(AnsibleModule):
         node = pyeapi.client.Node(connection, **config)
 
         try:
-            node.enable('show version')
+            resp = node.enable('show version')
+            self.debug('eos_version', resp[0]['result']['version'])
+            self.debug('eos_model', resp[0]['result']['modelName'])
         except (pyeapi.eapilib.ConnectionError, pyeapi.eapilib.CommandError):
             self.fail('unable to connect to %s' % node)
         else:
@@ -407,6 +416,48 @@ def eos_vlan(module):
     purged = [{'vlanid': vid, 'state': 'absent'} for vid in purgeset]
     return dict(purged=purged)
 
+def eos_bgp_network(module):
+
+    network = lambda x: collections.namedtuple('Network', x.keys())(**x)
+
+    current = module.api('bgp').get()['networks']
+    current = [network(item) for item in current]
+
+    results = module.from_json(module.attributes['results'])
+    expected = list()
+    for item in results['results']:
+        inst = item['instance']
+        del inst['state']
+        expected.append(network(inst))
+
+    purgeset = set(current).difference(expected)
+    for item in purgeset:
+        if not module.check_mode:
+            module.api('bgp').remove_network(**vars(item))
+
+    purged = list()
+    for item in purgeset:
+        data = dict(vars(item))
+        data['state'] = 'absent'
+        purged.append(data)
+
+    return dict(purged=purged)
+
+def eos_bgp_neighbor(module):
+    current = module.api('bgp').neighbors.getall()
+
+    results = module.from_json(module.attributes['results'])
+    expected = list()
+    for item in results['results']:
+        expected.append(item['instance']['name'])
+
+    purgeset = set(current.keys()).difference(expected)
+    for item in purgeset:
+        if not module.check_mode:
+            module.api('bgp').neighbors.delete(item)
+
+    purged = [{'name': name, 'state': 'absent'} for name in purgeset]
+    return dict(purged=purged)
 
 def main():
     """ The main module routine called when the module is run by Ansible

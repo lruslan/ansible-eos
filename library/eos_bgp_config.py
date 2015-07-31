@@ -32,94 +32,64 @@
 #
 DOCUMENTATION = """
 ---
-module: eos_portchannel
-short_description: Manage Port-Channel interfaces in EOS
+module: eos_bgp_config
+short_description: Manage BGP routing configuraiton in EOS
 description:
-  - The eos_portchannel module manages the interface configuration for
-    logical Port-Channel interfaces on EOS nodes.
-version_added: 1.0.0
-category: Interfaces
+  - The eos_bgp_config module provides resource management of the
+    global BGP routing process for Arista EOS nodes
+version_added: 1.1.0
+category: BGP
 author: Arista EOS+
 requirements:
-  - Arista EOS 4.13.7M or later with command API enabled
-  - Python Client for eAPI 0.3.0 or later
+  - Arista EOS 4.13.7M or later with command API enable
+  - Python Client for eAPI 0.3.1 or later
 notes:
-  - All configuration is idempotent unless otherwise specified
+  - All configuraiton is idempontent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
-  - Supports stateful resource configuration.
+  - Supports tateful resource configuration
 options:
-  name:
+  bgp_as:
     description:
-      - The unique interface identifier name.  The interface name must use
-        the full interface name (no abbreviated names).  For example,
-        interfaces should be specified as Ethernet1 not Et1
+      - The BGP autonomous system number to be configured for the
+        local BGP routing instance.  The value must be in the valid
+        BGP AS range of 1 to 65535.
     required: true
     default: null
     choices: []
     aliases: []
-    version_added: 1.0.0
+    version_added: 1.1.0
   enable:
     description:
-      - Configures the administrative state for the interface.  Setting
-        the value to true will adminstrative enable the interface and
-        setting the value to false will administratively disable the
-        interface.  The EOS default value for enable is true
-    required: false
+      - Configures the administrative state for the global BGP routing
+        process. If enable is True then the BGP routing process is
+        administartively enabled and if enable is False then
+        the BGP routing process is administratively disabled.
     default: true
+    required: false
     choices: ['True', 'False']
     aliases: []
-    version_added: 1.0.0
-  description:
+    version_added: 1.1.0
+  router_id:
     description:
-      - Configures a one lne ASCII description for the interface.  The EOS
-        default value for description is None
+      - Configures the BGP routing process router-id value.  The router
+        id must be in the form of A.B.C.D
+    default: false
     required: false
-    default: null
     choices: []
     aliases: []
-    version_added: 1.0.0
-  members:
-    description:
-      - Configures the set of physical Ethernet interfaces that are bundled
-        together to create the logical Port-Channel interface.  Member
-        interface names should be a comma separated list of physical Ethernet
-        interface names to be included in the named interface.
-    required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.0.0
-  minimum_links:
-    description:
-      - Conifugres the minimum links value which specifies the miniumum
-        number of physical Ethernet interfaces that must be operationally
-        up for the entire Port-Channel interface to be considered
-        operationally up.  Valid values for minimum links are in the range
-        of 0 to 16.  The EOS default value for min-links is 0
-    required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.0.0
-  lacp_mode:
-    description:
-      - Configures the LACP mode configured on the named interface.  The
-        LACP mode identifies the negotiation protocol used between peers.
-    required: false
-    default: null
-    choices: ['active', 'passive', 'disabled']
-    aliases: []
-    version_added: 1.0.0
+    version_added: 1.1.0
 """
 
 EXAMPLES = """
 
-- name: Ensure Port-Channel1 has members Ethernet1 and 2
-  eos_portchannel: name=Port-Channel1 members=Ethernet1,Ethernet2
+- name: enable BGP routing with AS 65535
+  eos_bgp_config: bgp_as=65535 state=present enable=yes
 
-- name: Ensure Port-Channel10 uses lacp mode active
-  eos_portchannel: name=Port-Channel10 members=Ethernet1,Ethernet3
-                   lacp_mode=active
+- name: disable the BGP routing process
+  eos_bgp_config: bgp_as=65535 enable=no
+
+- name: configure the BGP router-id
+  eos_bgp_config: bgp_as=65535 router_id=1.1.1.1
 """
 #<<EOS_COMMON_MODULE_START>>
 
@@ -412,94 +382,57 @@ class EosAnsibleModule(AnsibleModule):
 #<<EOS_COMMON_MODULE_END>>
 
 def instance(module):
-    """ Returns  the interface properties for the specified name
+    """Returns the BGP routing instance configuration
     """
-    name = module.attributes['name']
-    result = module.node.api('interfaces').get(name)
-    _instance = dict(name=name, state='absent')
-    if result:
+    bgp_as = module.attributes['bgp_as']
+    result = module.node.api('bgp').get()
+    _instance = dict(bgp_as=bgp_as, state='absent')
+    if result and bgp_as == str(result['bgp_as']):
         _instance['state'] = 'present'
-        _instance.update(result)
-        desc = '' if not result['description'] else result['description']
-        _instance['description'] = desc
+        _instance['router_id'] = result['router_id']
         _instance['enable'] = not result['shutdown']
-        _instance['members'] = ','.join(result['members'])
-        lacp_mode = result['lacp_mode']
-        _instance['lacp_mode'] = 'disabled' if lacp_mode == 'on' else lacp_mode
     return _instance
 
 def create(module):
-    """Creates a new instance of interface on the node
+    """Creates a new isntance of BGP routing on the node
     """
-    name = module.attributes['name']
-    module.log('Invoked create for eos_portchannel[%s]' % name)
-    module.node.api('interfaces').create(name)
+    bgp_as = module.attributes['bgp_as']
+    module.log('Invoked create for eos_bgp_config[{}]'.format(bgp_as))
+    module.node.api('bgp').create(bgp_as)
 
 def remove(module):
-    """Creates a new instance of interface on the node
+    """Removes the BGP routing instance from the node
     """
-    name = module.attributes['name']
-    module.log('Invoked remove for eos_portchannel[%s]' % name)
-    module.node.api('interfaces').delete(name)
-
-def set_description(module):
-    """ Configures the description attribute for the interface
-    """
-    value = module.attributes['description']
-    name = module.attributes['name']
-    value = None if value == '' else value
-    module.log('Invoked set_description for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_description(name, value)
+    bgp_as = module.attributes['bgp_as']
+    module.log('Invoked remove for eos_bgp_config[{}]'.format(bgp_as))
+    module.node.api('bgp').delete()
 
 def set_enable(module):
-    """ Configures the enable attribute for the interface
+    """Globally enables or disables the BGP process
     """
     value = not module.attributes['enable']
-    name = module.attributes['name']
-    module.log('Invoked set_enable for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_shutdown(name, value)
+    bgp_as = module.attributes['bgp_as']
+    module.log('Invoked set_enable for eos_bgp_config[{}] '
+               'with value {}'.format(bgp_as, value))
+    module.node.api('bgp').set_shutdown(value)
 
-def set_members(module):
-    """ Configures the members attribute for the interface
+def set_router_id(module):
+    """Configures the BGP router-id
     """
-    value = module.attributes['members'].split(',')
-    name = module.attributes['name']
-    module.log('Invoked set_members for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_members(name, value)
-
-def set_minimum_links(module):
-    """ Configures the minimum links attribute for the interface
-    """
-    value = module.attributes['minimum_links']
-    name = module.attributes['name']
-    module.log('Invoked set_minimum_links for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_minimum_links(name, value)
-
-def set_lacp_mode(module):
-    """ Configures the lacp mode attribute for the interface
-    """
-    value = module.attributes['lacp_mode']
-    value = 'on' if value == 'disabled' else value
-    name = module.attributes['name']
-    module.log('Invoked set_lacp_mode for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_lacp_mode(name, value)
+    value = module.attributes['router_id']
+    bgp_as = module.attributes['bgp_as']
+    module.log('Invoked set_router_id for eos_bgp_config[{}] '
+               'with value {}'.format(bgp_as, value))
+    module.node.api('bgp').set_router_id(value)
 
 def main():
-    """ The main module routine called when the module is run by Ansible
+    """The main module routine called when the module is run by Ansible
     """
 
     argument_spec = dict(
-        name=dict(required=True),
+        bgp_as=dict(required=True),
         enable=dict(type='bool', default=True),
-        description=dict(),
-        members=dict(),
-        minimum_links=dict(type='int'),
-        lacp_mode=dict(choices=['active', 'passive', 'disabled'])
+        router_id=dict()
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,

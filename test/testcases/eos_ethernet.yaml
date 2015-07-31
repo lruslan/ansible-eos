@@ -1,7 +1,7 @@
 ---
 defaults:
-  inventory: ../../ansible/demo/hosts
-  module_path: ../../ansible/ansible-eos-core/library
+  inventory: test/fixtures/hosts
+  module_path: library
   module: eos_ethernet
 
 testcases:

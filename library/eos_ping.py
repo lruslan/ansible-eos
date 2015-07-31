@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Copyright (c) 2015, Arista Networks, Inc.
+# Copyright (c) 2014, Arista Networks, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,16 @@
 #
 DOCUMENTATION = """
 ---
-module: eos_portchannel
-short_description: Manage Port-Channel interfaces in EOS
+module: eos_ping
+short_description: Executes a network ping to from the node
 description:
-  - The eos_portchannel module manages the interface configuration for
-    logical Port-Channel interfaces on EOS nodes.
+  - The eos_ping module will execute a network ping from the node and
+    return the results.  If the host can be successfully pinged, then the
+    module returns successfully.  If any of the sent pings are not returned
+    the module fails.  By default, the error threshold is set to the same
+    value as the number of pings sent
 version_added: 1.0.0
-category: Interfaces
+category: System
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled
@@ -46,81 +49,43 @@ requirements:
 notes:
   - All configuration is idempotent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
-  - Supports stateful resource configuration.
+  - Does not support stateful resource configuration.
 options:
-  name:
+  host:
     description:
-      - The unique interface identifier name.  The interface name must use
-        the full interface name (no abbreviated names).  For example,
-        interfaces should be specified as Ethernet1 not Et1
+      - Specifies the host IP address or FQDN of the destination for the
+        network ping packet.
     required: true
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.0.0
-  enable:
+    version_added: 1.1.0
+  count:
     description:
-      - Configures the administrative state for the interface.  Setting
-        the value to true will adminstrative enable the interface and
-        setting the value to false will administratively disable the
-        interface.  The EOS default value for enable is true
+      - Configures the number of packets to send from the node to the remote
+        host.  The default value is 5.
+    default: 5
     required: false
-    default: true
-    choices: ['True', 'False']
-    aliases: []
-    version_added: 1.0.0
-  description:
+    version_added: 1.1.0
+  source:
     description:
-      - Configures a one lne ASCII description for the interface.  The EOS
-        default value for description is None
+      - Configures the source interface for the network ping packet
     required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.0.0
-  members:
+    version_added: 1.1.0
+  error_threshold:
     description:
-      - Configures the set of physical Ethernet interfaces that are bundled
-        together to create the logical Port-Channel interface.  Member
-        interface names should be a comma separated list of physical Ethernet
-        interface names to be included in the named interface.
+      - Configures the error threshold (in packets) for the ping to be
+        considered failed.  By default the value of the error_threshold
+        is set to the count argument
     required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.0.0
-  minimum_links:
-    description:
-      - Conifugres the minimum links value which specifies the miniumum
-        number of physical Ethernet interfaces that must be operationally
-        up for the entire Port-Channel interface to be considered
-        operationally up.  Valid values for minimum links are in the range
-        of 0 to 16.  The EOS default value for min-links is 0
-    required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.0.0
-  lacp_mode:
-    description:
-      - Configures the LACP mode configured on the named interface.  The
-        LACP mode identifies the negotiation protocol used between peers.
-    required: false
-    default: null
-    choices: ['active', 'passive', 'disabled']
-    aliases: []
-    version_added: 1.0.0
+    version_added: 1.1.0
 """
 
 EXAMPLES = """
 
-- name: Ensure Port-Channel1 has members Ethernet1 and 2
-  eos_portchannel: name=Port-Channel1 members=Ethernet1,Ethernet2
+- eos_ping: host=192.168.1.254 count=10
 
-- name: Ensure Port-Channel10 uses lacp mode active
-  eos_portchannel: name=Port-Channel10 members=Ethernet1,Ethernet3
-                   lacp_mode=active
+- eos_ping: host=192.168.1.254 count=10 error_threshold=9
+
 """
+import re
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
@@ -411,101 +376,55 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
-def instance(module):
-    """ Returns  the interface properties for the specified name
-    """
-    name = module.attributes['name']
-    result = module.node.api('interfaces').get(name)
-    _instance = dict(name=name, state='absent')
-    if result:
-        _instance['state'] = 'present'
-        _instance.update(result)
-        desc = '' if not result['description'] else result['description']
-        _instance['description'] = desc
-        _instance['enable'] = not result['shutdown']
-        _instance['members'] = ','.join(result['members'])
-        lacp_mode = result['lacp_mode']
-        _instance['lacp_mode'] = 'disabled' if lacp_mode == 'on' else lacp_mode
-    return _instance
-
-def create(module):
-    """Creates a new instance of interface on the node
-    """
-    name = module.attributes['name']
-    module.log('Invoked create for eos_portchannel[%s]' % name)
-    module.node.api('interfaces').create(name)
-
-def remove(module):
-    """Creates a new instance of interface on the node
-    """
-    name = module.attributes['name']
-    module.log('Invoked remove for eos_portchannel[%s]' % name)
-    module.node.api('interfaces').delete(name)
-
-def set_description(module):
-    """ Configures the description attribute for the interface
-    """
-    value = module.attributes['description']
-    name = module.attributes['name']
-    value = None if value == '' else value
-    module.log('Invoked set_description for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_description(name, value)
-
-def set_enable(module):
-    """ Configures the enable attribute for the interface
-    """
-    value = not module.attributes['enable']
-    name = module.attributes['name']
-    module.log('Invoked set_enable for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_shutdown(name, value)
-
-def set_members(module):
-    """ Configures the members attribute for the interface
-    """
-    value = module.attributes['members'].split(',')
-    name = module.attributes['name']
-    module.log('Invoked set_members for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_members(name, value)
-
-def set_minimum_links(module):
-    """ Configures the minimum links attribute for the interface
-    """
-    value = module.attributes['minimum_links']
-    name = module.attributes['name']
-    module.log('Invoked set_minimum_links for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_minimum_links(name, value)
-
-def set_lacp_mode(module):
-    """ Configures the lacp mode attribute for the interface
-    """
-    value = module.attributes['lacp_mode']
-    value = 'on' if value == 'disabled' else value
-    name = module.attributes['name']
-    module.log('Invoked set_lacp_mode for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_lacp_mode(name, value)
-
 def main():
     """ The main module routine called when the module is run by Ansible
     """
 
     argument_spec = dict(
-        name=dict(required=True),
-        enable=dict(type='bool', default=True),
-        description=dict(),
-        members=dict(),
-        minimum_links=dict(type='int'),
-        lacp_mode=dict(choices=['active', 'passive', 'disabled'])
+        host=dict(required=True),
+        count=dict(type='int', default=5),
+        error_threshold=dict(type='int'),
+        source=dict()
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,
-                              supports_check_mode=True)
+                              supports_check_mode=False,
+                              stateful=False)
 
-    module.flush(True)
+    host = module.params['host']
+    count = module.params['count']
+    source = module.params['source']
+    error_threshold = module.params['error_threshold']
 
+    if not error_threshold:
+        error_threshold = count
+    elif error_threshold > count:
+        module.fail('error_threshold value cannot be bigger than the count value')
+
+    cmd = 'ping %s ' % host
+    cmd += 'repeat %s ' % count
+
+    if source:
+        cmd += 'source %s' % source
+
+    resp = module.node.enable(cmd, encoding='text')
+    data = resp[0]['result']['output']
+
+    stats = re.search(r'^(\d+) \w+ \w+, (\d+) \w+, (?:.([^\s]+) errors, )?(\d+)% \w+', data, re.M)
+    (tx, rx, err, loss) = stats.groups()
+
+    if err is not None:
+        if int(err) > - error_threshold:
+            module.fail("Ping '%s' failed (sent: %s, rcvd: %s')" % (host, tx, rx))
+
+
+    module.result['host'] = host
+    module.result['count'] = count
+    module.result['transmitted'] = int(tx)
+    module.result['received'] = int(rx)
+    module.result['errors'] = 0
+    module.result['loss'] = int(loss)
+
+    module.exit()
 
 main()

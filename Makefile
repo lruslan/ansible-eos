@@ -7,6 +7,7 @@
 #	make flake8 -- flake8 checkes
 #	make tests -- run all of the tests
 #	make clean -- clean distutils
+#	make build -- build library/*
 #
 ########################################################
 # variable section
@@ -14,7 +15,7 @@
 NAME = "ansible-eos"
 
 PYTHON=python
-BUILDER=build_modules.py
+BUILDER=scripts/build_modules.py
 
 VERSION := $(shell cat VERSION)
 
@@ -32,7 +33,8 @@ clean:
 tests: clean
 	nosetests -v 
 
-build:
+build: 
 	$(PYTHON) $(BUILDER)
+
 
 
