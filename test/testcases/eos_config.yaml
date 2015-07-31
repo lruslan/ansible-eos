@@ -57,6 +57,16 @@ testcases:
     setup:
       - snmp-server location 1234
 
+  - name: configure global feature with regexp alias
+    arguments:
+      - { name: command, value: "'snmp-server location test'" }
+      - { name: expression, value: "'snmp-server location [a-z]'" }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - snmp-server location 1234
+
   - name: configure new section
     arguments:
       - { name: command, value: "'interface Loopback0'" }

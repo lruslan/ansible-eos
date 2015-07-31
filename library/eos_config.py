@@ -78,7 +78,7 @@ options:
     required: false
     default: null
     choices: []
-    aliases: []
+    aliases: ['expression']
     version_added: 1.1.0
 """
 
@@ -425,7 +425,7 @@ def main():
     argument_spec = dict(
         command=dict(required=True),
         section=dict(),
-        regexp=dict(),
+        regexp=dict(aliases=['expression']),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
