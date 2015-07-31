@@ -30,6 +30,93 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+DOCUMENTATION = """
+---
+module: eos_acl_entry
+short_description: Manage ACL entries (standard ACLs only)
+description:
+  - This module will manage standard ACL entries on EOS nodes
+version_added: 1.1.0
+category: Route Policy
+author: Arista EOS+
+requirements:
+  - Arista EOS 4.13.7M or later with command API enabled
+  - Python Client for eAPI 0.3.2 or later
+notes:
+  - All configuration is idempotent unless otherwise specified
+  - Supports eos metaparameters for using the eAPI transport
+  - Supports stateful resource configuration.
+options:
+  acltype:
+    description:
+      - The type of ACL to manage.  Currently the only supported value for
+        acltype is 'standard'
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  name:
+    description:
+      - The name of the ACL to manage.  This name must correspond to the ACL
+        name in the running-configuration of the node
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  seqno:
+    description:
+      - The sequence number of the rule that this entry corresponds to.
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  action:
+    descrpition:
+      - The ACL entry action.  Values include either 'permit' or 'deny'
+    required:  true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  srcaddr:
+    description:
+      - The source address corresponding to this rule
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  srcprefixlen:
+    description:
+      - The source address prefix mask length.  Valid valids are in the range
+        of 1 to 32
+    required: true
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+  log:
+    description:
+      - Enables or disables the log keyword
+    required: false
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.1.0
+"""
+
+EXAMPLES = """
+
+- eos_acl_entry: seqno=10 name=foo action=permit srcaddr=0.0.0.0
+  srcprefixlen=32
+
+- eos_acl_entry: seqno=20 name=foo action=deny srcaddr=172.16.10.0
+  srcprefixlen=16
+
+"""
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
@@ -376,6 +463,9 @@ def main():
 
     module = EosAnsibleModule(argument_spec=argument_spec,
                               supports_check_mode=True)
+
+    if module.attributes['acltype'] == 'extended':
+        module.fail('Currently only standard ACLs are supported')
 
     module.flush(True)
 
