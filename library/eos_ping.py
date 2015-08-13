@@ -36,7 +36,7 @@ module: eos_ping
 short_description: Executes a network ping to from the node
 description:
   - The eos_ping module will execute a network ping from the node and
-    return the results.  If the host can be successfully pinged, then the
+    return the results.  If the destination can be successfully pinged, then the
     module returns successfully.  If any of the sent pings are not returned
     the module fails.  By default, the error threshold is set to the same
     value as the number of pings sent
@@ -51,16 +51,16 @@ notes:
   - Supports eos metaparameters for using the eAPI transport
   - Does not support stateful resource configuration.
 options:
-  host:
+  dst:
     description:
-      - Specifies the host IP address or FQDN of the destination for the
+      - Specifies the destination IP address or FQDN for the
         network ping packet.
     required: true
     version_added: 1.1.0
   count:
     description:
       - Configures the number of packets to send from the node to the remote
-        host.  The default value is 5.
+        dst.  The default value is 5.
     default: 5
     required: false
     version_added: 1.1.0
@@ -80,9 +80,9 @@ options:
 
 EXAMPLES = """
 
-- eos_ping: host=192.168.1.254 count=10
+- eos_ping: dst=192.168.1.254 count=10
 
-- eos_ping: host=192.168.1.254 count=10 error_threshold=9
+- eos_ping: dst=192.168.1.254 count=10 error_threshold=9
 
 """
 import re
@@ -381,7 +381,7 @@ def main():
     """
 
     argument_spec = dict(
-        host=dict(required=True),
+        dst=dict(required=True),
         count=dict(type='int', default=5),
         error_threshold=dict(type='int'),
         source=dict()
@@ -391,7 +391,7 @@ def main():
                               supports_check_mode=False,
                               stateful=False)
 
-    host = module.params['host']
+    dst = module.params['dst']
     count = module.params['count']
     source = module.params['source']
     error_threshold = module.params['error_threshold']
@@ -401,7 +401,7 @@ def main():
     elif error_threshold > count:
         module.fail('error_threshold value cannot be bigger than the count value')
 
-    cmd = 'ping %s ' % host
+    cmd = 'ping %s ' % dst
     cmd += 'repeat %s ' % count
 
     if source:
@@ -415,10 +415,10 @@ def main():
 
     if err is not None:
         if int(err) > - error_threshold:
-            module.fail("Ping '%s' failed (sent: %s, rcvd: %s')" % (host, tx, rx))
+            module.fail("Ping '%s' failed (sent: %s, rcvd: %s')" % (dst, tx, rx))
 
 
-    module.result['host'] = host
+    module.result['dst'] = dst
     module.result['count'] = count
     module.result['transmitted'] = int(tx)
     module.result['received'] = int(rx)
