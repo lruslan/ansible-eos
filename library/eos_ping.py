@@ -82,7 +82,7 @@ EXAMPLES = """
 
 - eos_ping: dst=192.168.1.254 count=10
 
-# Set the error_threshold to 50pc packet loss
+# Set the error_threshold to 50% packet loss
 - eos_ping: dst=192.168.1.254 count=10 error_threshold=50
 
 """
