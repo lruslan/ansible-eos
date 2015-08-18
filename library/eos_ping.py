@@ -71,9 +71,9 @@ options:
     version_added: 1.1.0
   error_threshold:
     description:
-      - Configures the error threshold (in packets) for the ping to be
-        considered failed.  By default the value of the error_threshold
-        is set to the count argument
+      - Configures the error threshold (in packet loss percentage) for the
+        ping test to be considered failed.  By default the value of the
+        error_threshold is set to 0. Valid values between 0 and 100.
     required: false
     version_added: 1.1.0
 """
@@ -82,7 +82,8 @@ EXAMPLES = """
 
 - eos_ping: dst=192.168.1.254 count=10
 
-- eos_ping: dst=192.168.1.254 count=10 error_threshold=9
+# Set the error_threshold to 50pc packet loss
+- eos_ping: dst=192.168.1.254 count=10 error_threshold=50
 
 """
 import re
@@ -397,9 +398,9 @@ def main():
     error_threshold = module.params['error_threshold']
 
     if not error_threshold:
-        error_threshold = count
-    elif error_threshold > count:
-        module.fail('error_threshold value cannot be bigger than the count value')
+        error_threshold = 0
+    elif error_threshold > 100 or error_threshold < 0:
+        module.fail('error_threshold must be between 0 and 100')
 
     cmd = 'ping %s ' % dst
     cmd += 'repeat %s ' % count
@@ -410,19 +411,27 @@ def main():
     resp = module.node.enable(cmd, encoding='text')
     data = resp[0]['result']['output']
 
-    stats = re.search(r'^(\d+) \w+ \w+, (\d+) \w+, (?:.([^\s]+) errors, )?(\d+)% \w+', data, re.M)
-    (tx, rx, err, loss) = stats.groups()
+    if 'ping statistics' in data:
+        stats = re.search(r'^(\d+) \w+ \w+, (\d+) \w+, (?:.([^\s]+) errors, )?(\d+)% \w+', data, re.M)
+        (tx, rx, err, loss) = stats.groups()
 
-    if err is not None:
-        if int(err) > - error_threshold:
-            module.fail("Ping '%s' failed (sent: %s, rcvd: %s')" % (dst, tx, rx))
+        if loss:
+            if int(loss) > error_threshold:
+                module.fail("Ping '%s' failed (sent: %s, rcvd: %s, err: %s, "
+                            "loss: %s)" % (dst, tx, rx, err, loss))
+
+    elif 'Network is unreachable' in data:
+        module.fail("Ping '%s' failed: Network is unreachable" % dst)
+
+    else:
+        module.fail("Ping '%s' failed: Unknown error %s" % (dst, data))
 
 
     module.result['dst'] = dst
     module.result['count'] = count
     module.result['transmitted'] = int(tx)
     module.result['received'] = int(rx)
-    module.result['errors'] = 0
+    module.result['errors'] = err if err else 0
     module.result['loss'] = int(loss)
 
     module.exit()

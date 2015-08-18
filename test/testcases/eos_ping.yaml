@@ -38,12 +38,21 @@ testcases:
       - { name: connection, value: $host }
       - { name: debug, value: true }
 
-  - name: ping localhost with error_threshold 1
+  - name: ping localhost with error_threshold 0
     changed: false
     arguments:
       - { name: dst, value: 127.0.0.1 }
       - { name: count, value: 10 }
-      - { name: error_threshold, value: 1 }
+      - { name: error_threshold, value: 0 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+  - name: ping localhost with error_threshold 100
+    changed: false
+    arguments:
+      - { name: dst, value: 127.0.0.1 }
+      - { name: count, value: 10 }
+      - { name: error_threshold, value: 100 }
       - { name: connection, value: $host }
       - { name: debug, value: true }
 
@@ -54,3 +63,8 @@ testcases:
       - { name: source, value: Ethernet1 }
       - { name: connection, value: $host }
       - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - no switchport
+      - ip address 10.10.10.10/24
