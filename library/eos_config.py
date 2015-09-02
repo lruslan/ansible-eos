@@ -63,7 +63,17 @@ options:
     description:
       - Restricts the configuration evaluation to a single configuration
         section.  If the configuration section argument is not provided,
-        then the global configuration is used.
+        then the global configuration is used. Required if subsection is
+        included.
+    required: false
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.0.0
+  subsection:
+    description:
+      - Restricts the configuration evaluation to a nested section of the
+        section argument.
     required: false
     default: null
     choices: []
@@ -410,10 +420,22 @@ def section(module):
     except TypeError:
         return str()
 
+def subsection(module, block):
+    try:
+        if module.attributes['subsection']:
+            regex = r'%s$' % module.attributes['subsection']
+            return module.node.subsection(regex, block)
+        else:
+            return block
+    except TypeError:
+        return str()
+
 def config(module):
     commands = list()
     if module.attributes['section']:
         commands.append(module.attributes['section'])
+    if module.attributes['subsection']:
+        commands.append(module.attributes['subsection'])
     commands.append(module.attributes['command'])
     module.debug('commands', commands)
     module.config(commands)
@@ -425,6 +447,7 @@ def main():
     argument_spec = dict(
         command=dict(required=True),
         section=dict(),
+        subsection=dict(),
         regexp=dict(aliases=['expression']),
         state=dict(default='present', choices=['present', 'absent'])
     )
@@ -439,6 +462,10 @@ def main():
         regexp = re.compile(r'{0}'.format(regexp), re.M)
 
     cfg = section(module)
+
+    if module.attributes['subsection']:
+        cfg = subsection(module, cfg)
+
     module.debug('running_config', cfg)
 
     if state == 'absent':
