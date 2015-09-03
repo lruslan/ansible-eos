@@ -423,7 +423,7 @@ def section(module):
 def subsection(module, block):
     try:
         if module.attributes['subsection']:
-            regex = r'%s$' % module.attributes['subsection']
+            regex = r'^\s+%s$' % module.attributes['subsection']
             return module.node.subsection(regex, block)
         else:
             return block
