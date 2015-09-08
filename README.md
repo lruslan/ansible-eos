@@ -14,9 +14,9 @@ The Ansible EOS role is freely provided to the open source community for automat
 ### Requirements
 
 * Arista EOS 4.13.7M or later
-* EOS Command API enabled (see Enabling EOS Command API)
+* EOS Command API enabled (see [Enabling EOS Command API] [eapi])
 * [Python Client for eAPI 0.3.0 or later] [pyeapi]
-* Linux shell account (optional) (see Preparing EOS for Ansible)
+* Linux shell account (optional) (see [Preparing EOS for Ansible] [sshaccess])
 
 ## Documentation
 
@@ -62,6 +62,8 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 [pyeapi]: https://github.com/arista-eosplus/pyeapi
+[eapi]: http://ansible-eos.readthedocs.org/en/master/quickstart.html#enabling-eos-command-api
+[sshaccess]: http://ansible-eos.readthedocs.org/en/master/quickstart.html#option-a-connect-to-arista-node-over-ssh
 [quickstart]: http://ansible-eos.readthedocs.org/en/master/quickstart.html
 [install]: http://ansible-eos.readthedocs.org/en/master/install.html
 [modules]: http://ansible-eos.readthedocs.org/en/master/_modules/list_of_All_modules.html
