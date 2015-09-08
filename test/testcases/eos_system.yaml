@@ -14,3 +14,34 @@ testcases:
     setup:
       - no hostname
 
+  - name: enable ip routing with True
+    arguments:
+      - { name: ip_routing, value: true }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no ip routing
+
+  - name: enable ip routing with yes
+    arguments:
+      - { name: ip_routing, value: yes }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no ip routing
+
+  - name: disable ip routing with False
+    arguments:
+      - { name: ip_routing, value: False }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - ip routing
+
+  - name: disable ip routing with no
+    arguments:
+      - { name: ip_routing, value: no }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - ip routing
