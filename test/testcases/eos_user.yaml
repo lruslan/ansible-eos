@@ -143,12 +143,25 @@ testcases:
     setup:
       - no username test
 
-#  - name: Negative Case - Use encryption without secret
-#    arguments:
-#      - { name: name, value: test }
-#      - { name: encryption, value: md5 }
-#      - { name: state, value: present }
-#      - { name: connection, value: $host }
-#      - { name: debug, value: true }
-#    setup:
-#      - no username test
+  - name: Create user with an sshkey
+    arguments:
+      - { name: name, value: test }
+      - { name: nopassword, value: True }
+      - { name: sshkey, value: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKL1UtBALa4CvFUsHUipNymA04qCXuAtTwNcMj84bTUzUI+q7mdzRCTLkllXeVxKuBnaTm2PW7W67K5CVpl0EVCm6IY7FS7kc4nlnD/tFvTvShy/fzYQRAdM7ZfVtegW8sMSFJzBR/T/Y/sxI16Y/dQb8fC3la9T25XOrzsFrQiKRZmJGwg8d+0RLxpfMg0s/9ATwQKp6tPoLE4f3dKlAgSk5eENyVLA3RsypWADHpenHPcB7sa8D38e1TS+n+EUyAdb3Yov+5ESAbgLIJLd52Xv+FyYi0c2L49ByBjcRrupp4zfXn4DNRnEG4K6GcmswHuMEGZv5vjJ9OY7aaaaaa' }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+
+  - name: Remove sshkey but keep user
+    arguments:
+      - { name: name, value: test }
+      - { name: nopassword, value: True }
+      - { name: sshkey, value: '' }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - username test nopassword
+      - username test sshkey ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKL1UtBALa4CvFUsHUipNymA04qCXuAtTwNcMj84bTUzUI+q7mdzRCTLkllXeVxKuBnaTm2PW7W67K5CVpl0EVCm6IY7FS7kc4nlnD/tFvTvShy/fzYQRAdM7ZfVtegW8sMSFJzBR/T/Y/sxI16Y/dQb8fC3la9T25XOrzsFrQiKRZmJGwg8d+0RLxpfMg0s/9ATwQKp6tPoLE4f3dKlAgSk5eENyVLA3RsypWADHpenHPcB7sa8D38e1TS+n+EUyAdb3Yov+5ESAbgLIJLd52Xv+FyYi0c2L49ByBjcRrupp4zfXn4DNRnEG4K6GcmswHuMEGZv5vjJ9OY7aaaaaa

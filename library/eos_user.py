@@ -37,12 +37,12 @@ short_description: Manage CLI users on Arista nodes
 description:
   - The eos_user module helps manage CLI users on your Arista nodes. You can
     create, delete and modify users along with their passwords.
-version_added: 1.1.1
+version_added: 1.2.0
 category: System
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled
-  - Python Client for eAPI 0.3.4 or later
+  - Python Client for eAPI 0.4.0 or later
   - Cleartext passwords are not accepted in playbooks
 notes:
   - All configuration is idempotent unless otherwise specified
@@ -53,12 +53,12 @@ options:
     description:
       - "The unique username. The username must adhere to certain format
         guidelines. Valid usernames begin with A-Z, a-z, or 0-9 and may also
-        contain any of these characters: @#$%^&*()-_= +{}[];<>,.~|"
+        contain any of these characters: @#$%^&*-_= +;<>,.~|"
     required: true
     default: null
     choices: []
     aliases: []
-    version_added: 1.1.1
+    version_added: 1.2.0
   nopassword:
     description:
       - The nopassword key is used to create a user with no password
@@ -68,7 +68,7 @@ options:
     default: false
     choices: ['True', 'False']
     aliases: []
-    version_added: 1.1.1
+    version_added: 1.2.0
   encryption:
     description:
       - Defines the encryption format of the password provided in the
@@ -79,7 +79,7 @@ options:
     default: null
     choices: ['md5', 'sha512']
     aliases: []
-    version_added: 1.1.1
+    version_added: 1.2.0
   secret:
     description:
       - This key is used in conjunction with encryption. The value should be
@@ -88,7 +88,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.1.1
+    version_added: 1.2.0
   role:
     description:
       - Configures the role assigned to the user. The EOS default for this
@@ -98,7 +98,7 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.1.1
+    version_added: 1.2.0
   privilege:
     description:
       - Configures the privilege level for the user. Permitted values are
@@ -107,7 +107,17 @@ options:
     default: null
     choices: []
     aliases: []
-    version_added: 1.1.1
+    version_added: 1.2.0
+  sshkey:
+    description:
+      - Configures an sshkey for the CLI user. This sshkey will end up in
+        /home/USER/.ssh/authorized_keys.  Typically this is the public key
+        from the client SSH node.
+    required: false
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.2.0
 """
 
 EXAMPLES = """
@@ -136,6 +146,13 @@ EXAMPLES = """
             secret=$6$somesalt$rkDq7Az4Efjo
             privilege=10 role=network-admin
 
+- name: Add an SSH key with a user no password
+  eos_user: name=sshkeytom nopassword=true
+            sshkey='ssh-rsa somesshkey'
+
+- name: Remove SSH key with a user no password
+  eos_user: name=sshkeytom nopassword=true
+            sshkey=''
 """
 #<<EOS_COMMON_MODULE_START>>
 
@@ -432,6 +449,7 @@ def instance(module):
         _instance['privilege'] = result['privilege']
         _instance['role'] = result['role']
         _instance['secret'] = result['secret']
+        _instance['sshkey'] = result['sshkey']
 
         # Map secret format values 5 to md5
         if result['format'] == '5':
@@ -519,6 +537,15 @@ def set_secret(module):
                'with secret %s and encryption %s' % (name, secret, encryption))
     module.node.api('users').create_with_secret(name, secret, encryption)
 
+def set_sshkey(module):
+    """ Configures the sshkey for the user. The user must have already between
+        created.
+    """
+    name = module.attributes['name']
+    sshkey = module.attributes['sshkey']
+
+    module.log('Invoked set_sshkey for eos_user[%s]' % name)
+    module.node.api('users').set_sshkey(name, sshkey)
 
 def main():
     """ The main module routine called when the module is run by Ansible
@@ -530,7 +557,8 @@ def main():
         role=dict(required=False),
         secret=dict(required=False),
         nopassword=dict(type='bool', default='false'),
-        encryption=dict(choices=['md5', 'sha512'])
+        encryption=dict(choices=['md5', 'sha512']),
+        sshkey=dict(required=False)
     )
 
     EosAnsibleModule.add_state('default')

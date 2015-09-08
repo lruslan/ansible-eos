@@ -70,7 +70,7 @@ class TestCase(object):
 
         arguments = ''
         for arg in self.arguments:
-            arguments += '%s=%s ' % (arg['name'], arg['value'])
+            arguments += '%s=\'%s\' ' % (arg['name'], arg['value'])
         command.extend(['-a', '"%s"' % arguments.strip()])
 
         command.append(self.host)
@@ -179,4 +179,3 @@ def test_module():
             testcase.set_host(name)
             testcase.add_variable('host', name)
             yield TestModule(testcase, node)
-
