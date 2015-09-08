@@ -9,7 +9,7 @@ The Arista EOS role provides the foundation for working with Arista EOS nodes an
 
 The Ansible EOS role is freely provided to the open source community for automating Arista EOS node configurations using Ansible.  Support for the modules is provided on a best effort basis by the Arista EOS+ community.  Please file any bugs, questions or enhancement requests using [Github Issues](http://github.com/arista-eosplus/ansible-eos/issues)
 
-Read More about support [support]
+[Read More about support] [support]
 
 ### Requirements
 
@@ -24,9 +24,9 @@ All documentation for the
 [Arista EOS](http://ansible-eos.readthedocs.org/en/master/index.html) role is
 hosted using readthedocs.org. Here are some helpful links within those docs:
 
-* Quickstart [quickstart]
-* Installation [install]
-* Modules [modules]
+* [Quickstart] [quickstart]
+* [Installation] [install]
+* [Modules] [modules]
 
 
 ## License
