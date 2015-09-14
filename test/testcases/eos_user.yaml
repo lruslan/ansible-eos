@@ -1,0 +1,167 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_user
+
+testcases:
+
+  - name: Create a user with no password set to true
+    arguments:
+      - { name: name, value: test }
+      - { name: nopassword, value: true }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+
+  - name: Create a user with no password set to yes
+    arguments:
+      - { name: name, value: test }
+      - { name: nopassword, value: yes }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+
+  - name: Remove a user who had no password
+    arguments:
+      - { name: name, value: test }
+      - { name: nopassword, value: yes }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - username test nopassword
+
+  - name: Remove a user who had a password
+    arguments:
+      - { name: name, value: test }
+      - { name: nopassword, value: yes }
+      - { name: state, value: absent }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+      - username test secret mysecret
+
+  - name: Create user with name that is only digits
+    arguments:
+      - { name: name, value: '01234' }
+      - { name: nopassword, value: yes }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username 01234
+
+  - name: Create user with name that has uncommon characters
+    arguments:
+      - { name: name, value: 'a@#$%^&*-_=+;<>,.~|' }
+      - { name: nopassword, value: yes }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username a@#$%^&*-_=+;<>,.~|
+
+  - name: Create user with md5 password
+    arguments:
+      - { name: name, value: test }
+      - { name: secret, value: '$1$J0auuPhz$Pkr5NnHssW.Jqlk17Ylpk0' }
+      - { name: encryption, value: md5 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+
+  - name: Change MD5 password for existing user
+    arguments:
+      - { name: name, value: test }
+      - { name: secret, value: '$1$J0auuPhz$Pkr5NnHssW.Jqlk17Ylpk0' }
+      - { name: encryption, value: md5 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+      - username test secret 5 $1$J0auuPhz$Pkr5NnHssW.Jqlk17Yllm1
+
+  - name: Create user with sha512 password
+    arguments:
+      - { name: name, value: test }
+      - { name: secret, value: '$6$somesalt$rkDq7Az4Efjo.0vtRe7E/8UXZNB6.88eMNIaqLdpmULIFkw3gDNPFnjAX4Y9fiGFzVlOyaDr1X.YYUsczCeMH.' }
+      - { name: encryption, value: sha512 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+
+  - name: Change sha512 password for existing user
+    arguments:
+      - { name: name, value: test }
+      - { name: secret, value: '$6$somesalt$rkDq7Az4Efjo.0vtRe7E/8UXZNB6.88eMNIaqLdpmULIFkw3gDNPFnjAX4Y9fiGFzVlOyaDr1X.YYUsczCeMH.' }
+      - { name: encryption, value: sha512 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+      - username test secret sha512 $6$somesalt$rkDq7Az4Efjo.0vtRe7E/8UXZNB6.88eMNIaqLdpmULIFkw3gDNPFnjAX4Y9fiGFzVlOyaDr1X.YYUsczCeAB.
+
+  - name: Create user with network-admin role
+    arguments:
+      - { name: name, value: test }
+      - { name: role, value: network-admin }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+
+  - name: Create user with privilege 0
+    arguments:
+      - { name: name, value: test }
+      - { name: privilege, value: 0 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+
+  - name: Create user with privilege 15
+    arguments:
+      - { name: name, value: test }
+      - { name: privilege, value: 15 }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+
+  - name: Create user with an sshkey
+    arguments:
+      - { name: name, value: test }
+      - { name: nopassword, value: True }
+      - { name: sshkey, value: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKL1UtBALa4CvFUsHUipNymA04qCXuAtTwNcMj84bTUzUI+q7mdzRCTLkllXeVxKuBnaTm2PW7W67K5CVpl0EVCm6IY7FS7kc4nlnD/tFvTvShy/fzYQRAdM7ZfVtegW8sMSFJzBR/T/Y/sxI16Y/dQb8fC3la9T25XOrzsFrQiKRZmJGwg8d+0RLxpfMg0s/9ATwQKp6tPoLE4f3dKlAgSk5eENyVLA3RsypWADHpenHPcB7sa8D38e1TS+n+EUyAdb3Yov+5ESAbgLIJLd52Xv+FyYi0c2L49ByBjcRrupp4zfXn4DNRnEG4K6GcmswHuMEGZv5vjJ9OY7aaaaaa' }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+
+  - name: Remove sshkey but keep user
+    arguments:
+      - { name: name, value: test }
+      - { name: nopassword, value: True }
+      - { name: sshkey, value: '' }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - username test nopassword
+      - username test sshkey ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKL1UtBALa4CvFUsHUipNymA04qCXuAtTwNcMj84bTUzUI+q7mdzRCTLkllXeVxKuBnaTm2PW7W67K5CVpl0EVCm6IY7FS7kc4nlnD/tFvTvShy/fzYQRAdM7ZfVtegW8sMSFJzBR/T/Y/sxI16Y/dQb8fC3la9T25XOrzsFrQiKRZmJGwg8d+0RLxpfMg0s/9ATwQKp6tPoLE4f3dKlAgSk5eENyVLA3RsypWADHpenHPcB7sa8D38e1TS+n+EUyAdb3Yov+5ESAbgLIJLd52Xv+FyYi0c2L49ByBjcRrupp4zfXn4DNRnEG4K6GcmswHuMEGZv5vjJ9OY7aaaaaa
