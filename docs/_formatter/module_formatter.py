@@ -123,7 +123,7 @@ def list_eos_modules(module_dir):
 
     for d in files:
 
-        if os.path.isdir(d):
+        if os.path.isdir(d) or d.endswith(".pyc"):
             pass
         else:
             module = os.path.basename(d)
@@ -139,6 +139,7 @@ def list_eos_modules(module_dir):
                 continue
             else:
                 try:
+                    print ''.join(open(d))
                     M = ast.parse(''.join(open(d)))
                     print "Analyzing file: %s" % d
                     for child in M.body:
