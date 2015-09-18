@@ -76,3 +76,47 @@ testcases:
       - no router bgp
       - router bgp 65000
 
+  - name: set bgp maximum-path to 20
+    arguments:
+      - { name: bgp_as, value: 65000 }
+      - { name: maximum_paths, value: 20 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: set bgp maximum-path to 20 and ecmp to 20
+    arguments:
+      - { name: bgp_as, value: 65000 }
+      - { name: maximum_paths, value: 20 }
+      - { name: maximum_ecmp_paths, value: 20 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+
+  - name: just change maximum paths and leave ecmp paths
+    arguments:
+      - { name: bgp_as, value: 65000 }
+      - { name: maximum_paths, value: 25 }
+      - { name: maximum_ecmp_paths, value: 100 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+      - maximum-paths 20 ecmp 100
+
+  - name: just change ecmp paths
+    arguments:
+      - { name: bgp_as, value: 65000 }
+      - { name: maximum_paths, value: 20 }
+      - { name: maximum_ecmp_paths, value: 20 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no router bgp
+      - router bgp 65000
+      - maximum-paths 20 ecmp 100

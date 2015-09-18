@@ -78,6 +78,28 @@ options:
     choices: []
     aliases: []
     version_added: 1.1.0
+  maximum_paths:
+    description:
+      - Configures the maximum number of parallel routes. The EOS default for
+        this attribute is 1. This value should be less than or equal to
+        maximum_ecmp_paths.
+    default: null
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.2.0
+  maximum_ecmp_paths:
+    description:
+      - Configures the maximum number of ecmp paths for each route.
+        The EOS default for this attribute is the maximum value, which varies
+        by hardware platform. Check your Arista documentation for more
+        information. This value should be greater than or equal to
+        maximum_paths.
+    default: null
+    required: false
+    choices: []
+    aliases: []
+    version_added: 1.2.0
 """
 
 EXAMPLES = """
@@ -90,6 +112,12 @@ EXAMPLES = """
 
 - name: configure the BGP router-id
   eos_bgp_config: bgp_as=65535 router_id=1.1.1.1
+
+- name: configure the BGP with just max paths
+  eos_bgp_config: bgp_as=65535 router_id=1.1.1.1 maximum_paths=20
+
+- name: configure the BGP with maximum_paths and maximum_ecmp_paths
+  eos_bgp_config: bgp_as=65535 router_id=1.1.1.1 maximum_paths=20 maximum_ecmp_paths=20
 """
 #<<EOS_COMMON_MODULE_START>>
 
@@ -390,6 +418,8 @@ def instance(module):
     if result and bgp_as == str(result['bgp_as']):
         _instance['state'] = 'present'
         _instance['router_id'] = result['router_id']
+        _instance['maximum_paths'] = str(result['maximum_paths'])
+        _instance['maximum_ecmp_paths'] = str(result['maximum_ecmp_paths'])
         _instance['enable'] = not result['shutdown']
     return _instance
 
@@ -425,6 +455,52 @@ def set_router_id(module):
                'with value {}'.format(bgp_as, value))
     module.node.api('bgp').set_router_id(value)
 
+def set_maximum_paths(module):
+    """Configures the BGP maximum-paths
+    """
+    module.log('Inside set_maximum_paths')
+    bgp_as = module.attributes['bgp_as']
+    try:
+        max_paths = int(module.attributes['maximum_paths'])
+    except:
+        max_paths = None
+
+    try:
+        max_ecmp_paths = int(module.attributes['maximum_ecmp_paths'])
+    except:
+        max_ecmp_paths = None
+
+    if max_ecmp_paths and max_paths > max_ecmp_paths:
+        module.fail('maximum_paths {} must be less than or equal to '
+                    'maximum_ecmp_paths {}'.format(max_paths, max_ecmp_paths))
+
+    module.log('Invoked set_maximum_paths for eos_bgp_config[{}] '
+               'with value {}'.format(bgp_as, max_paths))
+    module.node.api('bgp').set_maximum_paths(max_paths)
+
+def set_maximum_ecmp_paths(module):
+    """Configures the BGP maximum-paths
+    """
+    module.log('Inside set_maximum_ecmp_paths')
+    bgp_as = module.attributes['bgp_as']
+    try:
+        max_paths = int(module.attributes['maximum_paths'])
+    except:
+        max_paths = None
+
+    try:
+        max_ecmp_paths = int(module.attributes['maximum_ecmp_paths'])
+    except:
+        max_ecmp_paths = None
+
+    if max_paths > max_ecmp_paths:
+        module.fail('maximum_paths {} must be less than or equal to '
+                    'maximum_ecmp_paths {}'.format(max_paths, max_ecmp_paths))
+
+    module.log('Invoked set_maximum_paths for eos_bgp_config[{}] '
+               'with values {}/{}'.format(bgp_as, max_paths, max_ecmp_paths))
+    module.node.api('bgp').set_maximum_paths(max_paths, max_ecmp_paths)
+
 def main():
     """The main module routine called when the module is run by Ansible
     """
@@ -432,7 +508,9 @@ def main():
     argument_spec = dict(
         bgp_as=dict(required=True),
         enable=dict(type='bool', default=True),
-        router_id=dict()
+        router_id=dict(),
+        maximum_paths=dict(),
+        maximum_ecmp_paths=dict()
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,
