@@ -418,8 +418,8 @@ def instance(module):
     if result and bgp_as == str(result['bgp_as']):
         _instance['state'] = 'present'
         _instance['router_id'] = result['router_id']
-        _instance['maximum_paths'] = result['maximum_paths']
-        _instance['maximum_ecmp_paths'] = result['maximum_ecmp_paths']
+        _instance['maximum_paths'] = str(result['maximum_paths'])
+        _instance['maximum_ecmp_paths'] = str(result['maximum_ecmp_paths'])
         _instance['enable'] = not result['shutdown']
     return _instance
 
@@ -458,44 +458,48 @@ def set_router_id(module):
 def set_maximum_paths(module):
     """Configures the BGP maximum-paths
     """
-    max_paths = module.attributes['maximum_paths']
-    max_ecmp_paths = module.attributes['maximum_ecmp_paths']
+    module.log('Inside set_maximum_paths')
     bgp_as = module.attributes['bgp_as']
+    try:
+        max_paths = int(module.attributes['maximum_paths'])
+    except:
+        max_paths = None
+
+    try:
+        max_ecmp_paths = int(module.attributes['maximum_ecmp_paths'])
+    except:
+        max_ecmp_paths = None
 
     if max_ecmp_paths and max_paths > max_ecmp_paths:
         module.fail('maximum_paths {} must be less than or equal to '
                     'maximum_ecmp_paths {}'.format(max_paths, max_ecmp_paths))
 
-    if not max_paths and not max_ecmp_paths:
-        module.log('Invoked maximum_paths for eos_bgp_config[{}] '
-                   'with value {}. This will set maximum-paths to default'
-                   'settings on your node'.format(bgp_as, max_paths))
-        module.node.api('bgp').set_maximum_paths(default=True)
-    else:
-        module.log('Invoked maximum_paths for eos_bgp_config[{}] '
-                   'with value {}'.format(bgp_as, max_paths))
-        module.node.api('bgp').set_maximum_paths(max_paths)
+    module.log('Invoked set_maximum_paths for eos_bgp_config[{}] '
+               'with value {}'.format(bgp_as, max_paths))
+    module.node.api('bgp').set_maximum_paths(max_paths)
 
 def set_maximum_ecmp_paths(module):
     """Configures the BGP maximum-paths
     """
-    max_paths = module.attributes['maximum_paths']
-    max_ecmp_paths = module.attributes['maximum_ecmp_paths']
+    module.log('Inside set_maximum_ecmp_paths')
     bgp_as = module.attributes['bgp_as']
+    try:
+        max_paths = int(module.attributes['maximum_paths'])
+    except:
+        max_paths = None
+
+    try:
+        max_ecmp_paths = int(module.attributes['maximum_ecmp_paths'])
+    except:
+        max_ecmp_paths = None
 
     if max_paths > max_ecmp_paths:
-        module.fail('maximum_paths must be less than or equal to '
-                    'maximum_ecmp_paths')
+        module.fail('maximum_paths {} must be less than or equal to '
+                    'maximum_ecmp_paths {}'.format(max_paths, max_ecmp_paths))
 
-    if not max_paths and not max_ecmp_paths:
-        module.log('Invoked maximum_paths for eos_bgp_config[{}] '
-                   'with value {}. This will set maximum-paths to default'
-                   'settings on your node'.format(bgp_as, max_paths))
-        module.node.api('bgp').set_maximum_paths(default=True)
-    else:
-        module.log('Invoked maximum_ecmp_paths for eos_bgp_config[{}] '
-                   'with values {}/{}'.format(bgp_as, max_paths, max_ecmp_paths))
-        module.node.api('bgp').set_maximum_paths(max_paths, max_ecmp_paths)
+    module.log('Invoked set_maximum_paths for eos_bgp_config[{}] '
+               'with values {}/{}'.format(bgp_as, max_paths, max_ecmp_paths))
+    module.node.api('bgp').set_maximum_paths(max_paths, max_ecmp_paths)
 
 def main():
     """The main module routine called when the module is run by Ansible
@@ -505,8 +509,8 @@ def main():
         bgp_as=dict(required=True),
         enable=dict(type='bool', default=True),
         router_id=dict(),
-        maximum_paths=dict(type='int'),
-        maximum_ecmp_paths=dict(type='int')
+        maximum_paths=dict(),
+        maximum_ecmp_paths=dict()
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,
