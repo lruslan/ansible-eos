@@ -60,6 +60,14 @@ options:
     choices: []
     aliases: []
     version_added: 1.0.0
+  encoding:
+    description:
+      - Specifies the requested encoding of the command output.
+    required: false
+    default: json
+    choices: ['json','text']
+    aliases: []
+    version_added: 1.0.0
 """
 
 EXAMPLES = """
@@ -361,7 +369,8 @@ class EosAnsibleModule(AnsibleModule):
 
 def run_commands(module):
     commands = module.attributes['commands'].split(',')
-    return module.node.enable(commands)
+    encoding = module.attributes['encoding']
+    return module.node.enable(commands,encoding=encoding)
 
 def main():
     """ The main module routine called when the module is run by Ansible
@@ -369,6 +378,7 @@ def main():
 
     argument_spec = dict(
         commands=dict(required=True),
+        encoding=dict(required=False, default='json'),
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,
