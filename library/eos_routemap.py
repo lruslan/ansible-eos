@@ -410,7 +410,8 @@ class EosAnsibleModule(AnsibleModule):
 #<<EOS_COMMON_MODULE_END>>
 
 def instance(module):
-    """ Returns an instance of Vlan based on vlanid
+    """ Returns an instance of Routemaps based on name, action and sequence
+    number.
     """
     name = module.attributes['name']
     action = module.attributes['action']
