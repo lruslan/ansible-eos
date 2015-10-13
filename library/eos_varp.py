@@ -37,7 +37,7 @@ short_description: Manage EOS Varp configuration
 description:
   - This module will manage global Varp configuration on EOS nodes
 version_added: 1.2.0
-category: IP
+category: VARP
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled
@@ -45,7 +45,7 @@ requirements:
 notes:
   - All configuration is idempotent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
-  - Supports stateful resource configuration.
+  - Does not support stateful resource configuration.
 options:
   mac_address:
     description:
@@ -60,7 +60,7 @@ options:
 
 EXAMPLES = """
 
-- eos_varp: mac_address=00:11:22:33:44:55 state=present
+- eos_varp: mac_address='00:11:22:33:44:55'
 """
 #<<EOS_COMMON_MODULE_START>>
 

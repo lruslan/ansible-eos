@@ -39,7 +39,7 @@ description:
     this includes Vlan interfaces only by using the ip virtual-router address
     command.
 version_added: 1.2.0
-category: IP
+category: VARP
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled
@@ -47,14 +47,14 @@ requirements:
 notes:
   - All configuration is idempotent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
-  - Supports stateful resource configuration.
+  - Does not support stateful resource configuration.
 options:
   name:
     description:
       - The Varp interface which will have the following shared_ip's configured.
         These are typically Vlan interfaces. The interface name must match the
-        way it is written in the configuration. Example: Vlan100, not vlan100
-        or vlan 100.
+        way it is written in the configuration. For example, use Vlan100,
+        not vlan100 or vlan 100.
     required: true
     default: null
     choices: []
@@ -73,7 +73,7 @@ options:
 
 EXAMPLES = """
 
-- eos_varp_interface: name=Vlan1000 shared_ip='1.1.1.2,1.1.1.3,1.1.1.4' state=present
+- eos_varp_interface: name=Vlan1000 shared_ip='1.1.1.2,1.1.1.3,1.1.1.4'
 """
 #<<EOS_COMMON_MODULE_START>>
 
