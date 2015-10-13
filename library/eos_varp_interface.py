@@ -380,7 +380,9 @@ def instance(module):
 
 
 def set_shared_ip(module):
-    """ Configures the global virtual-router mac address
+    """ Configures the defined interfaces virtual-router ip addresses. This
+    method takes the comma-separated list of shared IP addresses and calls
+    the pyeapi set_addresses method to configure the virtual addresses.
     """
     name = module.attributes['name']
     shared_ip = module.attributes['shared_ip'].split(',')
