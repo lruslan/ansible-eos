@@ -1,0 +1,63 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_varp_interface
+
+testcases:
+
+  - name: set one virtual-router address
+    arguments:
+      - { name: name, value: 'Vlan100' }
+      - { name: shared_ip, value: '1.1.1.2' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface Vlan100
+
+  - name: set multiple virtual-router addresses
+    arguments:
+      - { name: name, value: 'Vlan100' }
+      - { name: shared_ip, value: '1.1.1.2,1.1.1.3,1.1.1.4' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface Vlan100
+
+  - name: set multiple virtual-router addresses with existing addresses
+    arguments:
+      - { name: name, value: 'Vlan100' }
+      - { name: shared_ip, value: '1.1.1.2,1.1.1.3,1.1.1.4' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface Vlan100
+      - interface Vlan100
+      - ip virtual-router address 1.1.1.2
+
+  - name: set multiple virtual-router addresses with all existing addresses
+    changed: False
+    arguments:
+      - { name: name, value: 'Vlan100' }
+      - { name: shared_ip, value: '1.1.1.2,1.1.1.3,1.1.1.4' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface Vlan100
+      - interface Vlan100
+      - ip virtual-router address 1.1.1.2
+      - ip virtual-router address 1.1.1.3
+      - ip virtual-router address 1.1.1.4
+
+  - name: remove all virtual-router addresses
+    arguments:
+      - { name: name, value: 'Vlan100' }
+      - { name: shared_ip, value: '' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface Vlan100
+      - interface Vlan100
+      - ip virtual-router address 1.1.1.2
+      - ip virtual-router address 1.1.1.3
+      - ip virtual-router address 1.1.1.4
