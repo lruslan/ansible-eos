@@ -1,0 +1,210 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_routemap
+
+testcases:
+
+  - name: create routemap entry
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no route-map test permit 10
+
+  - name: create routemap entry without action
+    arguments:
+      - { name: name, value: test }
+      - { name: seqno, value: 10 }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no route-map test permit 10
+
+  - name: delete routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: seqno, value: 10 }
+      - { name: state, value: absent }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - route-map test permit 10
+
+  - name: set description for routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: description, value: hello there routemap }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no route-map test permit 10
+
+  - name: remove description for routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: description, value: ''}
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no route-map test permit 10
+
+  - name: change description for routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: description, value: new string }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no route-map test permit 10
+      - route-map test permit 10
+      - description old string
+
+  - name: set continue for routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: continue, value: 20 }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no route-map test permit 10
+
+  - name: change continue value for routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: continue, value: 20 }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - route-map test permit 10
+      - continue 30
+
+  - name: remove continue value for routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: continue, value: '' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - route-map test permit 10
+      - continue 30
+
+  - name: set match statements for routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: match, value: 'as 1000,source-protocol bgp' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no route-map test permit 10
+
+  - name: match statements already exist for routemap
+    changed: false
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: match, value: 'as 1000,source-protocol bgp' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - route-map test permit 10
+      - match as 1000
+      - match source-protocol bgp
+
+  - name: update match statements in routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: match, value: 'as 2000,source-protocol ospf' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - route-map test permit 10
+      - match as 1000
+      - match source-protocol bgp
+
+  - name: remove all match statements in routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: match, value: '' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - route-map test permit 10
+      - match as 1000
+      - match source-protocol bgp
+
+  - name: set set statements for routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: set, value: 'weight 1000,tag 1000' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no route-map test permit 10
+
+  - name: set statements already exist for routemap
+    changed: false
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: set, value: 'weight 1000,tag 1000' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - route-map test permit 10
+      - set weight 1000
+      - set tag 1000
+
+  - name: update set statements in routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: set, value: 'weight 1000,tag 1000' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - route-map test permit 10
+      - set weight 500
+      - set tag 500
+
+  - name: remove all set statements in routemap
+    arguments:
+      - { name: name, value: test }
+      - { name: action, value: permit }
+      - { name: seqno, value: 10 }
+      - { name: set, value: '' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - route-map test permit 10
+      - set weight 1000
+      - set tag 1000
