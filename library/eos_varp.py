@@ -32,12 +32,12 @@
 #
 DOCUMENTATION = """
 ---
-module: eos_routemap
-short_description: Manage EOS routemap resources
+module: eos_varp
+short_description: Manage EOS Varp configuration
 description:
-  - This module will manage routemap entries on EOS nodes
+  - This module will manage global Varp configuration on EOS nodes
 version_added: 1.2.0
-category: Route Policy
+category: IP
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled
@@ -47,64 +47,11 @@ notes:
   - Supports eos metaparameters for using the eAPI transport
   - Supports stateful resource configuration.
 options:
-  name:
+  mac_address:
     description:
-      - The name of the routemap to manage.
+      - The MAC address to assign as the virtual-router mac address. This value
+        must be formatted like aa:bb:cc:dd:ee
     required: true
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.2.0
-  action:
-    description:
-      - The action associated with the routemap name.
-    required: true
-    default: 'permit'
-    choices: ['permit','deny']
-    aliases: []
-    version_added: 1.2.0
-  seqno:
-    description:
-      - The sequence number of the rule that this entry corresponds to.
-    required: true
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.2.0
-  description:
-    description:
-      - The description for this routemap entry.
-    required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.2.0
-  match:
-    description:
-      - The list of match statements that define the routemap entry. The
-        match statements should be a comma separated list of match statements
-        without the word match at the beginning of the string. See the example
-        below for more information.
-    required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.2.0
-  set:
-    description:
-      - The list of set statements that define the routemap entry. The
-        set statements should be a comma separated list of set statements
-        without the word set at the beginning of the string. See the example
-        below for more information.
-    required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.2.0
-  continue:
-    description:
-      - The statement defines the next routemap clause to evaluate.
-    required: false
     default: null
     choices: []
     aliases: []
@@ -113,11 +60,7 @@ options:
 
 EXAMPLES = """
 
-- eos_routemap: name=rm1 action=permit seqno=10
-                description='this is a great routemap'
-                match='as 50,interface Ethernet2'
-                set='tag 100,weight 1000'
-                continue=20
+- eos_varp: mac_address=00:11:22:33:44:55 state=present
 """
 #<<EOS_COMMON_MODULE_START>>
 
@@ -409,112 +352,39 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
+
 def instance(module):
-    """ Returns an instance of Routemaps based on name, action and sequence
-    number.
+    """ Returns an instance of Varp which includes the global mac-address. The
+    get() method will return other data but this module is only interested in
+    the virtual-router mac address.
     """
-    name = module.attributes['name']
-    action = module.attributes['action']
-    seqno = int(module.attributes['seqno'])
-    _instance = dict(name=name, action=action, seqno=seqno, state='absent')
-    result = module.api('routemaps').get(name, action, seqno)
+    _instance = dict(mac_address=None)
+    result = module.api('varp').get()
     if result:
-        _instance['state'] = 'present'
-        _instance['seqno'] = str(seqno)
-        _instance['set'] = ','.join(result['set'])
-        desc = result['description']
-        _instance['description'] = desc if desc else ''
-        _instance['match'] = ','.join(result['match'])
-        cont = result['continue']
-        _instance['continue'] = str(cont) if cont else ''
+        mac = result['mac_address']
+        _instance['mac_address'] = mac if mac else ''
     return _instance
 
 
-def create(module):
-    name = module.attributes['name']
-    action = module.attributes['action']
-    seqno = int(module.attributes['seqno'])
-    module.log('Invoked create for eos_routemap[%s %s %s]'
-               % (name, action, seqno))
-    module.api('routemaps').create(name, action, seqno)
-
-
-def remove(module):
-    name = module.attributes['name']
-    action = module.attributes['action']
-    seqno = int(module.attributes['seqno'])
-    module.log('Invoked remove for eos_routemap[%s %s %s]'
-               % (name, action, seqno))
-    module.api('routemaps').delete(name, action, seqno)
-
-def set_description(module):
-    """ Configures the description for the routemap
+def set_mac_address(module):
+    """ Configures the global virtual-router mac address
     """
-    name = module.attributes['name']
-    action = module.attributes['action']
-    seqno = int(module.attributes['seqno'])
-    value = module.attributes['description']
-    value = None if value == '' else value
+    mac_address = module.attributes['mac_address']
+    mac_address = mac_address if mac_address else None
+    module.log('Invoked create for eos_varp[%s]' % mac_address)
+    module.api('varp').set_mac_address(mac_address)
 
-    module.log('Invoked set_description with %s for eos_routemap[%s %s %s]'
-               % (value, name, action, seqno))
-    module.node.api('routemaps').set_description(name, action, seqno, value)
-
-def set_continue(module):
-    """ Configures the continue value for the routemap
-    """
-    name = module.attributes['name']
-    action = module.attributes['action']
-    seqno = int(module.attributes['seqno'])
-    try:
-        value = int(module.attributes['continue'])
-    except:
-        value = None
-
-    module.log('Invoked set_continue for eos_routemap[%s %s %s]'
-               % (name, action, seqno))
-    module.node.api('routemaps').set_continue(name, action, seqno, value)
-
-
-def set_match(module):
-    """ Configures the match statements for the routemap
-    """
-    name = module.attributes['name']
-    action = module.attributes['action']
-    seqno = int(module.attributes['seqno'])
-    statements = module.attributes['match'].split(',')
-    module.log('Invoked set_match for eos_routemap[%s %s %s]'
-               % (name, action, seqno))
-    module.node.api('routemaps').set_match_statements(name, action, seqno,
-                                                      statements)
-
-def set_set(module):
-    """ Configures the set statements for the routemap
-    """
-    name = module.attributes['name']
-    action = module.attributes['action']
-    seqno = int(module.attributes['seqno'])
-    statements = module.attributes['set'].split(',')
-    module.log('Invoked set_set for eos_routemap[%s %s %s]'
-               % (name, action, seqno))
-    module.node.api('routemaps').set_set_statements(name, action, seqno,
-                                                    statements)
 
 def main():
     """ The main module routine called when the module is run by Ansible
     """
 
     argument_spec = dict(
-        name=dict(required=True),
-        action=dict(default='permit', choices=['permit', 'deny']),
-        seqno=dict(required=True),
-        description=dict(),
-        match=dict(),
-        set=dict()
+        mac_address=dict(required=True)
     )
-    argument_spec['continue'] = dict()
 
     module = EosAnsibleModule(argument_spec=argument_spec,
+                              stateful=False,
                               supports_check_mode=True)
 
     module.flush(True)
