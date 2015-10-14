@@ -1,0 +1,14 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_staticroute
+
+testcases:
+
+  - name: create a static route
+    arguments:
+      - { name: ip_dest, value: "20.20.20.0/24" }
+      - { name: next_hop, value: "192.168.1.1" }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
