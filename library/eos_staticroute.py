@@ -93,11 +93,11 @@ options:
     version_added: 1.0.0
 """
 
-# XXX fix the examples
 EXAMPLES = """
 
-- name: configures the hostname to spine01
-  eos_system: hostname=spine01
+- eos_staticroute: ip_dest=1.1.1.0/24 next_hop=Ethernet1
+                   next_hop_ip=1.1.1.1 distance=1
+                   tag=15 name=route1
 
 """
 #<<EOS_COMMON_MODULE_START>>
@@ -390,35 +390,83 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
+
 def instance(module):
     """ Returns an instance of StaticRoute
     """
     ip_dest = module.attributes['ip_dest']
     next_hop = module.attributes['next_hop']
-    print "XXX before get\n"
-    result = module.node.api('staticroute').get(ip_dest, next_hop)
-    _instance = dict(ip_dest=ip_dest, next_hop=next_hop, state='absent')
+    distance = module.attributes['distance']
+    _instance = dict(ip_dest=ip_dest, next_hop=next_hop,
+                     distance=distance, state='absent')
+    result = module.node.api('staticroute').get(ip_dest, next_hop, distance)
     if result:
         _instance['state'] = 'present'
         _instance['next_hop_ip'] = result['next_hop_ip']
-        _instance['distance'] = result['distance']
         _instance['route_name'] = result['route_name']
         _instance['tag'] = result['tag']
     return _instance
+
 
 def create(module):
     """ Creates a new instance of a static route on the node
     """
     ip_dest = module.attributes['ip_dest']
     next_hop = module.attributes['next_hop']
-    module.node.api('staticroute').create(ip_dest, next_hop)
+    distance = module.attributes['distance']
+    next_hop_ip = module.attributes['next_hop_ip']
+    tag = module.attributes['tag']
+    route_name = module.attributes['route_name']
+    module.node.api('staticroute').create(ip_dest, next_hop,
+                                          next_hop_ip=next_hop_ip,
+                                          distance=distance, tag=tag,
+                                          route_name=route_name)
+
 
 def remove(module):
     """ Removes an instance of a static route on the node
     """
     ip_dest = module.attributes['ip_dest']
     next_hop = module.attributes['next_hop']
-    module.node.api('staticroute').delete(ip_dest, next_hop)
+    distance = module.attributes['distance']
+    next_hop_ip = module.attributes['next_hop_ip']
+    tag = module.attributes['tag']
+    route_name = module.attributes['route_name']
+    module.node.api('staticroute').delete(ip_dest, next_hop,
+                                          next_hop_ip=next_hop_ip,
+                                          distance=distance, tag=tag,
+                                          route_name=route_name)
+
+
+def set_tag(module):
+    """ Modifies the tag for an existing route
+    """
+    ip_dest = module.attributes['ip_dest']
+    next_hop = module.attributes['next_hop']
+    distance = module.attributes['distance']
+    next_hop_ip = module.attributes['next_hop_ip']
+    tag = module.attributes['tag']
+    route_name = module.attributes['route_name']
+    module.node.api('staticroute').create(ip_dest, next_hop,
+                                          next_hop_ip=next_hop_ip,
+                                          distance=distance, tag=tag,
+                                          route_name=route_name)
+
+
+def set_route_name(module):
+    """ Modifies the route name for an existing route
+    """
+    ip_dest = module.attributes['ip_dest']
+    next_hop = module.attributes['next_hop']
+    distance = module.attributes['distance']
+    next_hop_ip = module.attributes['next_hop_ip']
+    tag = module.attributes['tag']
+    route_name = module.attributes['route_name']
+    module.node.api('staticroute').create(ip_dest, next_hop,
+                                          next_hop_ip=next_hop_ip,
+                                          distance=distance, tag=tag,
+                                          route_name=route_name)
+
 
 def main():
     """ The main module routine called when the module is run by Ansible
