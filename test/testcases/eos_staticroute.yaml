@@ -10,7 +10,7 @@ testcases:
     arguments:
       - { name: ip_dest, value: "21.21.21.0/24" }
       - { name: next_hop, value: "192.168.1.1" }
-      - { name: distance, value: "41" }
+      - { name: distance, value: 41 }
       - { name: state, value: present }
       - { name: debug, value: true }
       - { name: connection, value: $host }
@@ -21,7 +21,7 @@ testcases:
     arguments:
       - { name: ip_dest, value: "22.22.22.0/24" }
       - { name: next_hop, value: "192.168.1.1" }
-      - { name: distance, value: "42" }
+      - { name: distance, value: 42 }
       - { name: state, value: absent }
       - { name: debug, value: true }
       - { name: connection, value: $host }
@@ -32,9 +32,9 @@ testcases:
     arguments:
       - { name: ip_dest, value: "23.23.23.0/24" }
       - { name: next_hop, value: "Ethernet1" }
-      - { name: distance, value: "43" }
+      - { name: distance, value: 43 }
       - { name: next_hop_ip, value: "1.1.1.1" }
-      - { name: tag, value: "143" }
+      - { name: tag, value: 143 }
       - { name: route_name, value: "test43" }
       - { name: state, value: present }
       - { name: debug, value: true }
@@ -47,8 +47,8 @@ testcases:
       - { name: ip_dest, value: "24.24.24.0/24" }
       - { name: next_hop, value: "Ethernet1" }
       - { name: next_hop_ip, value: "1.1.1.1" }
-      - { name: distance, value: "44" }
-      - { name: tag, value: "144" }
+      - { name: distance, value: 44 }
+      - { name: tag, value: 144 }
       - { name: route_name, value: "test44" }
       - { name: state, value: absent }
       - { name: debug, value: true }
@@ -61,8 +61,8 @@ testcases:
       - { name: ip_dest, value: "25.25.25.0/24" }
       - { name: next_hop, value: "Ethernet1" }
       - { name: next_hop_ip, value: "1.1.1.1" }
-      - { name: distance, value: "45" }
-      - { name: tag, value: "145" }
+      - { name: distance, value: 45 }
+      - { name: tag, value: 145 }
       - { name: route_name, value: "test45" }
       - { name: state, value: present }
       - { name: debug, value: true }
@@ -76,8 +76,8 @@ testcases:
       - { name: ip_dest, value: "26.26.26.0/24" }
       - { name: next_hop, value: "Ethernet1" }
       - { name: next_hop_ip, value: "1.1.1.1" }
-      - { name: distance, value: "46" }
-      - { name: tag, value: "146" }
+      - { name: distance, value: 46 }
+      - { name: tag, value: 146 }
       - { name: route_name, value: "test46" }
       - { name: state, value: present }
       - { name: debug, value: true }

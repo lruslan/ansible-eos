@@ -478,7 +478,7 @@ def main():
         ip_dest=dict(required=True),
         next_hop=dict(required=True),
         next_hop_ip=dict(),
-        distance=dict(type='int', default=1),
+        distance=dict(type='str', default=1),
         route_name=dict(),
         tag=dict()
     )
