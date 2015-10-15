@@ -465,10 +465,11 @@ def set_members(module):
     """ Configures the members attribute for the interface
     """
     value = module.attributes['members'].split(',')
+    mode = module.attributes['lacp_mode']
     name = module.attributes['name']
     module.log('Invoked set_members for eos_portchannel[%s] '
-               'with value %s' % (name, value))
-    module.node.api('interfaces').set_members(name, value)
+               'with value %s, mode %s' % (name, value, mode))
+    module.node.api('interfaces').set_members(name, value, mode=mode)
 
 def set_minimum_links(module):
     """ Configures the minimum links attribute for the interface
