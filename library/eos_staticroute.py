@@ -396,10 +396,12 @@ def instance(module):
     """
     ip_dest = module.attributes['ip_dest']
     next_hop = module.attributes['next_hop']
+    next_hop_ip = module.attributes['next_hop_ip']
     distance = module.attributes['distance']
     _instance = dict(ip_dest=ip_dest, next_hop=next_hop,
                      distance=distance, state='absent')
-    result = module.node.api('staticroute').get(ip_dest, next_hop, distance)
+    result = module.node.api('staticroute').get(ip_dest, next_hop, distance,
+                                                next_hop_ip=next_hop_ip)
     if result:
         _instance['state'] = 'present'
         _instance['next_hop_ip'] = result['next_hop_ip']
@@ -413,8 +415,8 @@ def create(module):
     """
     ip_dest = module.attributes['ip_dest']
     next_hop = module.attributes['next_hop']
-    distance = module.attributes['distance']
     next_hop_ip = module.attributes['next_hop_ip']
+    distance = module.attributes['distance']
     tag = module.attributes['tag']
     route_name = module.attributes['route_name']
     module.node.api('staticroute').create(ip_dest, next_hop,
@@ -428,8 +430,8 @@ def remove(module):
     """
     ip_dest = module.attributes['ip_dest']
     next_hop = module.attributes['next_hop']
-    distance = module.attributes['distance']
     next_hop_ip = module.attributes['next_hop_ip']
+    distance = module.attributes['distance']
     tag = module.attributes['tag']
     route_name = module.attributes['route_name']
     module.node.api('staticroute').delete(ip_dest, next_hop,
@@ -443,8 +445,8 @@ def set_tag(module):
     """
     ip_dest = module.attributes['ip_dest']
     next_hop = module.attributes['next_hop']
-    distance = module.attributes['distance']
     next_hop_ip = module.attributes['next_hop_ip']
+    distance = module.attributes['distance']
     tag = module.attributes['tag']
     route_name = module.attributes['route_name']
     module.node.api('staticroute').create(ip_dest, next_hop,
@@ -458,8 +460,8 @@ def set_route_name(module):
     """
     ip_dest = module.attributes['ip_dest']
     next_hop = module.attributes['next_hop']
-    distance = module.attributes['distance']
     next_hop_ip = module.attributes['next_hop_ip']
+    distance = module.attributes['distance']
     tag = module.attributes['tag']
     route_name = module.attributes['route_name']
     module.node.api('staticroute').create(ip_dest, next_hop,
