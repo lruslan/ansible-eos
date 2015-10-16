@@ -449,10 +449,10 @@ def set_tag(module):
     distance = module.attributes['distance']
     tag = module.attributes['tag']
     route_name = module.attributes['route_name']
-    module.node.api('staticroute').create(ip_dest, next_hop,
-                                          next_hop_ip=next_hop_ip,
-                                          distance=distance, tag=tag,
-                                          route_name=route_name)
+    module.node.api('staticroute').set_tag(ip_dest, next_hop,
+                                           next_hop_ip=next_hop_ip,
+                                           distance=distance, tag=tag,
+                                           route_name=route_name)
 
 
 def set_route_name(module):
@@ -464,10 +464,10 @@ def set_route_name(module):
     distance = module.attributes['distance']
     tag = module.attributes['tag']
     route_name = module.attributes['route_name']
-    module.node.api('staticroute').create(ip_dest, next_hop,
-                                          next_hop_ip=next_hop_ip,
-                                          distance=distance, tag=tag,
-                                          route_name=route_name)
+    module.node.api('staticroute').set_route_name(ip_dest, next_hop,
+                                                  next_hop_ip=next_hop_ip,
+                                                  distance=distance, tag=tag,
+                                                  route_name=route_name)
 
 
 def main():
