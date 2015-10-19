@@ -37,7 +37,7 @@ short_description: Configure static routes in EOS
 description:
   - The eos_staticroute module manages static route configuration options
     on Arista EOS nodes.
-version_added: 1.0.0
+version_added: 1.2.0
 category: System
 author: Arista EOS+ CS
 requirements:
@@ -54,7 +54,7 @@ options:
     required: true
     default: null
     choices: []
-    version_added: 1.0.0
+    version_added: 1.2.0
   next_hop_ip:
     description:
       - IP address of the next router. Only valid when next_hop is
@@ -62,35 +62,35 @@ options:
     required: false
     default: null
     choices: []
-    version_added: 1.0.0
+    version_added: 1.2.0
   next_hop:
     description:
       - Next hop IP address or egress interface
     required: true
     default: null
     choices: []
-    version_added: 1.0.0
+    version_added: 1.2.0
   distance:
     description:
       - Distance designated for this route
     required: false
     default: 1
     choices: []
-    version_added: 1.0.0
+    version_added: 1.2.0
   route_name:
     description:
       - Descriptive name for the route
     required: false
     default: null
     choices: []
-    version_added: 1.0.0
+    version_added: 1.2.0
   tag:
     description:
       - Tag assigned for the route
     required: false
     default: null
     choices: []
-    version_added: 1.0.0
+    version_added: 1.2.0
 """
 
 EXAMPLES = """
