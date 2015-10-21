@@ -63,7 +63,8 @@ options:
   shared_ip:
     description:
       - The list of IP addresses that will be shared in the Varp configuration.
-        The list of IPs should be a string of comma-separated addresses.
+        The list of IPs should be a string of comma-separated addresses. Please
+        provide a list of sorted IPs.
     required: true
     default: null
     choices: []
@@ -375,7 +376,9 @@ def instance(module):
     _instance = dict(name=name)
     result = module.api('varp').interfaces.get(name)
     if result:
+        result['addresses'].sort()
         _instance['shared_ip'] = ','.join(result['addresses'])
+        module.log('This is the list %s' % _instance['shared_ip'])
     return _instance
 
 
@@ -386,7 +389,7 @@ def set_shared_ip(module):
     """
     name = module.attributes['name']
     shared_ip = module.attributes['shared_ip'].split(',')
-    module.log('Invoked create for eos_varp_interface[%s] with '
+    module.log('Invoked set_shared_ip for eos_varp_interface[%s] with '
                'shared_ips %s' % (name, '.'.join(shared_ip)))
     module.api('varp').interfaces.set_addresses(name, shared_ip)
 
