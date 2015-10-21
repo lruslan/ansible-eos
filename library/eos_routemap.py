@@ -417,7 +417,11 @@ def instance(module):
     action = module.attributes['action']
     seqno = int(module.attributes['seqno'])
     _instance = dict(name=name, action=action, seqno=seqno, state='absent')
-    result = module.api('routemaps').get(name, action, seqno)
+    try:
+        result = module.api('routemaps').get(name)[action][seqno]
+    except:
+        result = None
+
     if result:
         _instance['state'] = 'present'
         _instance['seqno'] = str(seqno)
