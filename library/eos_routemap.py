@@ -82,9 +82,9 @@ options:
   match:
     description:
       - The list of match statements that define the routemap entry. The
-      match statements should be a comma separated list of match statements
-      without the word match at the beginning of the string. See the example
-      below for more information.
+        match statements should be a comma separated list of match statements
+        without the word match at the beginning of the string. See the example
+        below for more information.
     required: false
     default: null
     choices: []
@@ -93,9 +93,9 @@ options:
   set:
     description:
       - The list of set statements that define the routemap entry. The
-      set statements should be a comma separated list of set statements
-      without the word set at the beginning of the string. See the example
-      below for more information.
+        set statements should be a comma separated list of set statements
+        without the word set at the beginning of the string. See the example
+        below for more information.
     required: false
     default: null
     choices: []
