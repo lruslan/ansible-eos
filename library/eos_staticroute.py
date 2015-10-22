@@ -399,12 +399,18 @@ def instance(module):
     next_hop_ip = module.attributes['next_hop_ip']
     distance = module.attributes['distance']
     _instance = dict(ip_dest=ip_dest, next_hop=next_hop,
-                     distance=distance, state='absent')
-    result = module.node.api('staticroute').get(ip_dest, next_hop, distance,
-                                                next_hop_ip=next_hop_ip)
+                     next_hop_ip=next_hop_ip, distance=distance,
+                     state='absent')
+    try:
+        result = module.node.api('staticroute').get(ip_dest)
+        module.log(result)
+        result = result.get(ip_dest)[next_hop][next_hop_ip][distance]
+        module.log(result)
+    except:
+        result = None
+
     if result:
         _instance['state'] = 'present'
-        _instance['next_hop_ip'] = result['next_hop_ip']
         _instance['route_name'] = result['route_name']
         _instance['tag'] = result['tag']
     return _instance
@@ -477,10 +483,10 @@ def main():
     argument_spec = dict(
         ip_dest=dict(required=True),
         next_hop=dict(required=True),
-        next_hop_ip=dict(),
-        distance=dict(type='str', default=1),
-        route_name=dict(),
-        tag=dict()
+        next_hop_ip=dict(default=None),
+        distance=dict(type='int', default=1),
+        route_name=dict(default=None),
+        tag=dict(type='int', default=0)
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,
