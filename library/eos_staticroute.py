@@ -402,9 +402,8 @@ def instance(module):
                      next_hop_ip=next_hop_ip, distance=distance,
                      state='absent')
     try:
-        result = module.node.api('staticroute').get(ip_dest)
-        module.log(result)
-        result = result.get(ip_dest)[next_hop][next_hop_ip][distance]
+        result = module.node.api('staticroute').\
+            get(ip_dest)[next_hop][next_hop_ip][distance]
         module.log(result)
     except:
         result = None
