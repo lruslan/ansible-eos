@@ -50,7 +50,7 @@ options:
   mac_address:
     description:
       - The MAC address to assign as the virtual-router mac address. This value
-        must be formatted like aa:bb:cc:dd:ee
+        must be formatted like aa:bb:cc:dd:ee:ff
     required: true
     default: null
     choices: []
