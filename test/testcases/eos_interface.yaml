@@ -69,7 +69,7 @@ testcases:
   - name: set interface description
     arguments:
       - { name: name, value: Loopback0 }
-      - { name: description, value: "'test interface string'" }
+      - { name: description, value: 'test interface string' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:
@@ -79,11 +79,10 @@ testcases:
   - name: set interface description to empty string
     arguments:
       - { name: name, value: Loopback0 }
-      - { name: description, value: "''" }
+      - { name: description, value: '' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:
       - no interface Loopback0
       - interface Loopback0
       - description test string
-
