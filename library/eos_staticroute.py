@@ -38,7 +38,7 @@ description:
   - The eos_staticroute module manages static route configuration options
     on Arista EOS nodes.
 version_added: 1.2.0
-category: System
+category: Route Policy
 author: Arista EOS+ CS
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled

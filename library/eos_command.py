@@ -67,7 +67,7 @@ options:
     default: json
     choices: ['json','text']
     aliases: []
-    version_added: 1.0.0
+    version_added: 1.2.0
 """
 
 EXAMPLES = """
