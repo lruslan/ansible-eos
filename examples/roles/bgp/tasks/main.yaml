@@ -2,8 +2,8 @@
 - name: configure BGP global parameters
   eos_bgp_config:
     bgp_as={{ bgp.bgp_as|default(omit) }}
-    enable={{ bgp.enable|default(omit) }}
     router_id={{ bgp.router_id|default(omit) }}
+    enable={{ bgp.enable|default(omit) }}
     username={{ eapi.username|default(omit) }}
     password={{ eapi.password|default(omit) }}
     enablepwd={{ eapi.enablepwd|default(omit) }}
@@ -18,13 +18,13 @@
   eos_bgp_neighbor:
     name={{ item.name }}
     remote_as={{ item.remote_as|default(omit) }}
-    enable={{ item.enable|default(omit) }}
     description={{ item.description|default(omit) }}
     next_hop_self={{ item.next_hop_self|default(omit) }}
     peer_group={{ item.peer_group|default(omit) }}
     route_map_in={{ item.route_map_in|default(omit) }}
     route_map_out={{ item.route_map_out|default(omit) }}
     send_community={{ item.send_community|default(omit) }}
+    enable={{ item.enable|default(omit) }}
     username={{ eapi.username|default(omit) }}
     password={{ eapi.password|default(omit) }}
     enablepwd={{ eapi.enablepwd|default(omit) }}
