@@ -218,8 +218,7 @@ This will only allow the Ansible user to login with keys.
 3. Install pyeapi
 =================
 As mentioned earlier, the Ansible EOS role uses `pyeapi <https://github.com/arista-eosplus/pyeapi>`_
-on the Arista node that will be configured. Follow the `pyeapi
-http://pyeapi.readthedocs.org/en/feature-rtdocs/install.html>`_ installation
+on the Arista node that will be configured. Follow the `pyeapi <http://pyeapi.readthedocs.org/en/master/install.html>`_ installation
 guide to install the package.
 
 
