@@ -36,9 +36,8 @@ module: eos_command
 short_description: Sends arbitrary commands to EOS
 description:
   - The eos_command module provides a module for sending arbitray
-    commands to the EOS node and returns the ouput.  Commands can
-    be either priviledged mode (enable) commands or configuration
-    commands.
+    commands to the EOS node and returns the ouput.  Only
+    priviledged mode (enable) commands can be sent.
 version_added: 1.0.0
 category: System
 author: Arista EOS+

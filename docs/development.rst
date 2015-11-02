@@ -37,8 +37,8 @@ easy as passing the path to the ansible executable::
 
     $ ansible -M /workspace/ansible-eos/library -m eos_vlan -a "vlanid=100"
 
-Simply specifiy the module to be run (eos_vlan in the above example) and the
-arguments to pass to the module using the -a option.  
+Simply specify the module to be run (eos_vlan in the above example) and the
+arguments to pass to the module using the -a option.
 
 ****************
 Write Test Cases
@@ -65,12 +65,12 @@ Contributing
 ************
 
 The modules developed as part of the Ansible EOS role are supported by the
-Arista EOS+ community.  We gladly accept and encourge contributions in the form
+Arista EOS+ community.  We gladly accept and encourage contributions in the form
 of new modules, updated modules, test cases and documentation updates.  Simply
 develop the changes and submit a pull request through Github.
 
 For changes submitted by pull request, the Arista EOS+ community enforces some
-basid rules for new contributions.
+basic rules for new contributions.
 
 1. New modules must be fully documented per Ansible module documentation
    standards
@@ -78,7 +78,7 @@ basid rules for new contributions.
    new arguments made available in the module.
 
 If you have any questions regarding module development or running modules from
-source, please feel free to contact Arista EOS+ at eosplus-dev@arista.com
+source, please feel free to contact Arista EOS+ at ansible-dev@arista.com
 
 
 .. _Developer Information: http://docs.ansible.com/developing.html

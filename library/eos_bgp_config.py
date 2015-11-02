@@ -42,7 +42,7 @@ category: BGP
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enable
-  - Python Client for eAPI 0.3.1 or later
+  - Python Client for eAPI 0.4.0 or later
 notes:
   - All configuraiton is idempontent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
