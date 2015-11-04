@@ -254,11 +254,13 @@ class EosAnsibleModule(AnsibleModule):
     }
 
     def __init__(self, stateful=True, *args, **kwargs):
+
         kwargs['argument_spec'].update(self.meta_args)
 
         self._stateful = stateful
         if stateful:
             kwargs['argument_spec'].update(self.stateful_args)
+
         super(EosAnsibleModule, self).__init__(*args, **kwargs)
 
         self.result = dict(changed=False, changes=dict())
@@ -506,7 +508,6 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
-
 def instance(module):
     """ Returns an instance of Vrrp based on interface
     """
@@ -527,6 +528,7 @@ def instance(module):
         _instance['priority'] = str(result['priority'])
         _instance['description'] = result['description']
         _instance['ip_version'] = str(result['ip_version'])
+        _instance['secondary_ip'] = ','.join(sorted(result['secondary_ip']))
         _instance['timers_advertise'] = str(result['timers_advertise'])
         _instance['preempt'] = result['preempt']
         _instance['preempt_delay_min'] = str(result['preempt_delay_min'])
@@ -534,12 +536,6 @@ def instance(module):
         _instance['delay_reload'] = str(result['delay_reload'])
         _instance['mac_addr_adv_interval'] = \
             str(result['mac_addr_adv_interval'])
-
-
-
-        sec_ips = ','.join(sorted(result['secondary_ip']))
-        _instance['secondary_ip'] = ','.join(sorted(result['secondary_ip']))
-
         tracks = result['track']
         track_list = []
         for track in tracks:
@@ -547,8 +543,8 @@ def instance(module):
             action = track['action']
             amount = track.get('amount', '__NONE__')
             track_list.append("%s--%s--%s" % (tr_obj, action, amount))
-
         tracks = ','.join(sorted(track_list))
+        _instance['track'] = tracks
     return _instance
 
 
@@ -623,15 +619,19 @@ def set_ip_version(module):
 
 
 def validate_secondary_ip(value):
-    """Converts the secondary ip array argument into a matchable string
+    """Converts the secondary ip array argument into a string that is
+    matchable in ansible-eos. The array is sorted before conversion, so
+    matching is exact.
     """
     if value is None:
         return None
+
     split = value.split(',')
     trimmed = []
     for item in split:
         item = item.strip(" []")
         trimmed.append(item)
+
     joined = ','.join(sorted(trimmed))
     return joined
 
@@ -734,9 +734,71 @@ def set_mac_addr_adv_interval(module):
                                                       value=int(value))
 
 
-# XXX
-# def validate_track(value):
-#     pass
+def validate_track(value):
+    """Converts the tracked object array argument into a string that is
+    matchable in ansible-eos. The array is sorted before conversion, so
+    matching is exact.
+    """
+    if value is None:
+        return None
+
+    tracks = []
+    # Find the individual track specifications in the input string
+    matches = re.findall(r'\{[^{}]+\}', value)
+    for match in matches:
+        # Strip the surrounding braces from the match
+        match = match.strip("{}")
+        # Match the name, action, and amount from the string
+        # Do this in separate matches in case the components are out of order
+        # A failure in the group matching means something is wrong with
+        # the input string.
+        tr_obj = re.search(r'name: (\S+)', match)
+        action = re.search(r'action: (decrement|shutdown)', match)
+        amount = re.search(r'amount: (\d+)', match)
+        if tr_obj is None or action is None:
+            raise ValueError("vrrp argument 'track' dictionaries must "
+                             "include keys for 'name' and 'action'. Valid "
+                             "values for 'action' are 'decrement' and "
+                             "'shutdown'.")
+        tr_obj = tr_obj.group(1)
+        action = action.group(1)
+        if amount is None:
+            amount = '__NONE__'
+        else:
+            amount = amount.group(1)
+        # Build the formatted string with the values
+        tracks.append("%s--%s--%s" % (tr_obj, action, amount))
+
+    joined = ','.join(sorted(tracks))
+    return joined
+
+
+def set_track(module):
+    """Configures the track attributes for the vrrp
+
+    Takes the tracks definition string used by eos_vrrp and converts it
+    to a dictionary for the set_tracks method of pyeapi.
+    """
+    interface = module.attributes['interface']
+    vrid = module.attributes['vrid']
+    value = module.attributes['track']
+    if value == '':
+        value = []
+    else:
+        value = value.split(',')
+
+    tracks = []
+    for track_str in value:
+        match = re.search(r'(.+)--(.+)--(.+)', track_str)
+        tr_obj = match.group(1)
+        action = match.group(2)
+        amount = match.group(3)
+        track_dict = {'name': tr_obj, 'action': action}
+        if amount != '__NONE__':
+            track_dict['amount'] = amount
+        tracks.append(track_dict)
+
+    module.node.api('vrrp').set_tracks(interface, vrid, tracks)
 
 
 def main():
@@ -750,7 +812,6 @@ def main():
         primary_ip=dict(),
         priority=dict(),
         description=dict(),
-        # secondary_ip=dict(type='list'),
         secondary_ip=dict(),
         ip_version=dict(),
         timers_advertise=dict(),
@@ -760,12 +821,9 @@ def main():
         preempt_delay_reload=dict(),
         delay_reload=dict(),
         authentication_type=dict(),
-        # track=dict(type='list'),
         track=dict(),
         bfd_ip=dict(),
     )
-
-    # argument_spec = module.node.api('vrrp').vrrp_format(argument_spec)
 
     argument_spec['continue'] = dict()
 
