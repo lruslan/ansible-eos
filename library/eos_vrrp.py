@@ -37,12 +37,12 @@ short_description: Manage EOS VRRP resources
 description:
   - This module will manage VRRP configurations on EOS nodes
 version_added: 1.2.0
-category: XXX
+category: VRRP
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled
   - Python Client for eAPI 0.4.0 or later
-notes: XXX
+notes:
   - All configuration is idempotent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
   - Supports stateful resource configuration.
@@ -95,14 +95,6 @@ options:
     choices: []
     aliases: []
     version_added: 1.2.0
-  secondary_ip:
-    description:
-      - Array of secondary ip addresses assigned to the VRRP
-    required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.2.0
   ip_version:
     description:
       - VRRP version in place on the virtual router
@@ -111,19 +103,19 @@ options:
     choices: [2, 3]
     aliases: []
     version_added: 1.2.0
+  secondary_ip:
+    description:
+      - Array of secondary ip addresses assigned to the VRRP
+    required: false
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.2.0
   timers_advertise:
     description:
       - Interval between advertisement messages to virtual router group
     required: false
     default: 1
-    choices: []
-    aliases: []
-    version_added: 1.2.0
-  mac_addr_adv_interval:
-    description:
-      - Interval between advertisement messages to virtual router group
-    required: false
-    default: 30
     choices: []
     aliases: []
     version_added: 1.2.0
@@ -159,49 +151,19 @@ options:
     choices: []
     aliases: []
     version_added: 1.2.0
-  authentication:
+  mac_addr_adv_interval:
     description:
-      - Authentication key for packets received from router group
+      - Interval between advertisement messages to virtual router group
     required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.2.0
-  authentication_type:
-    description:
-      - Type of authentication key in effect on the virtual router
-    required: false
-    default: null
+    default: 30
     choices: []
     aliases: []
     version_added: 1.2.0
   track:
     description:
-      - Name of an interface to track
-    required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.2.0
-  track_action:
-    description:
-      - Action to take on state-change of the tracked interface
-    required: false
-    default: null
-    choices: [shutdown, decrement]
-    aliases: []
-    version_added: 1.2.0
-  track_amount:
-    description:
-      - Amount to decrement priority for 'decrement' track_action
-    required: false
-    default: null
-    choices: []
-    aliases: []
-    version_added: 1.2.0
-  bfd_ip:
-    description:
-      - BFD ip address for the VRRP
+      - Array of track definitions to be assigned to the vrrp
+      track:
+        - { name: 'Ethernet1',
     required: false
     default: null
     choices: []
@@ -211,12 +173,16 @@ options:
 
 EXAMPLES = """
 
-- XXX
-- eos_routemap: name=rm1 action=permit seqno=10
-                description='this is a great routemap'
-                match='as 50,interface Ethernet2'
-                set='tag 100,weight 1000'
-                continue=20
+- eos_vrrp: interface=Vlan70 vrid=10 enable=True
+            primary_ip=10.10.10.1 priority=50
+            description='vrrp 10 on Vlan70'
+            ip_version=2 secondary_ip=['10.10.10.70','10.10.10.80']
+            timers_advertise=15 preempt=True
+            preempt_delay_min=30 preempt_delay_reload=30
+            delay_reload=30
+            track=[{name: Ethernet1, action: shutdown},
+                   {name: Ethernet1, action: decrement, amount: 5}]
+
 """
 #<<EOS_COMMON_MODULE_START>>
 
@@ -508,8 +474,9 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
+
 def instance(module):
-    """ Returns an instance of Vrrp based on interface
+    """ Returns an instance of Vrrp based on interface and vrid
     """
     interface = module.attributes['interface']
     vrid = module.attributes['vrid']
@@ -549,6 +516,8 @@ def instance(module):
 
 
 def create(module):
+    """Creates a vrrp on the interface
+    """
     interface = module.attributes['interface']
     vrid = module.attributes['vrid']
     module.node.api('vrrp').create(interface, vrid)
@@ -620,7 +589,7 @@ def set_ip_version(module):
 
 def validate_secondary_ip(value):
     """Converts the secondary ip array argument into a string that is
-    matchable in ansible-eos. The array is sorted before conversion, so
+    matchable in ansible-eos. The array is sorted before conversion so
     matching is exact.
     """
     if value is None:
@@ -736,7 +705,7 @@ def set_mac_addr_adv_interval(module):
 
 def validate_track(value):
     """Converts the tracked object array argument into a string that is
-    matchable in ansible-eos. The array is sorted before conversion, so
+    matchable in ansible-eos. The array is sorted before conversion so
     matching is exact.
     """
     if value is None:

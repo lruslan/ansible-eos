@@ -30,10 +30,32 @@ testcases:
     arguments:
       - { name: interface, value: 'Vlan70' }
       - { name: vrid, value: 10 }
-      - { name: enable, value: 'True' }
+      - { name: enable, value: 'False' }
+      - { name: primary_ip, value: '70.70.70.1' }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+
+  - name: create vrrp full
+    arguments:
+      - { name: interface, value: 'Vlan70' }
+      - { name: vrid, value: 10 }
+      - { name: enable, value: 'False' }
       - { name: primary_ip, value: '70.70.70.1' }
       - { name: priority, value: 175 }
+      - { name: description, value: vrrp with full specification }
+      - { name: ip_version, value: 2 }
       - { name: secondary_ip, value: *ip_addrs_1 }
+      - { name: timers_advertise, value: 10 }
+      - { name: preempt, value: true }
+      - { name: preempt_delay_min, value: 1800 }
+      - { name: preempt_delay_reload, value: 3600 }
+      - { name: delay_reload, value: 900 }
+      - { name: mac_addr_adv_interval, value: 8 }
+      - { name: track, value: *tracks_1 }
       - { name: state, value: present }
       - { name: debug, value: true }
       - { name: connection, value: $host }
