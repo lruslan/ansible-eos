@@ -535,6 +535,14 @@ def create(module):
     module.node.api('vrrp').create(interface, vrid)
 
 
+def remove(module):
+    """Removes a vrrp configuration from the interface
+    """
+    interface = module.attributes['interface']
+    vrid = module.attributes['vrid']
+    module.node.api('vrrp').delete(interface, vrid)
+
+
 def set_enable(module):
     """Configures the enable attribute for the vrrp.
     """

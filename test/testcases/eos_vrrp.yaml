@@ -63,6 +63,20 @@ testcases:
       - no interface vlan 70
       - interface vlan 70
 
+  - name: remove vrrp
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: state, value: absent }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 ip 70.70.70.1
+      - vrrp 10 description vrrp to be removed
+
   - name: enable vrrp
     arguments:
       - { name: interface, value: Vlan70 }
