@@ -67,7 +67,7 @@ options:
     description:
       - The state of the VRRP
     required: false
-    default: false
+    default: True
     choices: [True, False]
     aliases: []
     version_added: 1.2.0
@@ -107,7 +107,7 @@ options:
     description:
       - Array of secondary ip addresses assigned to the VRRP
     required: false
-    default: null
+    default: []
     choices: []
     aliases: []
     version_added: 1.2.0
@@ -123,8 +123,8 @@ options:
     description:
       - Preempt mode setting for the virtual router
     required: false
-    default: true
-    choices: [true, false]
+    default: True
+    choices: [True, False]
     aliases: []
     version_added: 1.2.0
   preempt_delay_min:
@@ -162,10 +162,8 @@ options:
   track:
     description:
       - Array of track definitions to be assigned to the vrrp
-      track:
-        - { name: 'Ethernet1',
     required: false
-    default: null
+    default: []
     choices: []
     aliases: []
     version_added: 1.2.0
@@ -173,21 +171,43 @@ options:
 
 EXAMPLES = """
 
-- eos_vrrp: interface=Vlan70 vrid=10 enable=True
-            primary_ip=10.10.10.1 priority=50
-            description='vrrp 10 on Vlan70'
-            ip_version=2 secondary_ip=['10.10.10.70','10.10.10.80']
-            timers_advertise=15 preempt=True
-            preempt_delay_min=30 preempt_delay_reload=30
-            delay_reload=30
-            track=[{name: Ethernet1, action: shutdown},
-                   {name: Ethernet1, action: decrement, amount: 5}]
+# Configure the set of tracked objects for the VRRP
+# Create a list of dictionaries, where name is the object to be
+# tracked, action is shutdown or decrement, and amount is the
+# decrement amount. Amount is not specified when action is shutdown.
+
+vars:
+  tracks:
+      - name: Ethernet1
+        action: shutdown
+      - name: Ethernet2
+        action: decrement
+        amount: 5
+
+# Setup the VRRP
+
+  - eos_vrrp:
+      interface=Vlan70
+      vrid=10
+      enable=True
+      primary_ip=10.10.10.1
+      priority=50
+      description='vrrp 10 on Vlan70'
+      ip_version=2
+      secondary_ip=['10.10.10.70','10.10.10.80']
+      timers_advertise=15
+      preempt=True
+      preempt_delay_min=30
+      preempt_delay_reload=30
+      delay_reload=30
+      track="{{ tracks }}"
 
 """
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
 import collections
+import yaml
 
 from ansible.module_utils.basic import *
 
@@ -495,7 +515,7 @@ def instance(module):
         _instance['priority'] = str(result['priority'])
         _instance['description'] = result['description']
         _instance['ip_version'] = str(result['ip_version'])
-        _instance['secondary_ip'] = ','.join(sorted(result['secondary_ip']))
+        _instance['secondary_ip'] = yaml.dump(sorted(result['secondary_ip']))
         _instance['timers_advertise'] = str(result['timers_advertise'])
         _instance['preempt'] = result['preempt']
         _instance['preempt_delay_min'] = str(result['preempt_delay_min'])
@@ -503,15 +523,7 @@ def instance(module):
         _instance['delay_reload'] = str(result['delay_reload'])
         _instance['mac_addr_adv_interval'] = \
             str(result['mac_addr_adv_interval'])
-        tracks = result['track']
-        track_list = []
-        for track in tracks:
-            tr_obj = track['name']
-            action = track['action']
-            amount = track.get('amount', '__NONE__')
-            track_list.append("%s--%s--%s" % (tr_obj, action, amount))
-        tracks = ','.join(sorted(track_list))
-        _instance['track'] = tracks
+        _instance['track'] = yaml.dump(sorted(result['track']))
     return _instance
 
 
@@ -521,18 +533,6 @@ def create(module):
     interface = module.attributes['interface']
     vrid = module.attributes['vrid']
     module.node.api('vrrp').create(interface, vrid)
-
-
-def validate_enable(value):
-    """Validates the enable argument is True or False.
-    """
-    if value is None:
-        return None
-    if value == 'True':
-        return True
-    if value == 'False':
-        return False
-    raise ValueError("vrrp argument 'enable' must be True or False")
 
 
 def set_enable(module):
@@ -595,14 +595,17 @@ def validate_secondary_ip(value):
     if value is None:
         return None
 
-    split = value.split(',')
-    trimmed = []
-    for item in split:
-        item = item.strip(" []")
-        trimmed.append(item)
+    # If value string is not surrounded by brackets as
+    # a list, add the brackets
+    if not re.match(r'^\[.*\]$', value):
+        value = "[%s]" % value
 
-    joined = ','.join(sorted(trimmed))
-    return joined
+    # Convert the string to an object, sort, and convert
+    # back to string for matching
+    newval = sorted(yaml.load(value))
+    newstr = yaml.dump(newval)
+
+    return newstr
 
 
 def set_secondary_ip(module):
@@ -614,7 +617,7 @@ def set_secondary_ip(module):
     if value == '':
         value = []
     else:
-        value = value.split(',')
+        value = yaml.load(value)
     module.node.api('vrrp').set_secondary_ips(interface, vrid, value)
 
 
@@ -628,18 +631,6 @@ def set_timers_advertise(module):
         raise ValueError("vrrp argument 'timers_advertise' must be an integer")
     module.node.api('vrrp').set_timers_advertise(interface, vrid,
                                                  value=int(value))
-
-
-def validate_preempt(value):
-    """Validates the preempt argument is True or False.
-    """
-    if value is None:
-        return None
-    if value == 'True':
-        return True
-    if value == 'False':
-        return False
-    raise ValueError("vrrp argument 'preempt' must be True or False")
 
 
 def set_preempt(module):
@@ -711,35 +702,17 @@ def validate_track(value):
     if value is None:
         return None
 
-    tracks = []
-    # Find the individual track specifications in the input string
-    matches = re.findall(r'\{[^{}]+\}', value)
-    for match in matches:
-        # Strip the surrounding braces from the match
-        match = match.strip("{}")
-        # Match the name, action, and amount from the string
-        # Do this in separate matches in case the components are out of order
-        # A failure in the group matching means something is wrong with
-        # the input string.
-        tr_obj = re.search(r'name: (\S+)', match)
-        action = re.search(r'action: (decrement|shutdown)', match)
-        amount = re.search(r'amount: (\d+)', match)
-        if tr_obj is None or action is None:
-            raise ValueError("vrrp argument 'track' dictionaries must "
-                             "include keys for 'name' and 'action'. Valid "
-                             "values for 'action' are 'decrement' and "
-                             "'shutdown'.")
-        tr_obj = tr_obj.group(1)
-        action = action.group(1)
-        if amount is None:
-            amount = '__NONE__'
-        else:
-            amount = amount.group(1)
-        # Build the formatted string with the values
-        tracks.append("%s--%s--%s" % (tr_obj, action, amount))
+    # If value string is not surrounded by brackets as
+    # a list, add the brackets
+    if not re.match(r'^\[.*\]$', value):
+        value = "[%s]" % value
 
-    joined = ','.join(sorted(tracks))
-    return joined
+    # Convert the string to an object, sort, and convert
+    # back to string for matching
+    newval = sorted(yaml.load(value))
+    newstr = yaml.dump(newval)
+
+    return newstr
 
 
 def set_track(module):
@@ -754,20 +727,9 @@ def set_track(module):
     if value == '':
         value = []
     else:
-        value = value.split(',')
+        value = yaml.load(value)
 
-    tracks = []
-    for track_str in value:
-        match = re.search(r'(.+)--(.+)--(.+)', track_str)
-        tr_obj = match.group(1)
-        action = match.group(2)
-        amount = match.group(3)
-        track_dict = {'name': tr_obj, 'action': action}
-        if amount != '__NONE__':
-            track_dict['amount'] = amount
-        tracks.append(track_dict)
-
-    module.node.api('vrrp').set_tracks(interface, vrid, tracks)
+    module.node.api('vrrp').set_tracks(interface, vrid, value)
 
 
 def main():
@@ -777,21 +739,20 @@ def main():
     argument_spec = dict(
         interface=dict(required=True),
         vrid=dict(required=True, type='int'),
-        enable=dict(),
-        primary_ip=dict(),
-        priority=dict(),
+        enable=dict(type='bool', default=True),
+        primary_ip=dict(default='0.0.0.0'),
+        priority=dict(default='100'),
         description=dict(),
-        secondary_ip=dict(),
-        ip_version=dict(),
-        timers_advertise=dict(),
-        mac_addr_adv_interval=dict(),
-        preempt=dict(),
-        preempt_delay_min=dict(),
-        preempt_delay_reload=dict(),
-        delay_reload=dict(),
+        secondary_ip=dict(default=''),
+        ip_version=dict(default='2'),
+        timers_advertise=dict(default='1'),
+        mac_addr_adv_interval=dict(default='30'),
+        preempt=dict(type='bool', default=True),
+        preempt_delay_min=dict(default='0'),
+        preempt_delay_reload=dict(default='0'),
+        delay_reload=dict(default='0'),
         authentication_type=dict(),
-        track=dict(),
-        bfd_ip=dict(),
+        track=dict(default=''),
     )
 
     argument_spec['continue'] = dict()

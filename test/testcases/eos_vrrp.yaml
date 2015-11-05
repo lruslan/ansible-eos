@@ -16,22 +16,22 @@ ip_addrs_2: &ip_addrs_2
   - '100.99.98.80'
 
 tracks_1: &tracks_1
-  - { name: 'Ethernet1', action: 'shutdown' }
-  - { name: 'Ethernet1', action: 'decrement', amount: 5 }
+  - { name: Ethernet1, action: shutdown }
+  - { name: Ethernet1, action: decrement, amount: 5 }
 tracks_2: &tracks_2
+  - { name: 'Ethernet2', action: 'shutdown' }
   - { name: 'Ethernet1', action: 'shutdown' }
   - { name: 'Ethernet1', action: 'decrement', amount: 5 }
-  - { name: 'Ethernet2', action: 'shutdown' }
   - { name: 'Ethernet2', action: 'decrement', amount: 5 }
 
 testcases:
 
   - name: create vrrp
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
-      - { name: enable, value: 'False' }
-      - { name: primary_ip, value: '70.70.70.1' }
+      - { name: enable, value: False }
+      - { name: primary_ip, value: 70.70.70.1 }
       - { name: state, value: present }
       - { name: debug, value: true }
       - { name: connection, value: $host }
@@ -41,10 +41,10 @@ testcases:
 
   - name: create vrrp full
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
-      - { name: enable, value: 'False' }
-      - { name: primary_ip, value: '70.70.70.1' }
+      - { name: enable, value: False }
+      - { name: primary_ip, value: 70.70.70.1 }
       - { name: priority, value: 175 }
       - { name: description, value: vrrp with full specification }
       - { name: ip_version, value: 2 }
@@ -65,9 +65,10 @@ testcases:
 
   - name: enable vrrp
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: enable, value: True }
+      - { name: primary_ip, value: 70.70.70.1 }
       - { name: state, value: present }
       - { name: debug, value: true }
       - { name: connection, value: $host }
@@ -79,7 +80,7 @@ testcases:
 
   - name: disable vrrp
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: enable, value: False}
       - { name: state, value: present }
@@ -94,7 +95,7 @@ testcases:
 
   - name: set vrrp primary ip
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: primary_ip, value: 70.70.70.1 }
       - { name: state, value: present }
@@ -107,7 +108,7 @@ testcases:
 
   - name: set vrrp priority
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: priority, value: 30}
       - { name: state, value: present }
@@ -121,9 +122,9 @@ testcases:
 
   - name: set vrrp description
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
-      - { name: description, value: 'new information' }
+      - { name: description, value: new information }
       - { name: state, value: present }
       - { name: debug, value: true }
       - { name: connection, value: $host }
@@ -135,8 +136,9 @@ testcases:
 
   - name: set no vrrp description
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
+      - { name: enable, value: False }
       - { name: description, value: '' }
       - { name: state, value: present }
       - { name: debug, value: true }
@@ -149,7 +151,7 @@ testcases:
 
   - name: set vrrp ip version
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: ip_version, value: 3}
       - { name: state, value: present }
@@ -163,7 +165,7 @@ testcases:
 
   - name: set vrrp secondary ip addresses ip_addrs_1
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: secondary_ip, value: *ip_addrs_1 }
       - { name: state, value: present }
@@ -177,7 +179,7 @@ testcases:
 
   - name: set vrrp secondary ip addresses ip_addrs_2
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: secondary_ip, value: *ip_addrs_2 }
       - { name: state, value: present }
@@ -194,8 +196,9 @@ testcases:
 
   - name: set no vrrp secondary ip addresses
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
+      - { name: enable, value: False }
       - { name: secondary_ip, value: '' }
       - { name: state, value: present }
       - { name: debug, value: true }
@@ -210,7 +213,7 @@ testcases:
 
   - name: set vrrp timers advertise
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: timers_advertise, value: 30}
       - { name: state, value: present }
@@ -224,8 +227,9 @@ testcases:
 
   - name: enable vrrp preempt
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
+      - { name: enable, value: False }
       - { name: preempt, value: True }
       - { name: state, value: present }
       - { name: debug, value: true }
@@ -238,7 +242,7 @@ testcases:
 
   - name: disable vrrp preempt
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: preempt, value: False}
       - { name: state, value: present }
@@ -252,7 +256,7 @@ testcases:
 
   - name: set vrrp preempt delay minimum
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: preempt_delay_min, value: 3000}
       - { name: state, value: present }
@@ -266,7 +270,7 @@ testcases:
 
   - name: set vrrp preempt delay reload
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: preempt_delay_reload, value: 2000}
       - { name: state, value: present }
@@ -280,7 +284,7 @@ testcases:
 
   - name: set vrrp delay reload
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: delay_reload, value: 1500}
       - { name: state, value: present }
@@ -294,7 +298,7 @@ testcases:
 
   - name: set vrrp mac-address advertisement-interval
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: mac_addr_adv_interval, value: 100}
       - { name: state, value: present }
@@ -308,7 +312,7 @@ testcases:
 
   - name: set vrrp tracked objects tracks_1
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: track, value: *tracks_1 }
       - { name: state, value: present }
@@ -326,7 +330,7 @@ testcases:
 
   - name: set vrrp tracked objects tracks_2
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
       - { name: track, value: *tracks_2 }
       - { name: state, value: present }
@@ -344,8 +348,9 @@ testcases:
 
   - name: set no vrrp tracked objects
     arguments:
-      - { name: interface, value: 'Vlan70' }
+      - { name: interface, value: Vlan70 }
       - { name: vrid, value: 10 }
+      - { name: enable, value: False }
       - { name: track, value: '' }
       - { name: state, value: present }
       - { name: debug, value: true }
