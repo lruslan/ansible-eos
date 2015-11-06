@@ -26,7 +26,9 @@ Before jumping in head first, it's important to understand how
 :ref:`ansible-eos-role-label` is deployed. At the preceding link,
 you'll see two deployment options which correlate to two separate quick start
 paths below. Have a quick read of :ref:`ansible-eos-role-label` and then come
-follow your preferred path.
+follow your preferred path. It's also recommended that you take a look at
+`pyeapi <http://pyeapi.readthedocs.org/en/latest>`_ documentation since it plays
+an essential part in the Ansible EOS role.
 
 
 *****************************************
@@ -51,12 +53,29 @@ to be enabled on the switch. The modules use eAPI to communicate with EOS.
 Since eAPI is not enabled by default, it must be initially enabled before the
 EOS modules can be used.
 
-.. Note:: The EOS role provides a module for enabling and configuring command
-          API using a task; however, the local user still needs to be created
-
-
 The steps below provide the basic steps to enable eAPI.  For more advanced
 configurations, please consult the EOS User Guide.
+
+As you may have learned in :ref:`ansible-eos-role-label`, when you connect
+to your node over SSH, Ansible will copy the Python module code to the switch
+and then execute it locally using Pyeapi APIs. Therefore, you have a few options
+when it comes to which protocol is enabled for eAPI.
+
+=========== ================== =============== ========================
+Transport   eapi.conf Required Pyeapi run from Authentication Required
+=========== ================== =============== ========================
+http        Yes                On/Off-switch   Yes
+https       Yes                On/Off-switch   Yes
+http_local  Yes                On-switch only  No
+socket      No                 On-switch only  No
+=========== ================== =============== ========================
+
+.. Note:: http_local and socket are EOS transports only supported in EOS
+          version 4.14.5+
+
+Therefore, it is recommended to use ``socket`` if you are running a recent
+version of EOS. Otherwise, use HTTP or HTTPS depending upon your security model.
+
 
 **Step 1.1.** Login to the destination node and enter configuration mode
 
@@ -67,7 +86,27 @@ configurations, please consult the EOS User Guide.
   switch(config)#
 
 
-**Step 1.2.** Enable eAPI
+**Step 1.2a.** Enable eAPI for Unix Sockets and Disable HTTP/s
+
+.. code-block:: console
+
+  switch(config)# management api http-commands
+  switch(config-mgmt-api-http-cmds)# no shutdown
+  switch(config-mgmt-api-http-cmds)# protocol unix-socket
+  switch(config-mgmt-api-http-cmds)# no protocol https
+
+**Step 1.2a.** Enable eAPI for HTTP Local
+
+This will only expose port 8080 at the loopback (localhost)
+
+.. code-block:: console
+
+  switch(config)# management api http-commands
+  switch(config-mgmt-api-http-cmds)# no shutdown
+  switch(config-mgmt-api-http-cmds)# no protocol https
+  switch(config-mgmt-api-http-cmds)# protocol http localhost
+
+**Step 1.2a.** Enable eAPI for Standard HTTP/S
 
 .. code-block:: console
 
@@ -179,50 +218,8 @@ This will only allow the Ansible user to login with keys.
 3. Install pyeapi
 =================
 As mentioned earlier, the Ansible EOS role uses `pyeapi <https://github.com/arista-eosplus/pyeapi>`_
-on the Arista node that will be configured. Let's install it on the EOS node.
-
-If the Arista EOS node has internet access:
-
-.. code-block:: console
-
-  [ansible@veos ~]$ sudo pip install pyeapi
-
-If there's no internet access:
-
-**Step 3.1:** Download Pypi Package
-
-- `Download <https://pypi.python.org/pypi/pyeapi>`_ the latest version of **pyeapi** on your local machine.
-- You will also need a dependency package `netaddr <https://pypi.python.org/pypi/netaddr>`_.
-
-**Step 3.2:** SCP both files to the Arista node and install
-
-.. code-block:: console
-
-  ansible@hub:~$ scp path/to/pyeapi-<VERSION>.tar.gz ansible@veos01:/mnt/flash/
-  ansible@hub:~$ scp path/to/netaddr-<VERSION>.tar.gz ansible@veos01:/mnt/flash/
-
-Then SSH into your node and install it. Be sure to replace ``<VERSION>`` with the
-actual filename:
-
-.. code-block:: console
-
-  [ansible@veos ~]$ sudo pip install /mnt/flash/netaddr-<VERSION>.tar.gz
-  [ansible@veos ~]$ sudo pip install /mnt/flash/pyeapi-<VERSION>.tar.gz
-
-In order to keep the installation persistent across reboot, modify ``/mnt/flash/rc.eos``:
-
-.. code-block:: console
-
-  [ansible@veos ~]$ vi /mnt/flash/rc.eos
-
-Paste in the following:
-
-.. code-block:: console
-
-  #!/bin/sh
-
-  sudo pip install /mnt/flash/netaddr-<VERSION>.tar.gz
-  sudo pip install /mnt/flash/pyeapi-<VERSION>.tar.gz
+on the Arista node that will be configured. Follow the `pyeapi <https://pyeapi.readthedocs.org/en/latest/install.html>`_ installation
+guide to install the package.
 
 
 .. _A-run-adhoc-label:
@@ -245,7 +242,9 @@ Ansible ``hosts`` file.
 
 .. code-block:: console
 
-  ansible@hub:~$ sudo vi /etc/ansible/hosts
+  ansible@hub:~$ mkdir ~/myfirstplaybook
+  ansible@hub:~$ cd ~/myfirstplaybook
+  ansible@hub:~$ vi hosts
 
 and add the connection info for your node substituting the IP or FQDN of your
 node as well as the name of the user created in Step 2.2 above:
@@ -265,6 +264,10 @@ node as well as the name of the user created in Step 2.2 above:
   password=icanttellyou
   port=<port-if-non-default>
 
+.. Note:: If ``socket`` is enabled for eAPI, there is no need to add the variables:
+          ``transport``, ``username``, ``password``, ``port``.  If ``http_local``
+          is being used, simply use ``transport=http_local``.
+
 Example
 
 .. code-block:: console
@@ -277,9 +280,9 @@ Example
 
   [eos_switches:vars]
   ansible_ssh_user=ansible
-  transport: https
-  username: eapi
-  password: icanttellyou
+  transport=https
+  username=eapi
+  password=icanttellyou
 
 
 **Step 4.2. Create playbook**
@@ -318,13 +321,17 @@ Then paste in the following
           after Ansible SSHes into the EOS node. By including these parameters here
           we remove the need to have an ``eapi.conf`` file on each EOS node.
 
+.. Note:: If your eAPI is configured to use Unix Socket there is no need to pass
+          the ``transport``, ``username``, or ``password`` attributes since the
+          default is to try and use ``transport=socket``.
+
 **Step 4.3. Run playbook**
 
 Simply execute from your Ansible Host and review output:
 
 .. code-block:: console
 
-  ansible@hub:~$ ansible-playbook my-test-eos-playbook.yml
+  ansible@hub:~$ ansible-playbook -i hosts my-test-eos-playbook.yml
 
 **Result**:
 
@@ -406,25 +413,19 @@ meta arguments to authenticate to eAPI.
 2. Install pyeapi
 =================
 As mentioned earlier, the Ansible EOS role uses `pyeapi <https://github.com/arista-eosplus/pyeapi>`_
-to make configuration changes to your Arista node. This requires you to have
-pyeapi installed on your Ansible Contol Host (where you execute commands from).
+on the Arista node that will be configured. Follow the `pyeapi
+http://pyeapi.readthedocs.org/en/latest/install.html>`_ installation
+guide to install the package.
 
-.. hint: See the `pyeapi <https://github.com/arista-eosplus/pyeapi>`_ docs for more information.
 
-**Step 2.1:** Pip install pyeapi
-
-.. code-block:: console
-
-  [ansible@hub ~]$ sudo pip install pyeapi
-
-**Step 2.2:** Create local pyeapi.conf file
+**Create local pyeapi.conf file**
 
 .. code-block:: console
 
   [ansible@hub ~]$ vi ~/.eapi.conf
 
 with credentials you created in Step 1.3. The ``connection:<NAME>`` should match
-the entry in ``/etc/ansible/hosts``, Step 3.1 below:
+the entry in ``hosts``, Step 3.1 below:
 
 .. code-block:: console
 
@@ -434,7 +435,6 @@ the entry in ``/etc/ansible/hosts``, Step 3.1 below:
   username: eapi
   password: icanttellyou
   port: <port-if-non-default>
-
 
 .. _B-run-adhoc-label:
 
@@ -455,7 +455,9 @@ Let's add the details of our test node to an Ansible Inventory file.
 
 .. code-block:: console
 
-  ansible@hub:~$ sudo vi /etc/ansible/hosts
+  ansible@hub:~$ mkdir ~/myfirstplaybook
+  ansible@hub:~$ cd ~/myfirstplaybook
+  ansible@hub:~$ vi hosts
 
 and add the connection info for your node substituting the IP or FQDN of your
 node under our ``eos_switches`` group.
@@ -511,7 +513,7 @@ Simply execute from your Ansible Host:
 
 .. code-block:: console
 
-  ansible@hub:~$ ansible-playbook my-test-eos-playbook.yml
+  ansible@hub:~$ ansible-playbook -i hosts my-test-eos-playbook.yml
 
 **Result**:
 
@@ -519,7 +521,7 @@ You should see JSON output containing any changes, along with the current and de
 
 1. We execute the command and Ansible goes to our inventory to find the specified nodes that match group ``eos_switches``.
 2. Ansible is told to use ``connection:local`` so no SSH connection will be established to the node.
-3. Ansible substitutes the host name from ``/etc/ansible/hosts`` into the ``{{ inventory_hostname }}`` parameter. This creates the link to the ``[connection:veos01]`` in ``~/.eapi.conf``.
+3. Ansible substitutes the host name from ``hosts`` into the ``{{ inventory_hostname }}`` parameter. This creates the link to the ``[connection:veos01]`` in ``~/.eapi.conf``.
 4. Ansible creates a temp directory in the user's home directory, eg ``$HOME/.ansible/tmp/``.
 5. Ansible copies eos_vlan.py to the temp directory created above.
 6. Ansible executes eos_vlan.py with the specified arguments
@@ -537,6 +539,9 @@ This guide should have helped you install and configure all necessary
 dependencies and given you a basic idea of how to use the Ansible EOS role.
 Next, you can add to your Ansible playbooks using a combination of modules.
 You can also check out the list of modules provided within the Ansible EOS Role
-to see all of the ways to make configuration changes.
+to see all of the ways to make configuration changes. There's also an
+`examples <https://github.com/arista-eosplus/ansible-eos/tree/master/examples>`_
+directory which has a full-featured set of tasks and roles to build an entire
+leaf/spine network with MLAG and BGP.
 
 .. tip:: Please send us some `feedback <eosplus-dev@arista.com>`_ on ways to improve this guide.

@@ -38,11 +38,11 @@ description:
   - The eos_staticroute module manages static route configuration options
     on Arista EOS nodes.
 version_added: 1.2.0
-category: System
+category: Route Policy
 author: Arista EOS+ CS
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled
-  - Python Client for eAPI 0.3.0 or later
+  - Python Client for eAPI 0.4.0 or later
 notes:
   - All configuration is idempotent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport

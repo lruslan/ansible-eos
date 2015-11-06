@@ -61,7 +61,8 @@ options:
   ip_routing:
     description:
       - Configures the state of IPv4 'ip routing' on the switch. By default
-        EOS switches come up with 'no ip routing'
+        EOS switches come up with 'no ip routing'. This attribute requires
+        pyeapi version 0.4.0.
     required: false
     default: false
     choices: ['true', 'false']

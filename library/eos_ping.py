@@ -45,8 +45,10 @@ category: System
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled
-  - Python Client for eAPI 0.3.0 or later
+  - Python Client for eAPI 0.4.0 or later
 notes:
+  - Important fixes to this module were made in pyeapi 0.4.0. Be sure to
+    update to at least that version.
   - All configuration is idempotent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
   - Does not support stateful resource configuration.
