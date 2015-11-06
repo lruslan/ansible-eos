@@ -1,14 +1,18 @@
 v1.2.0
-------
-2015-10-30
+-----
+
+2015-11-05
 
 New Modules
 ^^^^^^^^^^^
 
+* Add eos_vrrp (`78 <https://github.com/arista-eosplus/ansible-eos/pull/78>`_) [`grybak <https://github.com/grybak>`_]
+    Add the eos_vrrp module. This module controls interface VRRP configuration.
+    (Requires pyeapi update)
 * Feature staticroute (`68 <https://github.com/arista-eosplus/ansible-eos/pull/68>`_) [`grybak <https://github.com/grybak>`_]
     Adds the eos_staticroute module to perform configuration management of static ip routes.
     (Requires pyeapi update)
-* Feature varp (`67 <https://github.com/arista-eosplus/ansible-eos/pull/67>`_) [`phil-arista <https://github.com/phil-arista>`_]
+* Add eos_varp and eos_varp_interface modules (`67 <https://github.com/arista-eosplus/ansible-eos/pull/67>`_) [`phil-arista <https://github.com/phil-arista>`_]
     Adds the eos_varp and eos_varp_interface modules. The eos_varp module provides management of the system's virtual mac address.  The eos_varp_interface manages virtual-router ip addresses within Vlans.
     (Requires pyeapi update)
 * Add eos_routemap module (`66 <https://github.com/arista-eosplus/ansible-eos/pull/66>`_) [`phil-arista <https://github.com/phil-arista>`_]
@@ -42,11 +46,3 @@ Fixed
 * port-channel set to mode "on" not "active" on initial pass (`36 <https://github.com/arista-eosplus/ansible-eos/issues/36>`_)
     The eos_portchannel module runs set_lacp_mode before set_members. This means that when set_members is run, you end up with the default lacp mode instead of the mode you defined. Now, the set_members method includes a mode keyword.
     (Required pyeapi update)
-
-Known Caveats
-^^^^^^^^^^^^^
-
-* [eos_bgp_neighbor] Enable=true doesn't get set on first run of playbook (`75 <https://github.com/arista-eosplus/ansible-eos/issues/75>`_)
-    .. comment
-* Explain eAPI unix socket use for SSH connection (`34 <https://github.com/arista-eosplus/ansible-eos/issues/34>`_)
-    .. comment
