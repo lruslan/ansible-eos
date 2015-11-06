@@ -69,7 +69,7 @@ testcases:
   - name: set portchannel description
     arguments:
       - { name: name, value: Port-Channel1 }
-      - { name: description, value: "'test portchannel string'" }
+      - { name: description, value: 'test portchannel string' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:
@@ -79,7 +79,7 @@ testcases:
   - name: set portchannel description to empty string
     arguments:
       - { name: name, value: Port-Channel1 }
-      - { name: description, value: "''" }
+      - { name: description, value: '' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:
@@ -123,25 +123,23 @@ testcases:
     arguments:
       - { name: name, value: Port-Channel1 }
       - { name: lacp_mode, value: active }
+      - { name: members, value: 'Ethernet1,Ethernet2' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:
       - no interface Port-Channel1
       - default interface Ethernet1-2
-      - interface Ethernet1-2
-      - channel-group 1 mode on
 
   - name: set lacp mode to passive
     arguments:
       - { name: name, value: Port-Channel1 }
       - { name: lacp_mode, value: passive }
+      - { name: members, value: 'Ethernet1,Ethernet2' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:
       - no interface Port-Channel1
       - default interface Ethernet1-2
-      - interface Ethernet1-2
-      - channel-group 1 mode on
 
   - name: set lacp mode to disabled
     arguments:
@@ -154,4 +152,3 @@ testcases:
       - default interface Ethernet1-2
       - interface Ethernet1-2
       - channel-group 1 mode active
-

@@ -36,7 +36,7 @@ module: eos_ping
 short_description: Executes a network ping to from the node
 description:
   - The eos_ping module will execute a network ping from the node and
-    return the results.  If the host can be successfully pinged, then the
+    return the results.  If the destination can be successfully pinged, then the
     module returns successfully.  If any of the sent pings are not returned
     the module fails.  By default, the error threshold is set to the same
     value as the number of pings sent
@@ -45,22 +45,24 @@ category: System
 author: Arista EOS+
 requirements:
   - Arista EOS 4.13.7M or later with command API enabled
-  - Python Client for eAPI 0.3.0 or later
+  - Python Client for eAPI 0.4.0 or later
 notes:
+  - Important fixes to this module were made in pyeapi 0.4.0. Be sure to
+    update to at least that version.
   - All configuration is idempotent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
   - Does not support stateful resource configuration.
 options:
-  host:
+  dst:
     description:
-      - Specifies the host IP address or FQDN of the destination for the
+      - Specifies the destination IP address or FQDN for the
         network ping packet.
     required: true
     version_added: 1.1.0
   count:
     description:
       - Configures the number of packets to send from the node to the remote
-        host.  The default value is 5.
+        dst.  The default value is 5.
     default: 5
     required: false
     version_added: 1.1.0
@@ -71,18 +73,19 @@ options:
     version_added: 1.1.0
   error_threshold:
     description:
-      - Configures the error threshold (in packets) for the ping to be
-        considered failed.  By default the value of the error_threshold
-        is set to the count argument
+      - Configures the error threshold (in packet loss percentage) for the
+        ping test to be considered failed.  By default the value of the
+        error_threshold is set to 0. Valid values between 0 and 100.
     required: false
     version_added: 1.1.0
 """
 
 EXAMPLES = """
 
-- eos_ping: host=192.168.1.254 count=10
+- eos_ping: dst=192.168.1.254 count=10
 
-- eos_ping: host=192.168.1.254 count=10 error_threshold=9
+# Set the error_threshold to 50% packet loss
+- eos_ping: dst=192.168.1.254 count=10 error_threshold=50
 
 """
 import re
@@ -381,7 +384,7 @@ def main():
     """
 
     argument_spec = dict(
-        host=dict(required=True),
+        dst=dict(required=True),
         count=dict(type='int', default=5),
         error_threshold=dict(type='int'),
         source=dict()
@@ -391,17 +394,17 @@ def main():
                               supports_check_mode=False,
                               stateful=False)
 
-    host = module.params['host']
+    dst = module.params['dst']
     count = module.params['count']
     source = module.params['source']
     error_threshold = module.params['error_threshold']
 
     if not error_threshold:
-        error_threshold = count
-    elif error_threshold > count:
-        module.fail('error_threshold value cannot be bigger than the count value')
+        error_threshold = 0
+    elif error_threshold > 100 or error_threshold < 0:
+        module.fail('error_threshold must be between 0 and 100')
 
-    cmd = 'ping %s ' % host
+    cmd = 'ping %s ' % dst
     cmd += 'repeat %s ' % count
 
     if source:
@@ -410,19 +413,27 @@ def main():
     resp = module.node.enable(cmd, encoding='text')
     data = resp[0]['result']['output']
 
-    stats = re.search(r'^(\d+) \w+ \w+, (\d+) \w+, (?:.([^\s]+) errors, )?(\d+)% \w+', data, re.M)
-    (tx, rx, err, loss) = stats.groups()
+    if 'ping statistics' in data:
+        stats = re.search(r'^(\d+) \w+ \w+, (\d+) \w+, (?:.([^\s]+) errors, )?(\d+)% \w+', data, re.M)
+        (tx, rx, err, loss) = stats.groups()
 
-    if err is not None:
-        if int(err) > - error_threshold:
-            module.fail("Ping '%s' failed (sent: %s, rcvd: %s')" % (host, tx, rx))
+        if loss:
+            if int(loss) > error_threshold:
+                module.fail("Ping '%s' failed (sent: %s, rcvd: %s, err: %s, "
+                            "loss: %s)" % (dst, tx, rx, err, loss))
+
+    elif 'Network is unreachable' in data:
+        module.fail("Ping '%s' failed: Network is unreachable" % dst)
+
+    else:
+        module.fail("Ping '%s' failed: Unknown error %s" % (dst, data))
 
 
-    module.result['host'] = host
+    module.result['dst'] = dst
     module.result['count'] = count
     module.result['transmitted'] = int(tx)
     module.result['received'] = int(rx)
-    module.result['errors'] = 0
+    module.result['errors'] = err if err else 0
     module.result['loss'] = int(loss)
 
     module.exit()

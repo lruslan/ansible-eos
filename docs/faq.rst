@@ -55,9 +55,9 @@ the modules.
 Do I have to use the pyeapi eapi.conf file?
 ===========================================
 
-No, it is not a absolutel requirement.  All EOS modules will accept connection
+No, it is not a absolute requirement.  All EOS modules will accept connection
 parameters for configuring the eAPI transport properties.  Using eapi.conf is
-convienent but not necessary.
+convenient but not necessary.
 
 Does the EOS role work with Ansible Tower?
 ==========================================
@@ -79,7 +79,7 @@ No, it works with all the Ansible defaults.
 Is there something like a rollback function available in ansible?
 =================================================================
 
-Yes, its all in the implementation.  When working with a tool like Ansible,
+Yes, it's all in the implementation.  When working with a tool like Ansible,
 the node configuration should be kept under version control.  As such, rolling
 back a nodes configuration is a matter of reverting the config.  It's an
 implementation detail, not necessarily a module or feature.   We have

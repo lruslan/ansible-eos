@@ -69,7 +69,7 @@ testcases:
   - name: set interface description
     arguments:
       - { name: name, value: Vxlan1 }
-      - { name: description, value: "'test interface string'" }
+      - { name: description, value: 'test interface string' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:
@@ -107,4 +107,3 @@ testcases:
     setup:
       - no interface Vxlan1
       - interface Vxlan1
-

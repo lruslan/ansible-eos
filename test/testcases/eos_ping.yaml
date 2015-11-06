@@ -1,0 +1,70 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_ping
+  idempotent: false
+
+testcases:
+
+  - name: ping localhost
+    changed: false
+    arguments:
+      - { name: dst, value: 127.0.0.1 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+  - name: ping localhost with count 1
+    changed: false
+    arguments:
+      - { name: dst, value: 127.0.0.1 }
+      - { name: count, value: 1 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+  - name: ping localhost with count 50
+    changed: false
+    arguments:
+      - { name: dst, value: 127.0.0.1 }
+      - { name: count, value: 50 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+  - name: ping localhost with count 500
+    changed: false
+    arguments:
+      - { name: dst, value: 127.0.0.1 }
+      - { name: count, value: 500 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+  - name: ping localhost with error_threshold 0
+    changed: false
+    arguments:
+      - { name: dst, value: 127.0.0.1 }
+      - { name: count, value: 10 }
+      - { name: error_threshold, value: 0 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+  - name: ping localhost with error_threshold 100
+    changed: false
+    arguments:
+      - { name: dst, value: 127.0.0.1 }
+      - { name: count, value: 10 }
+      - { name: error_threshold, value: 100 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+
+  - name: ping localhost with source Ethernet1
+    changed: false
+    arguments:
+      - { name: dst, value: 127.0.0.1 }
+      - { name: source, value: Ethernet1 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - no switchport
+      - ip address 10.10.10.10/24

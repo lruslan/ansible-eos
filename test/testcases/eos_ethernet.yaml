@@ -49,7 +49,7 @@ testcases:
   - name: set interface description
     arguments:
       - { name: name, value: Ethernet1 }
-      - { name: description, value: "'test interface description'" }
+      - { name: description, value: 'test interface description' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:
@@ -58,7 +58,7 @@ testcases:
   - name: set interface description to empty string
     arguments:
       - { name: name, value: Ethernet1 }
-      - { name: description, value: "''" }
+      - { name: description, value: '' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:
@@ -193,5 +193,3 @@ testcases:
       - default interface Ethernet1
       - interface Ethernet1
       - flowcontrol receive on
-
-

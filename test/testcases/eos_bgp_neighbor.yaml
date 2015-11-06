@@ -111,7 +111,7 @@ testcases:
   - name: set bgp neighbor description
     arguments:
       - { name: name, value: 172.16.10.0 }
-      - { name: description, value: "'this is a test string'" }
+      - { name: description, value: 'this is a test string' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:
@@ -129,4 +129,3 @@ testcases:
       - router bgp 65000
       - neighbor 172.16.10.0 description configured by ansible
       - neighbor 172.16.10.0 shutdown
-

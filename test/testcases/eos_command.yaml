@@ -10,15 +10,13 @@ testcases:
   - name: runs a single enable command
     changed: false
     arguments:
-      - { name: commands, value: "'show version'" }
+      - { name: commands, value: 'show version' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
 
   - name: runs multiple enable commands
     changed: false
     arguments:
-      - { name: commands, value: "'show version, show ip route'" }
+      - { name: commands, value: 'show version, show ip route' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
-
-

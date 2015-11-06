@@ -58,6 +58,16 @@ options:
     choices: []
     aliases: []
     version_added: 1.0.0
+  ip_routing:
+    description:
+      - Configures the state of IPv4 'ip routing' on the switch. By default
+        EOS switches come up with 'no ip routing'. This attribute requires
+        pyeapi version 0.4.0.
+    required: false
+    default: false
+    choices: ['true', 'false']
+    aliases: []
+    version_added: 1.2.0
 """
 
 EXAMPLES = """
@@ -359,7 +369,12 @@ class EosAnsibleModule(AnsibleModule):
 def instance(module):
     """ Returns the system resource instance
     """
-    return module.node.api('system').get()
+    result = module.node.api('system').get()
+    _instance = dict()
+    _instance['hostname'] = result['hostname']
+    _instance['ip_routing'] = result['iprouting']
+
+    return _instance
 
 def set_hostname(module):
     """Configures the hostname value
@@ -368,12 +383,24 @@ def set_hostname(module):
     module.log('Invoked set_hostanme for eos_system with value %s' % value)
     module.node.api('system').set_hostname(value)
 
+def set_ip_routing(module):
+    """Configures the ip routing state
+    """
+    value = module.attributes['ip_routing']
+    module.log('Invoked set_ip_routing for eos_system with value %s' % value)
+
+    if value:
+        module.node.api('system').set_iprouting(True)
+    else:
+        module.node.api('system').set_iprouting(False)
+
 def main():
     """ The main module routine called when the module is run by Ansible
     """
 
     argument_spec = dict(
-        hostname=dict()
+        hostname=dict(),
+        ip_routing=dict(type='bool')
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,

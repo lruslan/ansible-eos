@@ -85,10 +85,10 @@ options:
 EXAMPLES = """
 
 - name: Ensure a logical IP interface is configured on Vlan100
-  eos_ipinterface: name=Vlan100 ensure=present address=172.16.10.1/24
+  eos_ipinterface: name=Vlan100 state=present address=172.16.10.1/24
 
 - name: Ensure a logical IP interface is not configured on Ethernet1
-  eos_ipinterface: name=Ethernet1 ensure=absent
+  eos_ipinterface: name=Ethernet1 state=absent
 
 - name: Configure the MTU value on Port-Channel10
   eos_ipinterface: name=Port-Channel10 mtu=9000

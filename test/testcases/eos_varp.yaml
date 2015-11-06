@@ -1,0 +1,32 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_varp
+
+testcases:
+
+  - name: set varp mac address
+    arguments:
+      - { name: mac_address, value: '00:11:22:33:44:55' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - default ip virtual-router mac-address
+
+  - name: update varp mac address
+    arguments:
+      - { name: mac_address, value: '00:11:22:33:44:56' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - default ip virtual-router mac-address
+      - ip virtual-router mac-address 00:11:22:33:44:55
+
+  - name: remove varp mac address
+    arguments:
+      - { name: mac_address, value: '' }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - ip virtual-router mac-address 00:11:22:33:44:55

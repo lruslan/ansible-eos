@@ -1,0 +1,113 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_staticroute
+
+testcases:
+
+  - name: create a static route with an ip addr as next_hop
+    arguments:
+      - { name: ip_dest, value: "21.21.21.0/24" }
+      - { name: next_hop, value: "192.168.1.1" }
+      - { name: distance, value: 41 }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no ip route 21.21.21.0/24
+
+  - name: create a static route with distance passed in as a string
+    arguments:
+      - { name: ip_dest, value: "21.21.21.0/24" }
+      - { name: next_hop, value: "192.168.1.1" }
+      - { name: distance, value: '51' }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no ip route 21.21.21.0/24
+
+  - name: delete a static route with an ip addr as next hop
+    arguments:
+      - { name: ip_dest, value: "22.22.22.0/24" }
+      - { name: next_hop, value: "192.168.1.1" }
+      - { name: distance, value: 42 }
+      - { name: state, value: absent }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - ip route 22.22.22.0/24 192.168.1.1 42 tag 142 name test42
+
+  - name: create a static route with an interface as next_hop
+    arguments:
+      - { name: ip_dest, value: "23.23.23.0/24" }
+      - { name: next_hop, value: "Ethernet1" }
+      - { name: distance, value: 43 }
+      - { name: next_hop_ip, value: "1.1.1.1" }
+      - { name: tag, value: '143' }
+      - { name: route_name, value: "test43" }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no ip route 23.23.23.0/24
+
+  - name: delete a static route with an interface as next hop
+    arguments:
+      - { name: ip_dest, value: "24.24.24.0/24" }
+      - { name: next_hop, value: "Ethernet1" }
+      - { name: next_hop_ip, value: "1.1.1.1" }
+      - { name: distance, value: 44 }
+      - { name: tag, value: 144 }
+      - { name: route_name, value: "test44" }
+      - { name: state, value: absent }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - ip route 24.24.24.0/24 Ethernet1 1.1.1.1 44 tag 144 name test44
+
+  - name: set the tag on an existing route
+    arguments:
+      - { name: ip_dest, value: "25.25.25.0/24" }
+      - { name: next_hop, value: "Ethernet1" }
+      - { name: next_hop_ip, value: "1.1.1.1" }
+      - { name: distance, value: 45 }
+      - { name: tag, value: 145 }
+      - { name: route_name, value: "test45" }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no ip route 25.25.25.0/24
+      - ip route 25.25.25.0/24 Ethernet1 1.1.1.1 45 tag 99 name test45
+
+  - name: set the tag on an existing route using a string
+    arguments:
+      - { name: ip_dest, value: "25.25.25.0/24" }
+      - { name: next_hop, value: "Ethernet1" }
+      - { name: next_hop_ip, value: "1.1.1.1" }
+      - { name: distance, value: 45 }
+      - { name: tag, value: '155' }
+      - { name: route_name, value: "test45" }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no ip route 25.25.25.0/24
+      - ip route 25.25.25.0/24 Ethernet1 1.1.1.1 45 tag 99 name test45
+
+  - name: set the name on an existing route
+    arguments:
+      - { name: ip_dest, value: "26.26.26.0/24" }
+      - { name: next_hop, value: "Ethernet1" }
+      - { name: next_hop_ip, value: "1.1.1.1" }
+      - { name: distance, value: 46 }
+      - { name: tag, value: 146 }
+      - { name: route_name, value: "test46" }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no ip route 26.26.26.0/24
+      - ip route 26.26.26.0/24 Ethernet1 1.1.1.1 46 tag 146 name not46
