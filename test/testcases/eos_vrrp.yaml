@@ -1,0 +1,380 @@
+---
+defaults:
+  inventory: test/fixtures/hosts
+  module_path: library
+  module: eos_vrrp
+
+ip_addrs_1: &ip_addrs_1
+  - '100.99.98.72'
+  - '100.99.98.71'
+  - '100.99.98.73'
+  - '100.99.98.70'
+ip_addrs_2: &ip_addrs_2
+  - '100.99.98.83'
+  - '100.99.98.82'
+  - '100.99.98.81'
+  - '100.99.98.80'
+
+tracks_1: &tracks_1
+  - { name: Ethernet1, action: shutdown }
+  - { name: Ethernet1, action: decrement, amount: 5 }
+tracks_2: &tracks_2
+  - { name: 'Ethernet2', action: 'shutdown' }
+  - { name: 'Ethernet1', action: 'shutdown' }
+  - { name: 'Ethernet1', action: 'decrement', amount: 5 }
+  - { name: 'Ethernet2', action: 'decrement', amount: 5 }
+
+testcases:
+
+  - name: create vrrp
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: enable, value: False }
+      - { name: primary_ip, value: 70.70.70.1 }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+
+  - name: create vrrp full
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: enable, value: False }
+      - { name: primary_ip, value: 70.70.70.1 }
+      - { name: priority, value: 175 }
+      - { name: description, value: vrrp with full specification }
+      - { name: ip_version, value: 2 }
+      - { name: secondary_ip, value: *ip_addrs_1 }
+      - { name: timers_advertise, value: 10 }
+      - { name: preempt, value: true }
+      - { name: preempt_delay_min, value: 1800 }
+      - { name: preempt_delay_reload, value: 3600 }
+      - { name: delay_reload, value: 900 }
+      - { name: mac_addr_adv_interval, value: 8 }
+      - { name: track, value: *tracks_1 }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+
+  - name: remove vrrp
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: state, value: absent }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 ip 70.70.70.1
+      - vrrp 10 description vrrp to be removed
+
+  - name: enable vrrp
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: enable, value: True }
+      - { name: primary_ip, value: 70.70.70.1 }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 ip 70.70.70.1
+
+  - name: disable vrrp
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: enable, value: False}
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 ip 70.70.70.1
+      - no vrrp 10 shutdown
+
+  - name: set vrrp primary ip
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: primary_ip, value: 70.70.70.1 }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+
+  - name: set vrrp priority
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: priority, value: 30}
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 priority 200
+
+  - name: set vrrp description
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: description, value: new information }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 description old information
+
+  - name: set no vrrp description
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: enable, value: False }
+      - { name: description, value: '' }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 description previously set
+
+  - name: set vrrp ip version
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: ip_version, value: 3}
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 ip version 2
+
+  - name: set vrrp secondary ip addresses ip_addrs_1
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: secondary_ip, value: *ip_addrs_1 }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 ip 100.99.98.100
+
+  - name: set vrrp secondary ip addresses ip_addrs_2
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: secondary_ip, value: *ip_addrs_2 }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 ip 100.99.98.100
+      - vrrp 10 ip 100.99.98.70 secondary
+      - vrrp 10 ip 100.99.98.71 secondary
+      - vrrp 10 ip 100.99.98.72 secondary
+
+  - name: set no vrrp secondary ip addresses
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: enable, value: False }
+      - { name: secondary_ip, value: '' }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 ip 100.99.98.100
+      - vrrp 10 ip 100.99.98.80 secondary
+      - vrrp 10 ip 100.99.98.81 secondary
+
+  - name: set vrrp timers advertise
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: timers_advertise, value: 30}
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 timers advertise 10
+
+  - name: enable vrrp preempt
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: enable, value: False }
+      - { name: preempt, value: True }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - no vrrp 10 preempt
+
+  - name: disable vrrp preempt
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: preempt, value: False}
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 preempt
+
+  - name: set vrrp preempt delay minimum
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: preempt_delay_min, value: 3000}
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 preempt delay minimum 10
+
+  - name: set vrrp preempt delay reload
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: preempt_delay_reload, value: 2000}
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 preempt delay reload 10
+
+  - name: set vrrp delay reload
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: delay_reload, value: 1500}
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 delay reload 10
+
+  - name: set vrrp mac-address advertisement-interval
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: mac_addr_adv_interval, value: 100}
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 mac-address advertisement-interval 50
+
+  - name: set vrrp tracked objects tracks_1
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: track, value: *tracks_1 }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 ip 100.99.98.100
+      - vrrp 10 track Ethernet2 shutdown
+      - vrrp 10 track Ethernet1 decrement 50
+      - vrrp 10 track Ethernet3 shutdown
+      - vrrp 10 track Ethernet3 decrement 50
+
+  - name: set vrrp tracked objects tracks_2
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: track, value: *tracks_2 }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 ip 100.99.98.100
+      - vrrp 10 track Ethernet2 shutdown
+      - vrrp 10 track Ethernet1 decrement 50
+      - vrrp 10 track Ethernet3 shutdown
+      - vrrp 10 track Ethernet3 decrement 50
+
+  - name: set no vrrp tracked objects
+    arguments:
+      - { name: interface, value: Vlan70 }
+      - { name: vrid, value: 10 }
+      - { name: enable, value: False }
+      - { name: track, value: '' }
+      - { name: state, value: present }
+      - { name: debug, value: true }
+      - { name: connection, value: $host }
+    setup:
+      - no interface vlan 70
+      - interface vlan 70
+      - vrrp 10 shutdown
+      - vrrp 10 ip 100.99.98.100
+      - vrrp 10 track Ethernet2 shutdown
+      - vrrp 10 track Ethernet1 decrement 50
+      - vrrp 10 track Ethernet3 shutdown
+      - vrrp 10 track Ethernet3 decrement 50
