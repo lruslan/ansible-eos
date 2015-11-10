@@ -40,6 +40,18 @@ testcases:
       - interface Ethernet1
       - no switchport
 
+  - name: set no interface address
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: address, value: '' }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - no switchport
+      - ip address 99.99.99.99/8
+
   - name: set interface mtu
     arguments:
       - { name: name, value: Ethernet1 }
@@ -52,4 +64,28 @@ testcases:
       - no switchport
       - ip address 99.99.99.99/8
 
+  - name: set interface mtu to 1500
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: mtu, value: 1500 }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - no switchport
+      - ip address 99.99.99.99/8
+      - mtu 2000
 
+  - name: set no interface mtu
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: mtu, value: '' }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default interface Ethernet1
+      - interface Ethernet1
+      - no switchport
+      - ip address 99.99.99.99/8
+      - mtu 2000
