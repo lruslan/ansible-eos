@@ -258,7 +258,6 @@ class EosAnsibleModule(AnsibleModule):
                 self.refresh()
 
             changeset = self.attributes.viewitems() - self.instance.viewitems()
-
             if self._debug:
                 self.debug('desired_state', self.attributes)
                 self.debug('current_state', self.instance)
@@ -405,7 +404,12 @@ def instance(module):
     """Returns an instance of Mlag global config from the node
     """
     response = module.node.api('mlag').get()
-    return response['config']
+    _instance = response['config']
+    _instance['domain_id'] = _instance['domain_id'] or ''
+    _instance['local_interface'] = _instance['local_interface'] or ''
+    _instance['peer_address'] = _instance['peer_address'] or ''
+    _instance['peer_link'] = _instance['peer_link'] or ''
+    return _instance
 
 def set_domain_id(module):
     """Configures the global mlag domain-id value
@@ -413,7 +417,10 @@ def set_domain_id(module):
     value = module.attributes['domain_id']
     module.log('Invoked set_domain_id for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_domain_id(value)
+    if value == '':
+        module.node.api('mlag').set_domain_id(value, disable=True)
+    else:
+        module.node.api('mlag').set_domain_id(value)
 
 def set_local_interface(module):
     """Configures the global mlag local-interface value
@@ -421,7 +428,10 @@ def set_local_interface(module):
     value = module.attributes['local_interface']
     module.log('Invoked set_local_interface for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_local_interface(value)
+    if value == '':
+        module.node.api('mlag').set_local_interface(value, disable=True)
+    else:
+        module.node.api('mlag').set_local_interface(value)
 
 def set_peer_address(module):
     """Configures the global mlag peer-address value
@@ -429,7 +439,10 @@ def set_peer_address(module):
     value = module.attributes['peer_address']
     module.log('Invoked set_peer_address for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_peer_address(value)
+    if value == '':
+        module.node.api('mlag').set_peer_address(value, disable=True)
+    else:
+        module.node.api('mlag').set_peer_address(value)
 
 def set_peer_link(module):
     """Configures the global mlag peer-link value
@@ -437,7 +450,10 @@ def set_peer_link(module):
     value = module.attributes['peer_link']
     module.log('Invoked set_peer_link for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_peer_link(value)
+    if value == '':
+        module.node.api('mlag').set_peer_link(value, disable=True)
+    else:
+        module.node.api('mlag').set_peer_link(value)
 
 def set_shutdown(module):
     """Conifgures the global mlag shutdown value
