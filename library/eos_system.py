@@ -376,12 +376,22 @@ def instance(module):
 
     return _instance
 
+def validate_hostname(value):
+    # If value for hostname is '', the hostname will
+    # be removed and the default 'localhost' will be set
+    if value == '':
+        return 'localhost'
+    return value
+
 def set_hostname(module):
     """Configures the hostname value
     """
     value = module.attributes['hostname']
     module.log('Invoked set_hostanme for eos_system with value %s' % value)
-    module.node.api('system').set_hostname(value)
+    if value == 'localhost':
+        module.node.api('system').set_hostname(None, disable=True)
+    else:
+        module.node.api('system').set_hostname(value)
 
 def set_ip_routing(module):
     """Configures the ip routing state
