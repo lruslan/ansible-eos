@@ -143,6 +143,30 @@ testcases:
     setup:
       - no username test
 
+  - name: Create user with role ops
+    arguments:
+      - { name: name, value: test }
+      - { name: nopassword, value: True }
+      - { name: role, value: ops }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+
+  - name: Remove role but keep user
+    arguments:
+      - { name: name, value: test }
+      - { name: nopassword, value: True }
+      - { name: role, value: '' }
+      - { name: state, value: present }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no username test
+      - username test nopassword
+      - username test role ops
+
   - name: Create user with an sshkey
     arguments:
       - { name: name, value: test }
