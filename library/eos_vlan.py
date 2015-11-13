@@ -443,7 +443,10 @@ def set_trunk_groups(module):
     vlanid = module.attributes['vlanid']
     module.log('Invoked set_trunk_groups for eos_vlan[%s] '
                'with value %s' % (vlanid, value))
-    module.node.api('vlans').set_trunk_groups(vlanid, value)
+    if value == '':
+        module.node.api('vlans').set_trunk_groups(vlanid, value, disable=True)
+    else:
+        module.node.api('vlans').set_trunk_groups(vlanid, value)
 
 def main():
     """ The main module routine called when the module is run by Ansible
