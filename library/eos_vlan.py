@@ -436,14 +436,25 @@ def set_enable(module):
                'with value %s' % (vlanid, value))
     module.node.api('vlans').set_state(vlanid, value)
 
+def validate_trunk_groups(value):
+    """ Sorts the trunk groups passed into the playbook. This will ensure
+    idempotency since the API will return the trunk groups sorted.
+    """
+    if not value:
+        return None
+
+    trunk_groups = sorted(value.split(','))
+    return ','.join(trunk_groups)
+
 def set_trunk_groups(module):
     """ Configures the list of trunk groups assigned to this Vlan
     """
-    value = module.attributes['trunk_groups']
+    value = module.attributes['trunk_groups'].split(',')
+    trunk_groups = None if not value else value
     vlanid = module.attributes['vlanid']
     module.log('Invoked set_trunk_groups for eos_vlan[%s] '
-               'with value %s' % (vlanid, value))
-    module.node.api('vlans').set_trunk_groups(vlanid, value)
+               'with value %s' % (vlanid, trunk_groups))
+    module.node.api('vlans').set_trunk_groups(vlanid, trunk_groups)
 
 def main():
     """ The main module routine called when the module is run by Ansible
