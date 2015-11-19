@@ -425,10 +425,10 @@ def set_enable(module):
     """Configures the enable attribute for the interface
     """
     name = module.attributes['name']
-    value = not module.attributes['enable']
+    value = module.attributes['enable']
     module.log('Invoked set_enable for eos_interface[%s] '
                'with value %s' % (name, value))
-    module.node.api('interfaces').set_shutdown(name, value)
+    module.node.api('interfaces').set_shutdown(name, disable=value)
 
 def main():
     """ The main module routine called when the module is run by Ansible
