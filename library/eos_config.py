@@ -400,15 +400,34 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
+
 def section(module):
-    try:
-        if module.attributes['section']:
-            regex = r'^%s$' % module.attributes['section']
-            return module.node.section(regex)
+    if module.attributes['section']:
+        regex = r'^%s$' % module.attributes['section']
+
+        if module.attributes['conf']:
+            conf = module.attributes['conf']
         else:
-            return module.node.running_config
-    except TypeError:
-        return str()
+            conf = module.node.running_config
+
+        match = re.search(regex, conf, re.M)
+        if not match:
+            raise TypeError('config section not found')
+        block_start, line_end = match.regs[0]
+
+        #match = re.search(r'^[^\s]', conf[line_end:], re.M)
+        match = re.search(r'^!', conf[line_end:], re.M)
+        if not match:
+            raise TypeError('could not find end block')
+        _, block_end = match.regs[0]
+
+        block_end = line_end + block_end
+        return conf[block_start:block_end]
+    else:
+        return module.node.running_config
+#    except TypeError:
+#        return str()
+
 
 def config(module):
     commands = list()
@@ -426,6 +445,7 @@ def main():
         command=dict(required=True),
         section=dict(),
         regexp=dict(aliases=['expression']),
+        conf=dict(),
         state=dict(default='present', choices=['present', 'absent'])
     )
 
@@ -440,6 +460,7 @@ def main():
 
     cfg = section(module)
     module.debug('running_config', cfg)
+    module.log('return log: %s' % len(cfg))
 
     if state == 'absent':
         if regexp:
