@@ -114,6 +114,7 @@ EXAMPLES = """
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
+import collections
 
 from ansible.module_utils.basic import *
 
@@ -126,7 +127,6 @@ except ImportError:
 DEFAULT_SYSLOG_PRIORITY = syslog.LOG_NOTICE
 DEFAULT_CONNECTION = 'localhost'
 TRANSPORTS = ['socket', 'http', 'https', 'http_local']
-
 
 class EosAnsibleModule(AnsibleModule):
 
@@ -258,6 +258,7 @@ class EosAnsibleModule(AnsibleModule):
                 self.refresh()
 
             changeset = self.attributes.viewitems() - self.instance.viewitems()
+
             if self._debug:
                 self.debug('desired_state', self.attributes)
                 self.debug('current_state', self.instance)
@@ -311,8 +312,7 @@ class EosAnsibleModule(AnsibleModule):
         if self.params['connection']:
             config = pyeapi.config_for(self.params['connection'])
             if not config:
-                msg = ('Connection name "%s" not found'
-                       % self.params['connection'])
+                msg = 'Connection name "%s" not found' % self.params['connection']
                 self.fail(msg)
 
         if self.params['username']:
@@ -420,10 +420,8 @@ def set_domain_id(module):
     value = module.attributes['domain_id']
     module.log('Invoked set_domain_id for eos_mlag_config '
                'with value %s' % value)
-    if value == '':
-        module.node.api('mlag').set_domain_id(value, disable=True)
-    else:
-        module.node.api('mlag').set_domain_id(value)
+    disable = (value == '')
+    module.node.api('mlag').set_domain_id(value, disable=disable)
 
 
 def set_local_interface(module):
@@ -432,10 +430,8 @@ def set_local_interface(module):
     value = module.attributes['local_interface']
     module.log('Invoked set_local_interface for eos_mlag_config '
                'with value %s' % value)
-    if value == '':
-        module.node.api('mlag').set_local_interface(value, disable=True)
-    else:
-        module.node.api('mlag').set_local_interface(value)
+    disable = (value == '')
+    module.node.api('mlag').set_local_interface(value, disable=disable)
 
 
 def set_peer_address(module):
@@ -444,10 +440,8 @@ def set_peer_address(module):
     value = module.attributes['peer_address']
     module.log('Invoked set_peer_address for eos_mlag_config '
                'with value %s' % value)
-    if value == '':
-        module.node.api('mlag').set_peer_address(value, disable=True)
-    else:
-        module.node.api('mlag').set_peer_address(value)
+    disable = (value == '')
+    module.node.api('mlag').set_peer_address(value, disable=disable)
 
 
 def set_peer_link(module):
@@ -456,10 +450,8 @@ def set_peer_link(module):
     value = module.attributes['peer_link']
     module.log('Invoked set_peer_link for eos_mlag_config '
                'with value %s' % value)
-    if value == '':
-        module.node.api('mlag').set_peer_link(value, disable=True)
-    else:
-        module.node.api('mlag').set_peer_link(value)
+    disable = (value == '')
+    module.node.api('mlag').set_peer_link(value, disable=disable)
 
 
 def set_shutdown(module):
