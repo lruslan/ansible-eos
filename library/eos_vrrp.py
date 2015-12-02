@@ -203,11 +203,11 @@ vars:
       track="{{ tracks }}"
 
 """
+import yaml
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
 import collections
-import yaml
 
 from ansible.module_utils.basic import *
 
