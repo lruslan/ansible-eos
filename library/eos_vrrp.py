@@ -203,11 +203,11 @@ vars:
       track="{{ tracks }}"
 
 """
+import yaml
 #<<EOS_COMMON_MODULE_START>>
 
 import syslog
 import collections
-import yaml
 
 from ansible.module_utils.basic import *
 
@@ -581,7 +581,8 @@ def set_description(module):
     if value == '':
         # Empty string passed in - disable description on the vrrp
         module.node.api('vrrp').set_description(interface, vrid, disable=True)
-    module.node.api('vrrp').set_description(interface, vrid, value=value)
+    else:
+        module.node.api('vrrp').set_description(interface, vrid, value=value)
 
 
 def set_ip_version(module):

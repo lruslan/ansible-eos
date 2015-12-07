@@ -370,9 +370,11 @@ def set_mac_address(module):
     """ Configures the global virtual-router mac address
     """
     mac_address = module.attributes['mac_address']
-    mac_address = mac_address if mac_address else None
     module.log('Invoked create for eos_varp[%s]' % mac_address)
-    module.api('varp').set_mac_address(mac_address)
+    if mac_address == '':
+        module.api('varp').set_mac_address(mac_address, disable=True)
+    else:
+        module.api('varp').set_mac_address(mac_address)
 
 
 def main():

@@ -211,8 +211,9 @@ class EosAnsibleModule(AnsibleModule):
         self.debug('params', self.params)
 
         self._attributes = self.map_argument_spec()
-        self._node = self.connect()
+        self.validate()
 
+        self._node = self.connect()
         self._instance = None
 
         self.desired_state = self.params['state'] if self._stateful else None
@@ -269,6 +270,12 @@ class EosAnsibleModule(AnsibleModule):
         if 'CHECKMODE' in attrs:
             del attrs['CHECKMODE']
         return attrs
+
+    def validate(self):
+        for key, value in self.attributes.iteritems():
+            func = self.func('validate_%s' % key)
+            if func:
+                self.attributes[key] = func(value)
 
     def create(self):
         if not self.check_mode:
@@ -507,10 +514,12 @@ def set_role(module):
     name = module.attributes['name']
     value = module.attributes['role']
 
-    value = None if value == '' else value
     module.log('Invoked set_role for eos_user[%s] '
                'with value %s' % (name, value))
-    module.node.api('users').set_role(name, value)
+    if value == '':
+        module.node.api('users').set_role(name, value, disable=True)
+    else:
+        module.node.api('users').set_role(name, value)
 
 
 def set_secret(module):
@@ -537,6 +546,7 @@ def set_secret(module):
                'with secret %s and encryption %s' % (name, secret, encryption))
     module.node.api('users').create_with_secret(name, secret, encryption)
 
+
 def set_sshkey(module):
     """ Configures the sshkey for the user. The user must have already between
         created.
@@ -545,7 +555,11 @@ def set_sshkey(module):
     sshkey = module.attributes['sshkey']
 
     module.log('Invoked set_sshkey for eos_user[%s]' % name)
-    module.node.api('users').set_sshkey(name, sshkey)
+    if sshkey == '':
+        module.node.api('users').set_sshkey(name, sshkey, disable=True)
+    else:
+        module.node.api('users').set_sshkey(name, sshkey)
+
 
 def main():
     """ The main module routine called when the module is run by Ansible

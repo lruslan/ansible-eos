@@ -76,7 +76,7 @@ testcases:
       - no vlan 100
       - vlan 100
 
-  - name: set trunk groups to singe value
+  - name: set trunk groups to single value
     arguments:
       - { name: vlanid, value: 100 }
       - { name: trunk_groups, value: foo }
@@ -98,3 +98,15 @@ testcases:
       - vlan 100
       - trunk group foo1
       - trunk group foo2
+
+  - name: set trunk groups to no value
+    arguments:
+      - { name: vlanid, value: 100 }
+      - { name: trunk_groups, value: '' }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - no vlan 100
+      - vlan 100
+      - trunk group foo
+      - trunk group bar

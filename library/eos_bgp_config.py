@@ -117,7 +117,8 @@ EXAMPLES = """
   eos_bgp_config: bgp_as=65535 router_id=1.1.1.1 maximum_paths=20
 
 - name: configure the BGP with maximum_paths and maximum_ecmp_paths
-  eos_bgp_config: bgp_as=65535 router_id=1.1.1.1 maximum_paths=20 maximum_ecmp_paths=20
+  eos_bgp_config: bgp_as=65535 router_id=1.1.1.1 maximum_paths=20
+  maximum_ecmp_paths=20
 """
 #<<EOS_COMMON_MODULE_START>>
 
@@ -440,11 +441,13 @@ def remove(module):
 def set_enable(module):
     """Globally enables or disables the BGP process
     """
-    value = not module.attributes['enable']
+    # If enable is True, we disable shutdown (no shutdown)
+    # If enable is False, we do not disable shutdown
+    value = module.attributes['enable']
     bgp_as = module.attributes['bgp_as']
     module.log('Invoked set_enable for eos_bgp_config[{}] '
                'with value {}'.format(bgp_as, value))
-    module.node.api('bgp').set_shutdown(value)
+    module.node.api('bgp').set_shutdown(disable=value)
 
 def set_router_id(module):
     """Configures the BGP router-id

@@ -14,6 +14,14 @@ testcases:
     setup:
       - no hostname
 
+  - name: negate the system hostname
+    arguments:
+      - { name: hostname, value: '' }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - hostname teststring
+
   - name: enable ip routing with True
     arguments:
       - { name: ip_routing, value: true }

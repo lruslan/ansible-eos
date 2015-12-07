@@ -379,7 +379,7 @@ def instance(module):
     _instance = dict(name=name, state='absent')
     if result:
         _instance['state'] = 'present'
-        _instance['mlag_id'] = result['mlag_id']
+        _instance['mlag_id'] = result['mlag_id'] or ''
     return _instance
 
 def create(module):
@@ -394,6 +394,8 @@ def remove(module):
     """
     name = module.attributes['name']
     module.log('Invoked remove for eos_mlag_interface[%s]' % name)
+    # Set mlag_id to '' to invoke the disable flag on set_mlag_id
+    module.attributes['mlag_id'] = ''
     set_mlag_id(module)
 
 def set_mlag_id(module):
@@ -403,7 +405,10 @@ def set_mlag_id(module):
     name = module.attributes['name']
     module.log('Invoked set_mlag_id for eos_mlag_interface[%s] '
                'with value %s' % (name, value))
-    module.node.api('mlag').set_mlag_id(name, value)
+    if value == '':
+        module.node.api('mlag').set_mlag_id(name, value, disable=True)
+    else:
+        module.node.api('mlag').set_mlag_id(name, value)
 
 def main():
     """ The main module routine called when the module is run by Ansible

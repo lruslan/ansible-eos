@@ -409,6 +409,7 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
+
 def instance(module):
     """ Returns an instance of Routemaps based on name, action and sequence
     number.
@@ -451,6 +452,7 @@ def remove(module):
                % (name, action, seqno))
     module.api('routemaps').delete(name, action, seqno)
 
+
 def set_description(module):
     """ Configures the description for the routemap
     """
@@ -458,11 +460,15 @@ def set_description(module):
     action = module.attributes['action']
     seqno = int(module.attributes['seqno'])
     value = module.attributes['description']
-    value = None if value == '' else value
 
     module.log('Invoked set_description with %s for eos_routemap[%s %s %s]'
                % (value, name, action, seqno))
-    module.node.api('routemaps').set_description(name, action, seqno, value)
+    if value == '':
+        module.node.api('routemaps').set_description(name, action, seqno,
+                                                     disable=True)
+    else:
+        module.node.api('routemaps').set_description(name, action, seqno, value)
+
 
 def set_continue(module):
     """ Configures the continue value for the routemap
@@ -477,7 +483,11 @@ def set_continue(module):
 
     module.log('Invoked set_continue for eos_routemap[%s %s %s]'
                % (name, action, seqno))
-    module.node.api('routemaps').set_continue(name, action, seqno, value)
+    if value is None:
+        module.node.api('routemaps').set_continue(name, action, seqno,
+                                                  disable=True)
+    else:
+        module.node.api('routemaps').set_continue(name, action, seqno, value)
 
 
 def set_match(module):
@@ -492,6 +502,7 @@ def set_match(module):
     module.node.api('routemaps').set_match_statements(name, action, seqno,
                                                       statements)
 
+
 def set_set(module):
     """ Configures the set statements for the routemap
     """
@@ -503,6 +514,7 @@ def set_set(module):
                % (name, action, seqno))
     module.node.api('routemaps').set_set_statements(name, action, seqno,
                                                     statements)
+
 
 def main():
     """ The main module routine called when the module is run by Ansible

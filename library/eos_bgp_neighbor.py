@@ -537,11 +537,13 @@ def set_description(module):
 def set_enable(module):
     """Configures the BGP shutdown value for this neighbor
     """
+    # If enable is True, we disable shutdown (no shutdown)
+    # If enable is False, we do not disable shutdown
     name = module.attributes['name']
-    value = not module.attributes['enable']
+    value = module.attributes['enable']
     module.log('Invoked set_shutdown for eos_bgp_neighbor[{}] '
                'with value {}'.format(name, value))
-    module.node.api('bgp').neighbors.set_shutdown(name, value)
+    module.node.api('bgp').neighbors.set_shutdown(name, disable=value)
 
 
 def main():

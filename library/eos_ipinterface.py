@@ -392,7 +392,8 @@ def instance(module):
     _instance = dict(name=name, state='absent')
     if result:
         _instance['state'] = 'present'
-        _instance['address'] = result['address']
+        _instance['address'] = \
+            '' if result['address'] is None else result['address']
         _instance['mtu'] = str(result['mtu'])
     return _instance
 
@@ -415,9 +416,19 @@ def set_address(module):
     """
     value = module.attributes['address']
     name = module.attributes['name']
-    module.log('Invoked set_address for eos_ipinterface[%s] '
-               'with value %s' % (name, value))
-    module.node.api('ipinterfaces').set_address(name, value)
+    if value == '':
+        module.log('Invoked set_address for eos_ipinterface[%s] '
+                   'with empty string. Negating address value' % name)
+        module.node.api('ipinterfaces').set_address(name, disable=True)
+    else:
+        module.log('Invoked set_address for eos_ipinterface[%s] '
+                   'with value %s' % (name, value))
+        module.node.api('ipinterfaces').set_address(name, value)
+
+def validate_mtu(value):
+    if value == '':
+        return '1500'
+    return value
 
 def set_mtu(module):
     """ Configures the IP MTU attribute for the interface

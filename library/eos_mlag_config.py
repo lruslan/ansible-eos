@@ -401,11 +401,18 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
+
 def instance(module):
     """Returns an instance of Mlag global config from the node
     """
     response = module.node.api('mlag').get()
-    return response['config']
+    _instance = response['config']
+    _instance['domain_id'] = _instance['domain_id'] or ''
+    _instance['local_interface'] = _instance['local_interface'] or ''
+    _instance['peer_address'] = _instance['peer_address'] or ''
+    _instance['peer_link'] = _instance['peer_link'] or ''
+    return _instance
+
 
 def set_domain_id(module):
     """Configures the global mlag domain-id value
@@ -413,7 +420,9 @@ def set_domain_id(module):
     value = module.attributes['domain_id']
     module.log('Invoked set_domain_id for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_domain_id(value)
+    disable = (value == '')
+    module.node.api('mlag').set_domain_id(value, disable=disable)
+
 
 def set_local_interface(module):
     """Configures the global mlag local-interface value
@@ -421,7 +430,9 @@ def set_local_interface(module):
     value = module.attributes['local_interface']
     module.log('Invoked set_local_interface for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_local_interface(value)
+    disable = (value == '')
+    module.node.api('mlag').set_local_interface(value, disable=disable)
+
 
 def set_peer_address(module):
     """Configures the global mlag peer-address value
@@ -429,7 +440,9 @@ def set_peer_address(module):
     value = module.attributes['peer_address']
     module.log('Invoked set_peer_address for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_peer_address(value)
+    disable = (value == '')
+    module.node.api('mlag').set_peer_address(value, disable=disable)
+
 
 def set_peer_link(module):
     """Configures the global mlag peer-link value
@@ -437,15 +450,18 @@ def set_peer_link(module):
     value = module.attributes['peer_link']
     module.log('Invoked set_peer_link for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_peer_link(value)
+    disable = (value == '')
+    module.node.api('mlag').set_peer_link(value, disable=disable)
+
 
 def set_shutdown(module):
     """Conifgures the global mlag shutdown value
     """
-    value = module.attributes['shutdown']
+    value = not module.attributes['shutdown']
     module.log('Invoked set_shutdown for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_shutdown(value)
+    module.node.api('mlag').set_shutdown(disable=value)
+
 
 def main():
     """ The main module routine called when the module is run by Ansible
@@ -462,7 +478,6 @@ def main():
     module = EosAnsibleModule(argument_spec=argument_spec,
                               stateful=False,
                               supports_check_mode=True)
-
 
     module.flush(True)
 

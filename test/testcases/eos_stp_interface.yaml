@@ -28,7 +28,6 @@ testcases:
       - interface Ethernet1
       - spanning-tree portfast edge
 
-
   - name: set portfast to true
     arguments:
       - { name: name, value: Ethernet1 }
@@ -116,4 +115,3 @@ testcases:
       - default interface Ethernet1
       - interface Ethernet1
       - spanning-tree bpduguard enable
-

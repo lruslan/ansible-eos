@@ -451,10 +451,12 @@ def set_description(module):
     """
     value = module.attributes['description']
     name = module.attributes['name']
-    value = None if value == '' else value
     module.log('Invoked set_description for eos_vxlan[%s] '
                'with value %s' % (name, value))
-    module.node.api('interfaces').set_description(name, value)
+    if value == '':
+        module.node.api('interfaces').set_description(name, value, disable=True)
+    else:
+        module.node.api('interfaces').set_description(name, value)
 
 def set_enable(module):
     """ Configures the enable attribute for the interface
