@@ -393,6 +393,7 @@ class EosAnsibleModule(AnsibleModule):
 
 #<<EOS_COMMON_MODULE_END>>
 
+
 def instance(module):
     """ Returns an instance of Vlan based on vlanid
     """
@@ -406,6 +407,7 @@ def instance(module):
         _instance['trunk_groups'] = ','.join(result['trunk_groups'])
     return _instance
 
+
 def create(module):
     """ Creates a new instance of a Vlan on the node
     """
@@ -413,10 +415,12 @@ def create(module):
     module.log('Invoked create for eos_vlan[%s]' % name)
     module.node.api('vlans').create(name)
 
+
 def remove(module):
     name = module.attributes['vlanid']
     module.log('Invoked remove for eos_vlan[%s]' % name)
     module.node.api('vlans').delete(name)
+
 
 def set_name(module):
     """ Configures the name attribute for the vlan id
@@ -427,6 +431,7 @@ def set_name(module):
                'with value %s' % (vlanid, value))
     module.node.api('vlans').set_name(vlanid, value)
 
+
 def set_enable(module):
     """ Configures the vlan as adminstratively enabled or disabled
     """
@@ -436,10 +441,22 @@ def set_enable(module):
                'with value %s' % (vlanid, value))
     module.node.api('vlans').set_state(vlanid, value)
 
+
+def validate_trunk_groups(value):
+    """ Sorts the trunk groups passed into the playbook. This will ensure
+    idempotency since the API will return the trunk groups sorted.
+    """
+    if not value:
+        return ''
+
+    trunk_groups = sorted(value.split(','))
+    return ','.join(trunk_groups)
+
+
 def set_trunk_groups(module):
     """ Configures the list of trunk groups assigned to this Vlan
     """
-    value = module.attributes['trunk_groups']
+    value = module.attributes['trunk_groups'].split(',')
     vlanid = module.attributes['vlanid']
     module.log('Invoked set_trunk_groups for eos_vlan[%s] '
                'with value %s' % (vlanid, value))
@@ -447,6 +464,7 @@ def set_trunk_groups(module):
         module.node.api('vlans').set_trunk_groups(vlanid, value, disable=True)
     else:
         module.node.api('vlans').set_trunk_groups(vlanid, value)
+
 
 def main():
     """ The main module routine called when the module is run by Ansible
