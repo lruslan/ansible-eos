@@ -77,7 +77,7 @@ class EosAnsibleModule(AnsibleModule):
         'state': dict(default='present', choices=['present', 'absent']),
     }
 
-    def __init__(self, stateful=True, *args, **kwargs):
+    def __init__(self, stateful=True, autorefresh=False, *args, **kwargs):
 
         kwargs['argument_spec'].update(self.meta_args)
 
@@ -100,7 +100,7 @@ class EosAnsibleModule(AnsibleModule):
 
         self._attributes = self.map_argument_spec()
         self.validate()
-
+        self._autorefresh = autorefresh
         self._node = EosConnection(**self.params)
         self._node.connect()
 
@@ -187,6 +187,7 @@ class EosAnsibleModule(AnsibleModule):
                 changed = self.create()
                 self.result['changed'] = changed or True
                 self.refresh()
+                self._node.refresh()
 
             changeset = self.attributes.viewitems() - self.instance.viewitems()
 
@@ -265,7 +266,9 @@ class EosAnsibleModule(AnsibleModule):
             self.fail('Connection must define a transport')
 
         connection = pyeapi.client.make_connection(**config)
-        node = pyeapi.client.Node(connection, **config)
+        self.log('Creating connection with auto: %s' % self._autorefresh)
+        node = pyeapi.client.Node(connection, autorefresh=self._autorefresh,
+                                  **config)
 
         try:
             resp = node.enable('show version')
