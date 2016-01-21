@@ -311,7 +311,7 @@ class EosAnsibleModule(AnsibleModule):
                 self.refresh()
                 # After a create command, flush the running-config
                 # so we get the latest for any other attributes
-                self._node.refresh()
+                self._node._running_config = None
 
             changeset = self.attributes.viewitems() - self.instance.viewitems()
 
@@ -324,6 +324,7 @@ class EosAnsibleModule(AnsibleModule):
                 self.result['changes'] = changes
                 self.result['changed'] = True
 
+            self.log(changes)
             self._attributes.update(changes)
 
             flush = self.func('flush')
@@ -341,7 +342,8 @@ class EosAnsibleModule(AnsibleModule):
                 self.result['changed'] = changed or True
 
         self.refresh()
-        self.result['instance'] = self.instance
+        if self._debug:
+            self.result['instance'] = self.instance
 
         if self.exit_after_flush:
             self.exit()
@@ -506,6 +508,7 @@ def set_router_id(module):
     module.log('Invoked set_router_id for eos_bgp_config[{}] '
                'with value {}'.format(bgp_as, value))
     module.node.api('bgp').set_router_id(value)
+    module.log('Ran command')
 
 def set_maximum_paths(module):
     """Configures the BGP maximum-paths

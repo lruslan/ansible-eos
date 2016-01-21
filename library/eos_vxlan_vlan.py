@@ -282,7 +282,7 @@ class EosAnsibleModule(AnsibleModule):
                 self.refresh()
                 # After a create command, flush the running-config
                 # so we get the latest for any other attributes
-                self._node.refresh()
+                self._node._running_config = None
 
             changeset = self.attributes.viewitems() - self.instance.viewitems()
 
@@ -295,6 +295,7 @@ class EosAnsibleModule(AnsibleModule):
                 self.result['changes'] = changes
                 self.result['changed'] = True
 
+            self.log(changes)
             self._attributes.update(changes)
 
             flush = self.func('flush')
@@ -312,7 +313,8 @@ class EosAnsibleModule(AnsibleModule):
                 self.result['changed'] = changed or True
 
         self.refresh()
-        self.result['instance'] = self.instance
+        if self._debug:
+            self.result['instance'] = self.instance
 
         if self.exit_after_flush:
             self.exit()
