@@ -504,7 +504,8 @@ def main():
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,
-                              supports_check_mode=True)
+                              supports_check_mode=True,
+                              autorefresh=True)
 
     module.flush(True)
 

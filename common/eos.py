@@ -187,6 +187,8 @@ class EosAnsibleModule(AnsibleModule):
                 changed = self.create()
                 self.result['changed'] = changed or True
                 self.refresh()
+                # After a create command, flush the running-config
+                # so we get the latest for any other attributes
                 self._node.refresh()
 
             changeset = self.attributes.viewitems() - self.instance.viewitems()
