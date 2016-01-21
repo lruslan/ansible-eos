@@ -268,7 +268,7 @@ class EosAnsibleModule(AnsibleModule):
             self.fail('Connection must define a transport')
 
         connection = pyeapi.client.make_connection(**config)
-        self.log('Creating connection with auto: %s' % self._autorefresh)
+        self.log('Creating connection with autorefresh=%s' % self._autorefresh)
         node = pyeapi.client.Node(connection, autorefresh=self._autorefresh,
                                   **config)
 
