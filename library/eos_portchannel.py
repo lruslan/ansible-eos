@@ -455,11 +455,11 @@ def set_description(module):
 def set_enable(module):
     """ Configures the enable attribute for the interface
     """
-    value = not module.attributes['enable']
+    value = module.attributes['enable']
     name = module.attributes['name']
     module.log('Invoked set_enable for eos_portchannel[%s] '
                'with value %s' % (name, value))
-    module.node.api('interfaces').set_shutdown(name, value)
+    module.node.api('interfaces').set_shutdown(name, disable=value)
 
 def set_members(module):
     """ Configures the members attribute for the interface
