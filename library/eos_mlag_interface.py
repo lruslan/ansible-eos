@@ -284,7 +284,6 @@ class EosAnsibleModule(AnsibleModule):
                 self.result['changes'] = changes
                 self.result['changed'] = True
 
-            self.log(changes)
             self._attributes.update(changes)
 
             flush = self.func('flush')
@@ -302,6 +301,9 @@ class EosAnsibleModule(AnsibleModule):
                 self.result['changed'] = changed or True
 
         self.refresh()
+        # By calling self.instance here we trigger another show running-config
+        # all which causes delay.  Only if debug is enabled do we call this
+        # since it will display the latest state of the object.
         if self._debug:
             self.result['instance'] = self.instance
 
