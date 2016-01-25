@@ -46,7 +46,9 @@ requirements:
 notes:
   - All configuration is idempotent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
-  - Supports stateful resource configuration.
+  - Supports stateful resource configuration. This method also supports the
+    'default' state. This will default the specified interface. Note however
+    that the default state operation is NOT idempotent.
 options:
   name:
     description:
@@ -451,6 +453,13 @@ def create(module):
     name = module.attributes['name']
     module.log('Invoked create for eos_interface[%s]' % name)
     module.node.api('interfaces').create(name)
+
+def default(module):
+    """Defaults an existing interface from the node
+    """
+    name = module.attributes['name']
+    module.log('Invoked default for eos_interface[%s]' % name)
+    module.node.api('interfaces').default(name)
 
 def remove(module):
     """Removes an existing interface from the node
