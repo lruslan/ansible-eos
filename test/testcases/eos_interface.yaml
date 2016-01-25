@@ -16,6 +16,7 @@ testcases:
       - no interface Loopback0
 
   - name: default loopback0 interface
+    idempotent: false
     arguments:
       - { name: name, value: Loopback0 }
       - { name: state, value: default }
@@ -25,6 +26,7 @@ testcases:
       - interface Loopback0
 
   - name: default Ethernet1 interface
+    idempotent: false
     arguments:
       - { name: name, value: Ethernet1 }
       - { name: state, value: default }
@@ -35,6 +37,7 @@ testcases:
       - description testdesc
 
   - name: default Port-Channel1 interface
+    idempotent: false
     arguments:
       - { name: name, value: Port-Channel1 }
       - { name: state, value: default }
