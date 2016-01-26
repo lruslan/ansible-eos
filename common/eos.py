@@ -86,11 +86,11 @@ class EosAnsibleModule(AnsibleModule):
             kwargs['argument_spec'].update(self.stateful_args)
 
         ## Ok, so in Ansible 2.0,
-        ## AnsibleModule.__init__() sets self.params and then 
+        ## AnsibleModule.__init__() sets self.params and then
         ##   calls self.log()
         ##   (through self._log_invocation())
         ##
-        ## However, self.log() (overridden in EosAnsibleModule) 
+        ## However, self.log() (overridden in EosAnsibleModule)
         ##   references self._logging
         ## and self._logging (defined in EosAnsibleModule)
         ##   references self.params.
@@ -99,7 +99,7 @@ class EosAnsibleModule(AnsibleModule):
         ##   *before* AnsibleModule.__init__() to avoid a "ref before def".
         ##
         ## I verified that this works with Ansible 1.9.4 and 2.0.0.2.
-        ## The only caveat is that the first log message in 
+        ## The only caveat is that the first log message in
         ##   AnsibleModule.__init__() won't be subject to the value of
         ##   self.params['logging'].
         self._logging = kwargs.get('logging')
@@ -233,7 +233,8 @@ class EosAnsibleModule(AnsibleModule):
 
         elif self._stateful:
             if self.desired_state != self.instance.get('state'):
-                changed = self.invoke(self.instance.get('state'))
+                func = self.func(self.desired_state)
+                changed = self.invoke(func, self)
                 self.result['changed'] = changed or True
 
         self.refresh()

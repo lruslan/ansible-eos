@@ -46,7 +46,9 @@ requirements:
 notes:
   - All configuration is idempotent unless otherwise specified
   - Supports eos metaparameters for using the eAPI transport
-  - Supports stateful resource configuration.
+  - Supports stateful resource configuration. This method also supports the
+    'default' state. This will default the specified interface. Note however
+    that the default state operation is NOT idempotent.
 options:
   name:
     description:
@@ -176,6 +178,24 @@ class EosAnsibleModule(AnsibleModule):
         if stateful:
             kwargs['argument_spec'].update(self.stateful_args)
 
+        ## Ok, so in Ansible 2.0,
+        ## AnsibleModule.__init__() sets self.params and then
+        ##   calls self.log()
+        ##   (through self._log_invocation())
+        ##
+        ## However, self.log() (overridden in EosAnsibleModule)
+        ##   references self._logging
+        ## and self._logging (defined in EosAnsibleModule)
+        ##   references self.params.
+        ##
+        ## So ... I'm defining self._logging without "or self.params['logging']"
+        ##   *before* AnsibleModule.__init__() to avoid a "ref before def".
+        ##
+        ## I verified that this works with Ansible 1.9.4 and 2.0.0.2.
+        ## The only caveat is that the first log message in
+        ##   AnsibleModule.__init__() won't be subject to the value of
+        ##   self.params['logging'].
+        self._logging = kwargs.get('logging')
         super(EosAnsibleModule, self).__init__(*args, **kwargs)
 
         self.result = dict(changed=False, changes=dict())
@@ -306,7 +326,8 @@ class EosAnsibleModule(AnsibleModule):
 
         elif self._stateful:
             if self.desired_state != self.instance.get('state'):
-                changed = self.invoke(self.instance.get('state'))
+                func = self.func(self.desired_state)
+                changed = self.invoke(func, self)
                 self.result['changed'] = changed or True
 
         self.refresh()
@@ -420,7 +441,7 @@ class EosAnsibleModule(AnsibleModule):
                 self.result['debug'] = dict()
             self.result['debug'][key] = value
 
-    def log(self, message, priority=None):
+    def log(self, message, log_args=None, priority=None):
         if self._logging:
             syslog.openlog('ansible-eos')
             priority = priority or DEFAULT_SYSLOG_PRIORITY
@@ -451,6 +472,13 @@ def create(module):
     name = module.attributes['name']
     module.log('Invoked create for eos_interface[%s]' % name)
     module.node.api('interfaces').create(name)
+
+def default(module):
+    """Defaults an existing interface from the node
+    """
+    name = module.attributes['name']
+    module.log('Invoked default for eos_interface[%s]' % name)
+    module.node.api('interfaces').default(name)
 
 def remove(module):
     """Removes an existing interface from the node
