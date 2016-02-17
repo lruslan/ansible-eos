@@ -10,3 +10,4 @@ Release Notes
     release-notes-1.0.1.rst
     release-notes-1.1.0.rst
     release-notes-1.2.0.rst
+    release-notes-1.3.0.rst
