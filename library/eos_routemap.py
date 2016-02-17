@@ -136,6 +136,50 @@ DEFAULT_SYSLOG_PRIORITY = syslog.LOG_NOTICE
 DEFAULT_CONNECTION = 'localhost'
 TRANSPORTS = ['socket', 'http', 'https', 'http_local']
 
+class EosConnection(object):
+
+    __attributes__ = ['username', 'password', 'host', 'transport', 'port']
+
+    def __init__(self, **kwargs):
+        self.connection = kwargs['connection']
+        self.transport = kwargs.get('transport')
+
+        self.username = kwargs.get('username')
+        self.password = kwargs.get('password')
+
+        self.host = kwargs.get('host')
+        self.port = kwargs.get('port')
+
+        self.config = kwargs.get('config')
+
+    def connect(self):
+        if self.config is not None:
+            pyeapi.load_config(self.config)
+
+        config = dict()
+
+        if self.connection is not None:
+            config = pyeapi.config_for(self.connection)
+            if not config:
+                msg = 'Connection name "{}" not found'.format(self.connection)
+
+        for key in self.__attributes__:
+            if getattr(self, key) is not None:
+                config[key] = getattr(self, key)
+
+        if 'transport' not in config:
+            raise ValueError('Connection must define a transport')
+
+        connection = pyeapi.client.make_connection(**config)
+        node = pyeapi.client.Node(connection, **config)
+
+        try:
+            node.enable('show version')
+        except (pyeapi.eapilib.ConnectionError, pyeapi.eapilib.CommandError):
+            raise ValueError('unable to connect to {}'.format(node))
+        return node
+
+
 class EosAnsibleModule(AnsibleModule):
 
     meta_args = {
@@ -154,7 +198,7 @@ class EosAnsibleModule(AnsibleModule):
         'state': dict(default='present', choices=['present', 'absent']),
     }
 
-    def __init__(self, stateful=True, *args, **kwargs):
+    def __init__(self, stateful=True, autorefresh=False, *args, **kwargs):
 
         kwargs['argument_spec'].update(self.meta_args)
 
@@ -162,6 +206,24 @@ class EosAnsibleModule(AnsibleModule):
         if stateful:
             kwargs['argument_spec'].update(self.stateful_args)
 
+        ## Ok, so in Ansible 2.0,
+        ## AnsibleModule.__init__() sets self.params and then
+        ##   calls self.log()
+        ##   (through self._log_invocation())
+        ##
+        ## However, self.log() (overridden in EosAnsibleModule)
+        ##   references self._logging
+        ## and self._logging (defined in EosAnsibleModule)
+        ##   references self.params.
+        ##
+        ## So ... I'm defining self._logging without "or self.params['logging']"
+        ##   *before* AnsibleModule.__init__() to avoid a "ref before def".
+        ##
+        ## I verified that this works with Ansible 1.9.4 and 2.0.0.2.
+        ## The only caveat is that the first log message in
+        ##   AnsibleModule.__init__() won't be subject to the value of
+        ##   self.params['logging'].
+        self._logging = kwargs.get('logging')
         super(EosAnsibleModule, self).__init__(*args, **kwargs)
 
         self.result = dict(changed=False, changes=dict())
@@ -177,6 +239,9 @@ class EosAnsibleModule(AnsibleModule):
 
         self._attributes = self.map_argument_spec()
         self.validate()
+        self._autorefresh = autorefresh
+        self._node = EosConnection(**self.params)
+        self._node.connect()
 
         self._node = self.connect()
         self._instance = None
@@ -207,9 +272,6 @@ class EosAnsibleModule(AnsibleModule):
 
     @property
     def node(self):
-        if self._node:
-            return self._node
-        self._node = self.connect()
         return self._node
 
     def check_pyeapi(self):
@@ -264,6 +326,9 @@ class EosAnsibleModule(AnsibleModule):
                 changed = self.create()
                 self.result['changed'] = changed or True
                 self.refresh()
+                # After a create command, flush the running-config
+                # so we get the latest for any other attributes
+                self._node._running_config = None
 
             changeset = self.attributes.viewitems() - self.instance.viewitems()
 
@@ -289,11 +354,16 @@ class EosAnsibleModule(AnsibleModule):
 
         elif self._stateful:
             if self.desired_state != self.instance.get('state'):
-                changed = self.invoke(self.instance.get('state'))
+                func = self.func(self.desired_state)
+                changed = self.invoke(func, self)
                 self.result['changed'] = changed or True
 
         self.refresh()
-        self.result['instance'] = self.instance
+        # By calling self.instance here we trigger another show running-config
+        # all which causes delay.  Only if debug is enabled do we call this
+        # since it will display the latest state of the object.
+        if self._debug:
+            self.result['instance'] = self.instance
 
         if self.exit_after_flush:
             self.exit()
@@ -342,7 +412,9 @@ class EosAnsibleModule(AnsibleModule):
             self.fail('Connection must define a transport')
 
         connection = pyeapi.client.make_connection(**config)
-        node = pyeapi.client.Node(connection, **config)
+        self.log('Creating connection with autorefresh=%s' % self._autorefresh)
+        node = pyeapi.client.Node(connection, autorefresh=self._autorefresh,
+                                  **config)
 
         try:
             resp = node.enable('show version')
@@ -397,7 +469,7 @@ class EosAnsibleModule(AnsibleModule):
                 self.result['debug'] = dict()
             self.result['debug'][key] = value
 
-    def log(self, message, priority=None):
+    def log(self, message, log_args=None, priority=None):
         if self._logging:
             syslog.openlog('ansible-eos')
             priority = priority or DEFAULT_SYSLOG_PRIORITY
@@ -451,6 +523,7 @@ def remove(module):
                % (name, action, seqno))
     module.api('routemaps').delete(name, action, seqno)
 
+
 def set_description(module):
     """ Configures the description for the routemap
     """
@@ -458,11 +531,15 @@ def set_description(module):
     action = module.attributes['action']
     seqno = int(module.attributes['seqno'])
     value = module.attributes['description']
-    value = None if value == '' else value
 
     module.log('Invoked set_description with %s for eos_routemap[%s %s %s]'
                % (value, name, action, seqno))
-    module.node.api('routemaps').set_description(name, action, seqno, value)
+    if value == '':
+        module.node.api('routemaps').set_description(name, action, seqno,
+                                                     disable=True)
+    else:
+        module.node.api('routemaps').set_description(name, action, seqno, value)
+
 
 def set_continue(module):
     """ Configures the continue value for the routemap
@@ -477,7 +554,11 @@ def set_continue(module):
 
     module.log('Invoked set_continue for eos_routemap[%s %s %s]'
                % (name, action, seqno))
-    module.node.api('routemaps').set_continue(name, action, seqno, value)
+    if value is None:
+        module.node.api('routemaps').set_continue(name, action, seqno,
+                                                  disable=True)
+    else:
+        module.node.api('routemaps').set_continue(name, action, seqno, value)
 
 
 def set_match(module):
@@ -492,6 +573,7 @@ def set_match(module):
     module.node.api('routemaps').set_match_statements(name, action, seqno,
                                                       statements)
 
+
 def set_set(module):
     """ Configures the set statements for the routemap
     """
@@ -503,6 +585,7 @@ def set_set(module):
                % (name, action, seqno))
     module.node.api('routemaps').set_set_statements(name, action, seqno,
                                                     statements)
+
 
 def main():
     """ The main module routine called when the module is run by Ansible

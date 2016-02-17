@@ -35,4 +35,3 @@ testcases:
     setup:
       - interface Port-Channel1
       - mlag 10
-

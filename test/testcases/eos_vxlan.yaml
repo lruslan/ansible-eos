@@ -79,7 +79,7 @@ testcases:
   - name: set interface description to empty string
     arguments:
       - { name: name, value: Vxlan1 }
-      - { name: description, value: "''" }
+      - { name: description, value: '' }
       - { name: connection, value: $host }
       - { name: debug, value: true }
     setup:

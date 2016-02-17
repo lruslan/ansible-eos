@@ -14,6 +14,16 @@ testcases:
     setup:
       - default mlag configuration
 
+  - name: set no domain_id value
+    arguments:
+      - { name: domain_id, value: '' }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+      - mlag configuration
+      - domain-id test
+
   - name: set the local_interface
     arguments:
       - { name: local_interface, value: Vlan1234 }
@@ -22,6 +32,17 @@ testcases:
     setup:
       - default mlag configuration
       - interface Vlan1234
+
+  - name: set no local_interface
+    arguments:
+      - { name: local_interface, value: '' }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+      - interface Vlan1234
+      - mlag configuration
+      - local-interface Vlan1234
 
   - name: set the peer_address
     arguments:
@@ -35,6 +56,20 @@ testcases:
     teardown:
       - no interface Vlan1234
 
+  - name: set no peer_address
+    arguments:
+      - { name: peer_address, value: '' }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+      - interface Vlan1234
+      - ip address 172.16.10.1/24
+      - mlag configuration
+      - peer-address 172.16.10.2
+    teardown:
+      - no interface Vlan1234
+
   - name: set the peer_link
     arguments:
       - { name: peer_link, value: Ethernet1 }
@@ -43,6 +78,17 @@ testcases:
     setup:
       - default mlag configuration
       - default interface Ethernet1
+
+  - name: set no peer_link
+    arguments:
+      - { name: peer_link, value: '' }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - default mlag configuration
+      - default interface Ethernet1
+      - mlag configuration
+      - peer-link Ethernet1
 
   - name: set mlag shutdown to true
     arguments:

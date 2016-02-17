@@ -15,6 +15,38 @@ testcases:
     setup:
       - no interface Loopback0
 
+  - name: default loopback0 interface
+    idempotent: false
+    arguments:
+      - { name: name, value: Loopback0 }
+      - { name: state, value: default }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - interface Loopback0
+
+  - name: default Ethernet1 interface
+    idempotent: false
+    arguments:
+      - { name: name, value: Ethernet1 }
+      - { name: state, value: default }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - interface Ethernet1
+      - description testdesc
+
+  - name: default Port-Channel1 interface
+    idempotent: false
+    arguments:
+      - { name: name, value: Port-Channel1 }
+      - { name: state, value: default }
+      - { name: connection, value: $host }
+      - { name: debug, value: true }
+    setup:
+      - interface Port-Channel1
+      - description testdesc
+
   - name: delete interface
     arguments:
       - { name: name, value: Loopback0 }

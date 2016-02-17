@@ -128,6 +128,50 @@ DEFAULT_SYSLOG_PRIORITY = syslog.LOG_NOTICE
 DEFAULT_CONNECTION = 'localhost'
 TRANSPORTS = ['socket', 'http', 'https', 'http_local']
 
+class EosConnection(object):
+
+    __attributes__ = ['username', 'password', 'host', 'transport', 'port']
+
+    def __init__(self, **kwargs):
+        self.connection = kwargs['connection']
+        self.transport = kwargs.get('transport')
+
+        self.username = kwargs.get('username')
+        self.password = kwargs.get('password')
+
+        self.host = kwargs.get('host')
+        self.port = kwargs.get('port')
+
+        self.config = kwargs.get('config')
+
+    def connect(self):
+        if self.config is not None:
+            pyeapi.load_config(self.config)
+
+        config = dict()
+
+        if self.connection is not None:
+            config = pyeapi.config_for(self.connection)
+            if not config:
+                msg = 'Connection name "{}" not found'.format(self.connection)
+
+        for key in self.__attributes__:
+            if getattr(self, key) is not None:
+                config[key] = getattr(self, key)
+
+        if 'transport' not in config:
+            raise ValueError('Connection must define a transport')
+
+        connection = pyeapi.client.make_connection(**config)
+        node = pyeapi.client.Node(connection, **config)
+
+        try:
+            node.enable('show version')
+        except (pyeapi.eapilib.ConnectionError, pyeapi.eapilib.CommandError):
+            raise ValueError('unable to connect to {}'.format(node))
+        return node
+
+
 class EosAnsibleModule(AnsibleModule):
 
     meta_args = {
@@ -146,7 +190,7 @@ class EosAnsibleModule(AnsibleModule):
         'state': dict(default='present', choices=['present', 'absent']),
     }
 
-    def __init__(self, stateful=True, *args, **kwargs):
+    def __init__(self, stateful=True, autorefresh=False, *args, **kwargs):
 
         kwargs['argument_spec'].update(self.meta_args)
 
@@ -154,6 +198,24 @@ class EosAnsibleModule(AnsibleModule):
         if stateful:
             kwargs['argument_spec'].update(self.stateful_args)
 
+        ## Ok, so in Ansible 2.0,
+        ## AnsibleModule.__init__() sets self.params and then
+        ##   calls self.log()
+        ##   (through self._log_invocation())
+        ##
+        ## However, self.log() (overridden in EosAnsibleModule)
+        ##   references self._logging
+        ## and self._logging (defined in EosAnsibleModule)
+        ##   references self.params.
+        ##
+        ## So ... I'm defining self._logging without "or self.params['logging']"
+        ##   *before* AnsibleModule.__init__() to avoid a "ref before def".
+        ##
+        ## I verified that this works with Ansible 1.9.4 and 2.0.0.2.
+        ## The only caveat is that the first log message in
+        ##   AnsibleModule.__init__() won't be subject to the value of
+        ##   self.params['logging'].
+        self._logging = kwargs.get('logging')
         super(EosAnsibleModule, self).__init__(*args, **kwargs)
 
         self.result = dict(changed=False, changes=dict())
@@ -169,6 +231,9 @@ class EosAnsibleModule(AnsibleModule):
 
         self._attributes = self.map_argument_spec()
         self.validate()
+        self._autorefresh = autorefresh
+        self._node = EosConnection(**self.params)
+        self._node.connect()
 
         self._node = self.connect()
         self._instance = None
@@ -199,9 +264,6 @@ class EosAnsibleModule(AnsibleModule):
 
     @property
     def node(self):
-        if self._node:
-            return self._node
-        self._node = self.connect()
         return self._node
 
     def check_pyeapi(self):
@@ -256,6 +318,9 @@ class EosAnsibleModule(AnsibleModule):
                 changed = self.create()
                 self.result['changed'] = changed or True
                 self.refresh()
+                # After a create command, flush the running-config
+                # so we get the latest for any other attributes
+                self._node._running_config = None
 
             changeset = self.attributes.viewitems() - self.instance.viewitems()
 
@@ -281,11 +346,16 @@ class EosAnsibleModule(AnsibleModule):
 
         elif self._stateful:
             if self.desired_state != self.instance.get('state'):
-                changed = self.invoke(self.instance.get('state'))
+                func = self.func(self.desired_state)
+                changed = self.invoke(func, self)
                 self.result['changed'] = changed or True
 
         self.refresh()
-        self.result['instance'] = self.instance
+        # By calling self.instance here we trigger another show running-config
+        # all which causes delay.  Only if debug is enabled do we call this
+        # since it will display the latest state of the object.
+        if self._debug:
+            self.result['instance'] = self.instance
 
         if self.exit_after_flush:
             self.exit()
@@ -334,7 +404,9 @@ class EosAnsibleModule(AnsibleModule):
             self.fail('Connection must define a transport')
 
         connection = pyeapi.client.make_connection(**config)
-        node = pyeapi.client.Node(connection, **config)
+        self.log('Creating connection with autorefresh=%s' % self._autorefresh)
+        node = pyeapi.client.Node(connection, autorefresh=self._autorefresh,
+                                  **config)
 
         try:
             resp = node.enable('show version')
@@ -389,7 +461,7 @@ class EosAnsibleModule(AnsibleModule):
                 self.result['debug'] = dict()
             self.result['debug'][key] = value
 
-    def log(self, message, priority=None):
+    def log(self, message, log_args=None, priority=None):
         if self._logging:
             syslog.openlog('ansible-eos')
             priority = priority or DEFAULT_SYSLOG_PRIORITY
@@ -405,7 +477,13 @@ def instance(module):
     """Returns an instance of Mlag global config from the node
     """
     response = module.node.api('mlag').get()
-    return response['config']
+    _instance = response['config']
+    _instance['domain_id'] = _instance['domain_id'] or ''
+    _instance['local_interface'] = _instance['local_interface'] or ''
+    _instance['peer_address'] = _instance['peer_address'] or ''
+    _instance['peer_link'] = _instance['peer_link'] or ''
+    return _instance
+
 
 def set_domain_id(module):
     """Configures the global mlag domain-id value
@@ -413,7 +491,9 @@ def set_domain_id(module):
     value = module.attributes['domain_id']
     module.log('Invoked set_domain_id for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_domain_id(value)
+    disable = (value == '')
+    module.node.api('mlag').set_domain_id(value, disable=disable)
+
 
 def set_local_interface(module):
     """Configures the global mlag local-interface value
@@ -421,7 +501,9 @@ def set_local_interface(module):
     value = module.attributes['local_interface']
     module.log('Invoked set_local_interface for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_local_interface(value)
+    disable = (value == '')
+    module.node.api('mlag').set_local_interface(value, disable=disable)
+
 
 def set_peer_address(module):
     """Configures the global mlag peer-address value
@@ -429,7 +511,9 @@ def set_peer_address(module):
     value = module.attributes['peer_address']
     module.log('Invoked set_peer_address for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_peer_address(value)
+    disable = (value == '')
+    module.node.api('mlag').set_peer_address(value, disable=disable)
+
 
 def set_peer_link(module):
     """Configures the global mlag peer-link value
@@ -437,15 +521,18 @@ def set_peer_link(module):
     value = module.attributes['peer_link']
     module.log('Invoked set_peer_link for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_peer_link(value)
+    disable = (value == '')
+    module.node.api('mlag').set_peer_link(value, disable=disable)
+
 
 def set_shutdown(module):
     """Conifgures the global mlag shutdown value
     """
-    value = module.attributes['shutdown']
+    value = not module.attributes['shutdown']
     module.log('Invoked set_shutdown for eos_mlag_config '
                'with value %s' % value)
-    module.node.api('mlag').set_shutdown(value)
+    module.node.api('mlag').set_shutdown(disable=value)
+
 
 def main():
     """ The main module routine called when the module is run by Ansible
@@ -462,7 +549,6 @@ def main():
     module = EosAnsibleModule(argument_spec=argument_spec,
                               stateful=False,
                               supports_check_mode=True)
-
 
     module.flush(True)
 
