@@ -24,17 +24,14 @@ VERSION := $(shell cat VERSION)
 all: clean flake8 build tests
 
 flake8:
-	flake8 --ignore=E265,E302,E303,F401,F403 library/ test/ common/
+	flake8 --ignore=E265,E266,E302,E303,F401,F403 library/ test/ common/
 
 clean:
 	@echo "Cleaning up byte compiled python stuff"
 	find . -type f -regex ".*\.py[co]$$" -delete
 
 tests: clean
-	nosetests -v 
+	nosetests -v
 
-build: 
+build:
 	$(PYTHON) $(BUILDER)
-
-
-

@@ -121,7 +121,12 @@ class TestModule(object):
         return self.parse_response(out)
 
     def parse_response(self, output):
-        return json.loads(str(output).split(' >> ')[1])
+        try:
+            resp = json.loads(str(output).split(' >> ')[1])
+        except:
+            resp = json.loads(str(output).split(' => ')[1])
+
+        return resp
 
     def compile_command(self):
         command = ' '.join(self.testcase.command)
@@ -140,7 +145,6 @@ class TestModule(object):
 
         self.output(out)
         self.output(err)
-
         return (proc.returncode, out, err)
 
 def filter_modules(modules, filenames):
