@@ -28,7 +28,7 @@ Installing via YUM
 ==================
 Ansible is provided via standard RPM installations from EPEL 6 and Fedora repositories.  Simply run Yum with appropriate permissions to install the latest version of Ansible.
 
-.. code-block:: console
+.. code-block:: shell
 
   $ sudo yum install ansible
 
@@ -40,7 +40,7 @@ to Apt’s sources. Ansible binaries are installed from this PPA.  Once the PPA
 has been added to the Apt sources list execute the following commands to
 install Ansible.
 
-.. code-block:: console
+.. code-block:: shell
 
   sudo apt-get install software-properties-common
   sudo apt-add-repository ppa:ansible/ansible
@@ -52,7 +52,7 @@ Installing via PIP
 Ansible can be installed using Python PIP. To install Ansible with PIP,
 simply enter the following command from a shell prompt.
 
-.. code-block:: console
+.. code-block:: shell
 
   sudo pip install ansible
 
@@ -73,7 +73,7 @@ Install Using Ansible Galaxy
 ============================
 From your Ansible Control Host, type:
 
-.. code-block:: console
+.. code-block:: shell
 
   sudo ansible-galaxy install arista.eos
 
@@ -103,7 +103,7 @@ To get started, download the latest Arista EOS modules from Github using the
 clone command. From a terminal on the Ansible control system issue the
 following command:
 
-.. code-block:: console
+.. code-block:: shell
 
   git clone https://github.com/arista-eosplus/ansible-eos.git
 
@@ -114,7 +114,7 @@ a work in progress, it might be necessary to switch to a released version of
 the EOS modules. In order to switch to a specific release version, change
 directories to the ansible-eos directory and enter the following command.
 
-.. code-block:: console
+.. code-block:: shell
 
   git tag
   git checkout tags/<tag name>
@@ -126,7 +126,7 @@ second command as the <tag name>.
 
 For instance, to use the v1.0.0 release, enter the command
 
-.. code-block:: console
+.. code-block:: shell
 
   git checkout tags/v1.0.0
 
@@ -143,7 +143,7 @@ We will create a symlink in ``/etc/ansible/roles/`` to make Ansible aware of the
 ``ansible-eos`` role.  Notice that the symlink name is ``arista.eos``. This is
 because the Ansible Galaxy role is named ``arista.eos``:
 
-.. code-block:: console
+.. code-block:: shell
 
   # create soft symlink
   cd /etc/ansible/roles
@@ -172,7 +172,7 @@ Then you can use the role in your play as:
 Here, you can edit ``/etc/ansible/ansible.cfg`` to make Ansible look for the
 ``ansible-eos`` directory:
 
-.. code-block:: console
+.. code-block:: shell
 
   # open the config file in an editor
   sudo vi /etc/ansible/ansible.cfg
