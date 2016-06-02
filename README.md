@@ -3,6 +3,19 @@
 [![Documentation Status](https://readthedocs.org/projects/ansible-eos/badge/?version=master)](https://readthedocs.org/projects/ansible-eos/?badge=master)
 [![Build Status](https://travis-ci.org/arista-eosplus/ansible-eos.svg)](https://travis-ci.org/arista-eosplus/ansible-eos)
 
+## Deprecation Notice
+
+Ansible 2.1 ships with great new networking
+[modules](http://docs.ansible.com/ansible/list_of_network_modules.html#eos)
+purpose-built for Arista EOS. Due to the easy-to-use nature of these modules,
+and their great flexibility, it is no longer recommended to use the arista.eos
+role.
+
+Get started by checking out the [Arista solution](https://www.ansible.com/ansible-arista-networks)
+at Ansible.com
+
+
+
 ## Overview
 
 The Arista EOS role provides the foundation for working with Arista EOS nodes and Ansible.  The Arista EOS role for Ansible provides the ability to manage configuration resources in EOS.  The architecture of the roles makes inherent use of the Arista EOS command API using either a traditional Ansible SSH connection or by specifying connection: local and using eAPI to send and receive commands.  
