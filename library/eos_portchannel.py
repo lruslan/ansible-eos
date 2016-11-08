@@ -110,6 +110,25 @@ options:
     choices: ['active', 'passive', 'disabled']
     aliases: []
     version_added: 1.0.0
+  lacp_timeout:
+    description:
+      - Configures the port-channel lacp timeout value in EOS for the
+        specified interface.  The fallback timeout configures the period
+        an interface in fallback mode remains in LACP mode without receiving a PDU.
+    required: flase
+    default: null
+    choices: []
+    aliases: []
+    version_added: 1.4.0
+  lacp_fallback:
+    description:
+      - Configures the port-channel lacp fallback setting in EOS for the
+        specified interface.
+    required: false
+    default: null
+    choices: ['static','individual','disabled']
+    aliases: []
+    version_added: 1.4.0
 """
 
 EXAMPLES = """
@@ -562,6 +581,24 @@ def set_lacp_mode(module):
                'with value %s' % (name, value))
     module.node.api('interfaces').set_lacp_mode(name, value)
 
+def set_lacp_timeout(module):
+    """ Configures the lacp fallback timeout attribute for the interface
+    """
+    value = module.attributes['lacp_timeout']
+    name = module.attributes['name']
+    module.log('Invoked set_lacp_timeout for eos_portchannel[%s] '
+               'with value %s' % (name, value))
+    module.node.api('interfaces').set_lacp_timeout(name, value)
+
+def set_lacp_fallback(module):
+    """ Configures the lacp mode attribute for the interface
+    """
+    value = module.attributes['lacp_fallback']
+    name = module.attributes['name']
+    module.log('Invoked set_lacp_fallback for eos_portchannel[%s] '
+               'with value %s' % (name, value))
+    module.node.api('interfaces').set_lacp_fallback(name, value)
+
 def main():
     """ The main module routine called when the module is run by Ansible
     """
@@ -572,7 +609,9 @@ def main():
         description=dict(),
         members=dict(),
         minimum_links=dict(type='int'),
-        lacp_mode=dict(choices=['active', 'passive', 'disabled'])
+        lacp_mode=dict(choices=['active', 'passive', 'disabled']),
+	lacp_timeout=dict(type='int'),
+	lacp_fallback=dict(choices=['static','individual','disabled']),
     )
 
     module = EosAnsibleModule(argument_spec=argument_spec,
